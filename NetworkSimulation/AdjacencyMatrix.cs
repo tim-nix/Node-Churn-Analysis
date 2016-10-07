@@ -10,6 +10,15 @@ namespace NetworkSimulation
     {
         int[,] graph;
 
+
+        public int[,] Graph
+        {
+            get
+            {
+                return (int[,])this.graph.Clone();
+            }
+        }
+
         public AdjacencyMatrix(int[,] g)
         {
             if (g.GetLength(0) == g.GetLength(1))
@@ -204,30 +213,6 @@ namespace NetworkSimulation
             return degree;
         }
 
-        public void setGraph(Bits bitArray)
-        {
-            for (int i = 0; i < graph.GetLength(0); i++)
-            {
-                for (int j = 0; j < graph.GetLength(1); j++)
-                {
-                    graph[i, j] = 0;
-                }
-            }
-
-            int bitIndex = 0;
-            for (int i = 0; i < graph.GetLength(0); i++)
-            {
-                for (int j = i + 1; j < graph.GetLength(0); j++)
-                {
-                    if (bitArray.BitArray[bitIndex])
-                    {
-                        graph[i, j] = 1;
-                        graph[j, i] = 1;
-                    }
-                    bitIndex++;
-                }
-            }
-        }
 
         public void displayGraph()
         {
