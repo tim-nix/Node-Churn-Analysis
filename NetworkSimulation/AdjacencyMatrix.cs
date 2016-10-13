@@ -122,6 +122,10 @@ namespace NetworkSimulation
 
         public bool isConnected()
         {
+
+            if (numEdges() == 0)
+                return false;
+
             Queue<int> toVisit = new Queue<int>();
             HashSet<int> visited = new HashSet<int>();
 
@@ -211,6 +215,46 @@ namespace NetworkSimulation
             }
 
             return degree;
+        }
+
+
+        public void TrimArray(int rowToRemove, int columnToRemove)
+        {
+            int[,] result = new int[graph.GetLength(0) - 1, graph.GetLength(1) - 1];
+
+            for (int i = 0, j = 0; i < graph.GetLength(0); i++)
+            {
+                if (i == rowToRemove)
+                    continue;
+
+                for (int k = 0, u = 0; k < graph.GetLength(1); k++)
+                {
+                    if (k == columnToRemove)
+                        continue;
+
+                    result[j, u] = graph[i, k];
+                    u++;
+                }
+                j++;
+            }
+
+            graph = result;
+        }
+
+        public int numEdges()
+        {
+            int e = 0;
+
+            for (int i = 0; i < graph.GetLength(0); i++)
+            {
+                for (int j = 0; j < graph.GetLength(1); j++)
+                {
+                    if (graph[i, j] == 1)
+                        e++;
+                }
+            }
+
+            return e;
         }
 
 

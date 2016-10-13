@@ -18,25 +18,25 @@ namespace NetworkSimulation
         }
 
 
-        public void updateStatus(int[] nodeStatus)
+        public void updateStatus(bool[] nodeStatus)
         {
-            int[,] g = fullNetwork.Graph;
-
-            int numRows = g.GetLength(0);
+            currentStatus = new AdjacencyMatrix(fullNetwork.Graph);
+            int trimmed = 0;
 
             for (int i = 0; i < nodeStatus.Length; i++)
             {
-                if (nodeStatus[i] == 0)
+                if (!nodeStatus[i])
                 {
-                    for (int j = 0; j < numRows; j++)
-                    {
-                        g[i, j] = 0;
-                        g[j, i] = 0;
-                    }
+                    currentStatus.TrimArray(i - trimmed, i - trimmed);
+                    trimmed++;
                 }
             }
         }
 
+        public bool isCurrentNetworkConnected()
+        {
+            return currentStatus.isConnected();
+        }
 
         public void displayNetwork()
         {
@@ -45,6 +45,7 @@ namespace NetworkSimulation
             Console.WriteLine(Environment.NewLine);
             Console.WriteLine("The current network state is:");
             currentStatus.displayGraph();
+            Console.WriteLine(Environment.NewLine);
         }
     }
 }

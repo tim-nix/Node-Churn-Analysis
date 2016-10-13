@@ -41,5 +41,45 @@ namespace NetworkSimulation
 
             return c;
         }
+
+
+        public static int[,] Path(int numNodes)
+        {
+            int[,] c = new int[numNodes, numNodes];
+
+            for (int i = 0; i < numNodes; i++)
+            {
+                for (int j = i; j < numNodes; j++)
+                {
+                    if (i == (j - 1))
+                    {
+                        c[i, j] = 1;
+                        c[j, i] = 1;
+                    }
+                }
+            }
+
+            return c;
+        }
+
+
+        public static int[,] Clique(int numNodes)
+        {
+            int[,] c = new int[numNodes, numNodes];
+
+            for (int i = 0; i < numNodes; i++)
+            {
+                for (int j = i; j < numNodes; j++)
+                {
+                    if (i != j)
+                    {
+                        c[i, j] = 1;
+                        c[j, i] = 1;
+                    }
+                }
+            }
+
+            return c;
+        }
     }
 }

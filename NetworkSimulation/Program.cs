@@ -10,22 +10,40 @@ namespace NetworkSimulation
     {
         static void Main(string[] args)
         {
-            int[,] g1 = { { 1, 1, 1 },
-                          { 1, 1, 1 },
-                          { 1, 1, 1 } };
+            double baseTime = 200.0;
+            double endTime  = 210.0;
+            double delta    = 1.0;
+            int numNodes    = 5;
+            int numSessions = 100;
+            Network network = new Network(CommonGraphs.PetersonGraph);
 
-            AdjacencyMatrix am1 = new AdjacencyMatrix(g1);
+            NodeTimeline[] nodeSessions = new NodeTimeline[numNodes];
 
-            Console.WriteLine("Inital:");
-            am1.displayGraph();
-            int[,] g2 = am1.Graph;
+            for (int i = 0; i < numNodes; i++)
+            {
+                nodeSessions[i] = new NodeTimeline(numSessions, baseTime);
+                nodeSessions[i].generateTimeline();
+            }
 
-            g2[0, 0] = 0;
-            g2[1, 1] = 0;
-            g2[2, 2] = 0;
+            bool[] status = new bool[numNodes];
 
-            Console.WriteLine("Final:");
-            am1.displayGraph();
+            double time             = baseTime;
+            double connectionCount  = 0.0;
+            double iterations       = 0.0;
+            while (time < endTime)
+            {
+                for (int i = 0; i < numNodes; i++)
+                    status[i] = nodeSessions[i].timeIsLive(time);
+
+                network.updateStatus(status);
+                if (network.isCurrentNetworkConnected())
+                    connectionCount += 1.0;
+
+                iterations += 1.0;
+                time += delta;
+            }
+
+            Console.WriteLine("Network is connected {0}% of the time.", (connectionCount / iterations) * 100);
         }
     }
 }
