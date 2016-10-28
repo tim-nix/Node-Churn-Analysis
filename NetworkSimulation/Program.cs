@@ -11,39 +11,41 @@ namespace NetworkSimulation
         static void Main(string[] args)
         {
             double baseTime = 200.0;
-            double endTime  = 210.0;
-            double delta    = 1.0;
-            int numNodes    = 5;
+            double endTime  = 250.0;
+            double delta    = 0.1;
             int numSessions = 100;
-            Network network = new Network(CommonGraphs.PetersonGraph);
-
-            NodeTimeline[] nodeSessions = new NodeTimeline[numNodes];
-
-            for (int i = 0; i < numNodes; i++)
+            for (int numNodes = 10; numNodes < 100; numNodes++)
             {
-                nodeSessions[i] = new NodeTimeline(numSessions, baseTime);
-                nodeSessions[i].generateTimeline();
-            }
+                Network network = new Network(CommonGraphs.GuntherHartnell(numNodes));
 
-            bool[] status = new bool[numNodes];
+                NodeTimeline[] nodeSessions = new NodeTimeline[numNodes];
 
-            double time             = baseTime;
-            double connectionCount  = 0.0;
-            double iterations       = 0.0;
-            while (time < endTime)
-            {
                 for (int i = 0; i < numNodes; i++)
-                    status[i] = nodeSessions[i].timeIsLive(time);
+                {
+                    nodeSessions[i] = new NodeTimeline(numSessions, baseTime);
+                    nodeSessions[i].generateTimeline();
+                }
 
-                network.updateStatus(status);
-                if (network.isCurrentNetworkConnected())
-                    connectionCount += 1.0;
+                bool[] status = new bool[numNodes];
 
-                iterations += 1.0;
-                time += delta;
+                double time = baseTime;
+                double connectionCount = 0.0;
+                double iterations = 0.0;
+                while (time < endTime)
+                {
+                    for (int i = 0; i < numNodes; i++)
+                        status[i] = nodeSessions[i].timeIsLive(time);
+
+                    network.updateStatus(status);
+                    if (network.isCurrentNetworkConnected())
+                        connectionCount += 1.0;
+
+                    iterations += 1.0;
+                    time += delta;
+                }
+
+                Console.WriteLine("Cycle with {0} nodes is connected {1}% of the time.", numNodes, (connectionCount / iterations) * 100);
             }
-
-            Console.WriteLine("Network is connected {0}% of the time.", (connectionCount / iterations) * 100);
         }
     }
 }
