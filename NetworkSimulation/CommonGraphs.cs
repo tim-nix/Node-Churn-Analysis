@@ -85,25 +85,26 @@ namespace NetworkSimulation
         public static int[,] GuntherHartnell(int numNodes)
         {
             int[,] c = new int[numNodes, numNodes];
-
-            int k = Convert.ToInt32(Math.Ceiling(Math.Sqrt(1.0 + (4.0 * Convert.ToDouble(numNodes))) - 1.0) / 2.0);
+            int k = Convert.ToInt32(Math.Ceiling((Math.Sqrt(1.0 + (4.0 * Convert.ToDouble(numNodes))) - 1.0) / 2.0));
             int numCliques = 0;
             int numFull = 0;
+
+            if (numNodes > (k * k))
+            {
+                numCliques = k + 1;
+                numFull = k;
+            }
 
             if (numNodes == (k * (k + 1)))
             {
                 numCliques = k + 1;
                 numFull = k + 1;
             }
-            else if (numNodes > (k * k))
-            {
-                numCliques = k + 1;
-                numFull = k;
-            }
-            else
+
+            if (numNodes <= (k * k))
             {
                 numCliques = k;
-                numFull = numFull - (k * (k - 1));
+                numFull = numNodes - (k * (k - 1));
             }
 
             int b = 0;
@@ -149,7 +150,7 @@ namespace NetworkSimulation
                     else
                         y = (j * k) + (i + 1);
 
-                    if ((x <= numFull) && (y <= numFull))
+                    if ((x <= numNodes) && (y <= numNodes))
                     {
                         c[x - 1, y - 1] = 1;
                         c[y - 1, x - 1] = 1;
