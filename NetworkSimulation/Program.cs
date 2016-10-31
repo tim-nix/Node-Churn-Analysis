@@ -10,7 +10,7 @@ namespace NetworkSimulation
     {
         static void Main(string[] args)
         {
-            simGH();
+            TestClass.testConnectivity();
         }
 
         public static void simClique()
