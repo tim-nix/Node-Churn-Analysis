@@ -12,6 +12,14 @@ namespace NetworkSimulation
         int numSessions = 100;
         Session[] timeline;
 
+        public double finalTime
+        {
+            get
+            {
+                return timeline[timeline.Length - 1].EndTime;
+            }
+        }
+
         public NodeTimeline(int size, double time)
         {
             baseTime = time;
@@ -58,6 +66,25 @@ namespace NetworkSimulation
 
             return live;
         }
+
+        public double averageLiveTime()
+        {
+            double sum = 0.0;
+            for (int i = 0; i < timeline.Length; i++)
+                sum += timeline[i].getTimeLive();
+
+            return sum / Convert.ToDouble(timeline.Length);
+        }
+
+        public double averageDownTime()
+        {
+            double sum = 0.0;
+            for (int i = 1; i < timeline.Length; i++)
+                sum += timeline[i].StartTime - timeline[i - 1].EndTime;
+
+            return sum / Convert.ToDouble(timeline.Length);
+        }
+
 
         public void displayTimeline()
         {

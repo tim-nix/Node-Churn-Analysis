@@ -11,6 +11,22 @@ namespace NetworkSimulation
         double start;
         double end;
 
+        public double StartTime
+        {
+            get
+            {
+                return start;
+            }
+        }
+
+        public double EndTime
+        {
+            get
+            {
+                return end;
+            }
+        }
+
         public Session(double s, double e)
         {
             start = s;
@@ -23,6 +39,11 @@ namespace NetworkSimulation
                 return true;
             else
                 return false;
+        }
+
+        public double getTimeLive()
+        {
+            return end - start;
         }
 
         public void printSession()
