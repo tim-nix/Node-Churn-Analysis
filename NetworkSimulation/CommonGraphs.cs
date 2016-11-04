@@ -82,6 +82,27 @@ namespace NetworkSimulation
             return c;
         }
 
+
+        public static int[,] Gnp(int n, double p)
+        {
+            int[,] c = new int[n, n];
+            MersenneTwister randomNum = new MersenneTwister();
+
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = i + 1; j < n; j++)
+                {
+                    if (randomNum.genrand_real1() <= p)
+                    {
+                        c[i, j] = 1;
+                        c[j, i] = 1;
+                    }
+                }
+            }
+
+            return c;
+        }
+
         public static int[,] GuntherHartnell(int numNodes)
         {
             int[,] c = new int[numNodes, numNodes];
