@@ -45,5 +45,25 @@ namespace NetworkSimulation
 
             return shortestTime;
         }
+
+        public double getAverageLiveTime()
+        {
+            double sum = 0.0;
+
+            for (int i = 0; i < nodeSessions.Length; i++)
+                sum += nodeSessions[i].averageLiveTime();
+
+            return sum / Convert.ToDouble(nodeSessions.Length);
+        }
+
+        public double getAverageDownTime()
+        {
+            double sum = 0.0;
+
+            for (int i = 0; i < nodeSessions.Length; i++)
+                sum += nodeSessions[i].averageDownTime();
+
+            return sum / Convert.ToDouble(nodeSessions.Length);
+        }
     }
 }

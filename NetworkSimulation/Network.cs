@@ -14,6 +14,7 @@ namespace NetworkSimulation
     /// </summary>
     class Network
     {
+        int[] labels;
         AdjacencyMatrix fullNetwork;
         AdjacencyMatrix currentStatus;
 
@@ -27,6 +28,7 @@ namespace NetworkSimulation
         {
             fullNetwork = new AdjacencyMatrix(g);
             currentStatus = new AdjacencyMatrix(g);
+            labels = new int[g.GetLength(0)];
         }
 
 
@@ -38,6 +40,24 @@ namespace NetworkSimulation
         /// <param name="nodeStatus">A boolean array specifying is each node is live.</param>
         public void updateStatus(bool[] nodeStatus)
         {
+            int count = 0;
+            for (int i = 0; i < nodeStatus.Length; i++)
+            {
+                if (nodeStatus[i])
+                    count++;
+            }
+
+            labels = new int[count];
+            int j = 0;
+            for (int i = 0; i < nodeStatus.Length; i++)
+            {
+                if (nodeStatus[i])
+                {
+                    labels[j] = i;
+                    j++;
+                }
+            }
+
             currentStatus = new AdjacencyMatrix(fullNetwork.Graph);
             int trimmed = 0;
 
@@ -76,6 +96,11 @@ namespace NetworkSimulation
             Console.WriteLine("The current network state is:");
             currentStatus.displayGraph();
             Console.WriteLine(Environment.NewLine);
+
+            Console.Write("Labels: ");
+            for (int i = 0; i < labels.Length; i++)
+                Console.Write("{0} ", labels[i]);
+            Console.WriteLine();
         }
     }
 }

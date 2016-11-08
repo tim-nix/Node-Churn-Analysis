@@ -34,7 +34,7 @@ namespace NetworkSimulation
 
             double alpha = 3.0;
             double beta = 1.0;
-            double lambda = 1.0;
+            double lambda = 2.0;
 
             double startTime = 0.0;
             double endTime = 0.0;

@@ -8,57 +8,159 @@ namespace NetworkSimulation
 {
     class Simulations
     {
-        public static void Sampling()
+        int minOrder = 0;
+        int maxOrder = 0;
+        int nodeDelta = 0;
+        double baseTime = 0.0;
+        double endTime = 0.0;
+        double timeDelta = 0.0;
+        int numSessions = 0;
+
+        public Simulations()
         {
-            MersenneTwister randomNum = new MersenneTwister();
-
-            const long SAMPLE_RUNS = 10000;
-            const long SAMPLE_SIZE = 10000;
-            const int H_SIZE = 500;
-
-            double[] residuals = new double[SAMPLE_SIZE];
-            double[] cdf = new double[H_SIZE];
-
-            double alpha = 3.0;
-            double beta = 1.0;
-            double lambda = (alpha - 1.0) / beta;
-
-            for (int i = 0; i < H_SIZE; i++)
-                cdf[i] = 0.0;
-
-            double bus_time = randomNum.genparet_real(alpha, beta);
-            double sample_time = randomNum.genexp_real(lambda);
-
-            for(int i = 0; i < SAMPLE_RUNS; i++)
-            {
-                for(int j = 0; j < SAMPLE_RUNS; j++)
-                {
-                    while (bus_time < sample_time)
-                    {
-                        bus_time += randomNum.genparet_real(alpha, beta);
-                    }
-
-                    residuals[j] = bus_time - sample_time;
-                    sample_time += randomNum.genexp_real(lambda);
-                }
-
-                for (int j = 0; j < H_SIZE; j++)                // calculate the CCDF of the wait times
-                {
-                    for (int k = 0; k < SAMPLE_SIZE; k++)
-                    {
-                        if (residuals[k] <= (double)j)
-                            cdf[j] += 1.0;
-                    }
-                }
-            }
-
-            for (int i = 0; i < H_SIZE; i++)
-            {
-                cdf[i] = cdf[i] / (SAMPLE_SIZE * SAMPLE_RUNS);
-            }
-
-            System.IO.File.WriteAllLines("cdf.txt", cdf.Select(d => d.ToString()).ToArray());
+            minOrder = 100;
+            maxOrder = 1000;
+            nodeDelta = 100;
+            baseTime = 200.0;
+            endTime = 300.0;
+            timeDelta = 0.1;
+            numSessions = 200;
         }
+
+        public Simulations(int minN, int maxN, int nDelta, double startTime, double finishTime, double sampleD, int sessions)
+        {
+            minOrder = minN;
+            maxOrder = maxN;
+            nodeDelta = nDelta;
+            baseTime = startTime;
+            endTime = finishTime;
+            timeDelta = sampleD;
+            numSessions = sessions;
+        }
+
+
+        public void simClique()
+        {
+            int numSessions = 100;
+            for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
+            {
+                Network network = new Network(CommonGraphs.Clique(numNodes));
+
+                NetworkChurn netChurn = new NetworkChurn(numNodes);
+                netChurn.generateChurn(numSessions, baseTime);
+
+                double time = baseTime;
+                double connectionCount = 0.0;
+                double iterations = 0.0;
+                double percentLive = 0;
+                endTime = netChurn.getQuickestFinalTime();
+
+                while (time < endTime)
+                {
+                    bool[] status = netChurn.getStatusAtTime(time);
+
+                    double numLive = 0;
+                    for (int i = 0; i < status.Length; i++)
+                    {
+                        if (status[i])
+                            numLive += 1.0;
+                    }
+
+                    percentLive += numLive / Convert.ToDouble(status.Length);
+
+                    network.updateStatus(status);
+                    if (network.isCurrentNetworkConnected())
+                        connectionCount += 1.0;
+
+                    iterations += 1.0;
+                    time += timeDelta;
+                }
+
+                Console.WriteLine("Clique with {0} nodes is connected {1}% of the time.", numNodes, (connectionCount / iterations) * 100);
+            }
+        }
+
+        public void simGH()
+        {
+            int numNodes = 0;
+            for (int numCliques = 3; numCliques < 50; numCliques++)
+            {
+                numNodes = numCliques * (numCliques - 1);
+                Network network = new Network(CommonGraphs.GuntherHartnell(numNodes));
+
+                NetworkChurn netChurn = new NetworkChurn(numNodes);
+                netChurn.generateChurn(numSessions, baseTime);
+
+                double time = baseTime;
+                double connectionCount = 0.0;
+                double iterations = 0.0;
+                double percentLive = 0;
+                endTime = netChurn.getQuickestFinalTime();
+                
+                while (time < endTime)
+                {
+                    bool[] status = netChurn.getStatusAtTime(time);
+
+                    double numLive = 0;
+                    for (int i = 0; i < status.Length; i++)
+                    {
+                        if (status[i])
+                            numLive += 1.0;
+                    }
+
+                    percentLive += numLive / Convert.ToDouble(status.Length);
+
+                    network.updateStatus(status);
+                    if (network.isCurrentNetworkConnected())
+                        connectionCount += 1.0;
+
+                    iterations += 1.0;
+                    time += timeDelta;
+                }
+
+                Console.WriteLine("Gunther-Hartnell topology with {0} nodes is connected {1:N2}% of the time.", numNodes, (connectionCount / iterations) * 100);
+                Console.WriteLine("Each node is live {0:N2}% of the time", (percentLive / iterations) * 100.0);
+            }
+        }
+
+        public void simGnp()
+        {
+            double p = 0.3;
+
+            for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
+            {
+                Network network = new Network(CommonGraphs.Gnp(numNodes, p));
+
+                NodeTimeline[] nodeSessions = new NodeTimeline[numNodes];
+
+                for (int i = 0; i < numNodes; i++)
+                {
+                    nodeSessions[i] = new NodeTimeline(numSessions, baseTime);
+                    nodeSessions[i].generateTimeline();
+                }
+
+                bool[] status = new bool[numNodes];
+
+                double time = baseTime;
+                double connectionCount = 0.0;
+                double iterations = 0.0;
+                while (time < endTime)
+                {
+                    for (int i = 0; i < numNodes; i++)
+                        status[i] = nodeSessions[i].timeIsLive(time);
+
+                    network.updateStatus(status);
+                    if (network.isCurrentNetworkConnected())
+                        connectionCount += 1.0;
+
+                    iterations += 1.0;
+                    time += timeDelta;
+                }
+
+                Console.WriteLine("Gnp graph family with {0} nodes and p = {1} is connected {2}% of the time.", numNodes, p, (connectionCount / iterations) * 100);
+            }
+        }
+
 
         public static void Superposition1()
         {
