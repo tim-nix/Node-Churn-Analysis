@@ -131,23 +131,27 @@ namespace NetworkSimulation
             {
                 Network network = new Network(CommonGraphs.Gnp(numNodes, p));
 
-                NodeTimeline[] nodeSessions = new NodeTimeline[numNodes];
-
-                for (int i = 0; i < numNodes; i++)
-                {
-                    nodeSessions[i] = new NodeTimeline(numSessions, baseTime);
-                    nodeSessions[i].generateTimeline();
-                }
-
-                bool[] status = new bool[numNodes];
+                NetworkChurn netChurn = new NetworkChurn(numNodes);
+                netChurn.generateChurn(numSessions, baseTime);
 
                 double time = baseTime;
                 double connectionCount = 0.0;
                 double iterations = 0.0;
+                double percentLive = 0;
+                endTime = netChurn.getQuickestFinalTime();
+
                 while (time < endTime)
                 {
-                    for (int i = 0; i < numNodes; i++)
-                        status[i] = nodeSessions[i].timeIsLive(time);
+                    bool[] status = netChurn.getStatusAtTime(time);
+
+                    double numLive = 0;
+                    for (int i = 0; i < status.Length; i++)
+                    {
+                        if (status[i])
+                            numLive += 1.0;
+                    }
+
+                    percentLive += numLive / Convert.ToDouble(status.Length);
 
                     network.updateStatus(status);
                     if (network.isCurrentNetworkConnected())
