@@ -125,7 +125,7 @@ namespace NetworkSimulation
 
         public void simGnp()
         {
-            double p = 0.3;
+            double p = 0.03;
 
             for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
             {
@@ -161,7 +161,9 @@ namespace NetworkSimulation
                     time += timeDelta;
                 }
 
-                Console.WriteLine("Gnp graph family with {0} nodes and p = {1} is connected {2}% of the time.", numNodes, p, (connectionCount / iterations) * 100);
+                Console.WriteLine("Gnp graph family with {0} nodes and p = {1:N2} is connected {2:N2}% of the time.", numNodes, p, (connectionCount / iterations) * 100);
+                Console.WriteLine("Each node is live {0:N2}% of the time", (percentLive / iterations) * 100.0);
+                Console.WriteLine("E[degree] = {0:N2}", numNodes * p);
             }
         }
 
