@@ -125,46 +125,81 @@ namespace NetworkSimulation
 
         public void simGnp()
         {
-            double p = 0.03;
+            int numSims = 100;
 
-            for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
+            int cliqueMin = 3;
+            int cliqueMax = 31;
+
+            int[] nValues = new int[cliqueMax - cliqueMin];
+
+            double[] pValues = new double[cliqueMax - cliqueMin];
+            double[] connectivity = new double[cliqueMax - cliqueMin];
+
+            double percentLive = 0.0;
+            double iterations = 0.0;
+            double p = 0.0;
+
+            int index = 0;
+            int numNodes = 0;
+            for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
             {
-                Network network = new Network(CommonGraphs.Gnp(numNodes, p));
+                numNodes = numCliques * (numCliques - 1);
+                p = Convert.ToDouble(numCliques - 1) / Convert.ToDouble(numNodes);
 
-                NetworkChurn netChurn = new NetworkChurn(numNodes);
-                netChurn.generateChurn(numSessions, baseTime);
+                nValues[index] = numNodes;
+                pValues[index] = p;
+                connectivity[index] = 0.0;
+                
 
-                double time = baseTime;
-                double connectionCount = 0.0;
-                double iterations = 0.0;
-                double percentLive = 0;
-                endTime = netChurn.getQuickestFinalTime();
-
-                while (time < endTime)
+                for (int sim = 0; sim < numSims; sim++)
                 {
-                    bool[] status = netChurn.getStatusAtTime(time);
+                    Network network = new Network(CommonGraphs.Gnp(numNodes, p));
 
-                    double numLive = 0;
-                    for (int i = 0; i < status.Length; i++)
+                    NetworkChurn netChurn = new NetworkChurn(numNodes);
+                    netChurn.generateChurn(numSessions, baseTime);
+
+                    double time = baseTime;
+                    double connectionCount = 0.0;
+                    percentLive = 0.0;
+                    iterations = 0;
+
+                    endTime = netChurn.getQuickestFinalTime();
+
+                    while (time < endTime)
                     {
-                        if (status[i])
-                            numLive += 1.0;
+                        bool[] status = netChurn.getStatusAtTime(time);
+
+                        double numLive = 0;
+                        for (int i = 0; i < status.Length; i++)
+                        {
+                            if (status[i])
+                                numLive += 1.0;
+                        }
+
+                        percentLive += numLive / Convert.ToDouble(status.Length);
+
+                        network.updateStatus(status);
+                        if (network.isCurrentNetworkConnected())
+                            connectionCount += 1.0;
+
+                        iterations += 1.0;
+                        time += timeDelta;
                     }
 
-                    percentLive += numLive / Convert.ToDouble(status.Length);
-
-                    network.updateStatus(status);
-                    if (network.isCurrentNetworkConnected())
-                        connectionCount += 1.0;
-
-                    iterations += 1.0;
-                    time += timeDelta;
+                    connectivity[index] += (connectionCount / iterations) * 100.0;
                 }
 
-                Console.WriteLine("Gnp graph family with {0} nodes and p = {1:N2} is connected {2:N2}% of the time.", numNodes, p, (connectionCount / iterations) * 100);
+                connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
+                
+                Console.WriteLine("Gnp graph family with {0} nodes and p = {1:N2} is connected {2:N2}% of the time.", nValues[index], pValues[index], connectivity[index]);
                 Console.WriteLine("Each node is live {0:N2}% of the time", (percentLive / iterations) * 100.0);
-                Console.WriteLine("E[degree] = {0:N2}", numNodes * p);
+
+                index++;
             }
+
+            System.IO.File.WriteAllLines("nvalues.txt", nValues.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("pvalues.txt", pValues.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("cvalues.txt", connectivity.Select(d => d.ToString()).ToArray());
         }
 
 
