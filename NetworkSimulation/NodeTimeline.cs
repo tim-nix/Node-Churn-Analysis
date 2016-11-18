@@ -41,15 +41,15 @@ namespace NetworkSimulation
             while (endTime < baseTime)
             {
                 startTime = endTime + randomNum.genexp_real(lambda);
-                endTime = startTime + randomNum.genexp_real(lambda); //.genparet_real(alpha, beta);
+                endTime = startTime + randomNum.genparet_real(alpha, beta);
             }
 
             for(int i = 0; i < numSessions; i++)
             {
                 timeline[i] = new Session(startTime, endTime);
 
-                startTime = endTime + randomNum.genrand_real1(); //.genexp_real(lambda);
-                endTime = startTime + randomNum.genrand_real1(); //.genparet_real(alpha, beta);
+                startTime = endTime + randomNum.genexp_real(lambda);
+                endTime = startTime + randomNum.genparet_real(alpha, beta);
             }
         }
 

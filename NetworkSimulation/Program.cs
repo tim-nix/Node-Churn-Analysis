@@ -11,7 +11,7 @@ namespace NetworkSimulation
         static void Main(string[] args)
         {
             Simulations sim = new Simulations();
-            sim.simGnp();
+            sim.simGH();
         }
     }
 }
