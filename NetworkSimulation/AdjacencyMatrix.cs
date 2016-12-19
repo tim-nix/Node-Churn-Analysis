@@ -280,6 +280,22 @@ namespace NetworkSimulation
             return degree;
         }
 
+        public int getDegree(int node)
+        {
+            if (node >= graph.GetLength(0))
+                throw new System.ArgumentOutOfRangeException("Given node does not exist!");
+
+            int degree = 0;
+
+            for (int j = 0; j < graph.GetLength(0); j++)
+            {
+                if (graph[node, j] == 1)
+                    degree++;
+            }
+
+            return degree;
+        }
+
 
         /// <summary>
         /// The purpose of this method is to modify the class member graph by
