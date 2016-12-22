@@ -14,9 +14,9 @@ namespace NetworkSimulation
     /// </summary>
     class Network
     {
-        int[] labels;
-        AdjacencyMatrix fullNetwork;
-        AdjacencyMatrix currentStatus;
+        private int[] labels;
+        private AdjacencyMatrix fullNetwork;
+        private AdjacencyMatrix currentStatus;
 
 
         /// <summary>
@@ -80,6 +80,61 @@ namespace NetworkSimulation
         public bool isCurrentNetworkConnected()
         {
             return currentStatus.isConnected();
+        }
+
+
+        /// <summary>
+        /// Returns the degree of node n in the full network.
+        /// </summary>
+        /// <param name="n">The node to examine</param>
+        /// <returns>The degree of node n.</returns>
+        public int getFullDegree(int n)
+        {
+            return fullNetwork.getDegree(n);
+        }
+
+
+        /// <summary>
+        /// Returns the degree of node n in the current network.  If the current
+        /// node is not live, then -1 is returned. If the current node is live but 
+        /// isolated, then the function returns 0.
+        /// </summary>
+        /// <param name="n">The node to examine.</param>
+        /// <returns>The degree of node n.</returns>
+        public int getCurrentDegree(int n)
+        {
+            int index = Array.IndexOf(labels, n);
+
+            if (index == -1)
+                return -1;
+            else
+                return currentStatus.getDegree(index);
+        }
+
+
+        /// <summary>
+        /// Returns the degree distribution of the full network.  The
+        /// index of the returned array corresponds to the possible
+        /// node degree.  Each value in the array corresponds to the 
+        /// number of nodes that have that degree.
+        /// </summary>
+        /// <returns>The degree distribution of the full network.</returns>
+        public int[] getDistroFull()
+        {
+            return fullNetwork.degreeDistro();
+        }
+
+
+        /// <summary>
+        /// Returns the degree distribution of the current network.  
+        /// The index of the returned array corresponds to the possible
+        /// node degree.  Each value in the array corresponds to the 
+        /// number of nodes that have that degree.
+        /// </summary>
+        /// <returns>The degree distribution of the current network.</returns>
+        public int[] getDistroCurrent()
+        {
+            return currentStatus.degreeDistro();
         }
 
 

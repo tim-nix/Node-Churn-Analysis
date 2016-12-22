@@ -8,9 +8,9 @@ namespace NetworkSimulation
 {
     class NodeTimeline
     {
-        double baseTime = 0.0;
-        int numSessions = 100;
-        Session[] timeline;
+        private double baseTime = 0.0;
+        private int numSessions = 100;
+        private Session[] timeline;
 
         public double finalTime
         {

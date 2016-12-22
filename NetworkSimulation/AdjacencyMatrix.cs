@@ -12,7 +12,7 @@ namespace NetworkSimulation
     /// </summary>
     class AdjacencyMatrix
     {
-        int[,] graph;
+        private int[,] graph;
 
 
         /// <summary>
@@ -280,6 +280,13 @@ namespace NetworkSimulation
             return degree;
         }
 
+        /// <summary>
+        /// The purpose of this method is to return the degree of the given node
+        /// within the class member graph; that is the most number of neighbors had
+        /// by the given vertex.
+        /// </summary>
+        /// <param name="node">The given node identified by number.</param>
+        /// <returns>The degree of the given node within the class member graph.</returns>
         public int getDegree(int node)
         {
             if (node >= graph.GetLength(0))
@@ -295,6 +302,27 @@ namespace NetworkSimulation
 
             return degree;
         }
+
+
+        /// <summary>
+        /// Returns the degree distribution of the adjacency matrix.  
+        /// The index of the returned array corresponds to the possible
+        /// node degree.  Each value in the array corresponds to the 
+        /// number of nodes that have that degree.
+        /// </summary>
+        /// <returns>The degree distribution of the adjacency matrix.</returns>
+        public int[] degreeDistro()
+        {
+            int[] distro = new int[maxDegree() + 1];
+
+            for (int i = 0; i < graph.GetLength(0); i++)
+            {
+                distro[getDegree(i)]++;
+            }
+
+            return distro;
+        }
+
 
 
         /// <summary>

@@ -8,13 +8,13 @@ namespace NetworkSimulation
 {
     class Simulations
     {
-        int minOrder = 0;
-        int maxOrder = 0;
-        int nodeDelta = 0;
-        double baseTime = 0.0;
-        double endTime = 0.0;
-        double timeDelta = 0.0;
-        int numSessions = 0;
+        private int minOrder = 0;
+        private int maxOrder = 0;
+        private int nodeDelta = 0;
+        private double baseTime = 0.0;
+        private double endTime = 0.0;
+        private double timeDelta = 0.0;
+        private int numSessions = 0;
 
         public Simulations()
         {
