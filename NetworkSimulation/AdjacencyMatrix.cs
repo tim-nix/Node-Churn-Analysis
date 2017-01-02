@@ -9,7 +9,7 @@ namespace NetworkSimulation
     /// </summary>
     public class AdjacencyMatrix
     {
-        int[,] graph;
+        private int[,] graph;
 
 
         /// <summary>
@@ -282,6 +282,27 @@ namespace NetworkSimulation
 
             return true;
         }
+
+
+        /// <summary>
+        /// Returns the degree distribution of the adjacency matrix.  
+        /// The index of the returned array corresponds to the possible
+        /// node degree.  Each value in the array corresponds to the 
+        /// number of nodes that have that degree.
+        /// </summary>
+        /// <returns>The degree distribution of the adjacency matrix.</returns>
+        public int[] degreeDistro()
+        {
+            int[] distro = new int[maxDegree() + 1];
+
+            for (int i = 0; i < graph.GetLength(0); i++)
+            {
+                distro[getDegree(i)]++;
+            }
+
+            return distro;
+        }
+
 
 
         /// <summary>

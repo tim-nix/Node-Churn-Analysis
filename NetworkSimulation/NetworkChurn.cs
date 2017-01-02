@@ -8,7 +8,7 @@ namespace NetworkSimulation
 {
     class NetworkChurn
     {
-        NodeTimeline[] nodeSessions;
+        private NodeTimeline[] nodeSessions;
 
         public NetworkChurn(int numNodes)
         {

@@ -8,8 +8,8 @@ namespace NetworkSimulation
 {
     class Session
     {
-        double start;
-        double end;
+        private double start;
+        private double end;
 
         public double StartTime
         {
