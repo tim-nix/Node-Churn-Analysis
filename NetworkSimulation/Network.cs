@@ -16,10 +16,35 @@ namespace NetworkSimulation
 
 
         /// <summary>
+        /// The purpose of this 'getter' is to return a copy of the class
+        /// member fullNetwork.
+        /// </summary>
+        public int[,] FullGraph
+        {
+            get
+            {
+                return fullNetwork.Graph;
+            }
+        }
+
+
+        /// <summary>
+        /// The purpose of this 'getter' is to return a copy of the class
+        /// member creentStatus.
+        /// </summary>
+        public int[,] CurrentGraph
+        {
+            get
+            {
+                return currentStatus.Graph;
+            }
+        }
+
+        /// <summary>
         /// A constructor for the class, the full network and the current
         /// network are both set as if all nodes were active.
         /// </summary>
-        /// <param name="g">A two-dimensional array representing the adjacency matrix of the graph.</param>
+        /// <param name="g">The adjacency matrix of the graph.</param>
         public Network(int[,] g)
         {
             fullNetwork = new AdjacencyMatrix(g);
@@ -29,11 +54,12 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// The purpose of this method is to modify the current network adjacency matrix
-        /// based on which nodes are live and which nodes are not.  The nodes that are 
-        /// not live are removed from the adjacency matrix, currentStatus.
+        /// The purpose of this method is to modify the current network 
+        /// adjacency matrix based on which nodes are live and which nodes 
+        /// are not.  The currentStatus graph is reset to the full graph 
+        /// and then nodes that are not live are trimmed from currentStatus.
         /// </summary>
-        /// <param name="nodeStatus">A boolean array specifying is each node is live.</param>
+        /// <param name="nodeStatus">An array specifying the status of each node.</param>
         public void updateStatus(bool[] nodeStatus)
         {
             int count = 0;
@@ -69,10 +95,11 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// The purpose of this method is to serve as a wrapper for the isConnected()
-        /// method in the AdjacencyMatrix class called on the currentStatus class member. 
+        /// The purpose of this method is to serve as a wrapper for the 
+        /// isConnected() method in the AdjacencyMatrix class called on 
+        /// the currentStatus. 
         /// </summary>
-        /// <returns>The boolean value as to whether the currentStatus network is connected or not.</returns>
+        /// <returns>Whether the currentStatus network is connected.</returns>
         public bool isCurrentNetworkConnected()
         {
             return currentStatus.isConnected();
@@ -80,7 +107,9 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// Returns the degree of node n in the full network.
+        /// The purpose of this method is to serve as a wrapper for the 
+        /// getDegree() method in the AdjacencyMatrix class called on 
+        /// the fullNetwork.
         /// </summary>
         /// <param name="n">The node to examine</param>
         /// <returns>The degree of node n.</returns>
@@ -91,9 +120,11 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// Returns the degree of node n in the current network.  If the current
-        /// node is not live, then -1 is returned. If the current node is live but 
-        /// isolated, then the function returns 0.
+        /// The purpose of this method is to serve as a wrapper for the 
+        /// getDegree() method in the AdjacencyMatrix class called on 
+        /// the currentStatus.  If the current node is not live, then 
+        /// -1 is returned. If the current node is live but isolated, 
+        /// then the function returns 0.
         /// </summary>
         /// <param name="n">The node to examine.</param>
         /// <returns>The degree of node n.</returns>
@@ -109,10 +140,11 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// Returns the degree distribution of the full network.  The
-        /// index of the returned array corresponds to the possible
-        /// node degree.  Each value in the array corresponds to the 
-        /// number of nodes that have that degree.
+        /// The purpose of this method is to serve as a wrapper for the 
+        /// degreeDistro() method in the AdjacencyMatrix class called on 
+        /// the fullNetwork. The index of the returned array corresponds 
+        /// to the possible node degree. Each value in the array 
+        /// corresponds to the number of nodes that have that degree.
         /// </summary>
         /// <returns>The degree distribution of the full network.</returns>
         public int[] getDistroFull()
@@ -122,10 +154,11 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// Returns the degree distribution of the current network.  
-        /// The index of the returned array corresponds to the possible
-        /// node degree.  Each value in the array corresponds to the 
-        /// number of nodes that have that degree.
+        /// The purpose of this method is to serve as a wrapper for the 
+        /// degreeDistro() method in the AdjacencyMatrix class called on 
+        /// the currentStatus. The index of the returned array corresponds 
+        /// to the possible node degree.  Each value in the array 
+        /// corresponds to the number of nodes that have that degree.
         /// </summary>
         /// <returns>The degree distribution of the current network.</returns>
         public int[] getDistroCurrent()
@@ -135,23 +168,26 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// The purpose of this method is to extend the displayGraph() method in the
-        /// AdjacencyMatrix class by displaying both the fullNetwork and the currentStatus.
-        /// This method is primarily for testing.
+        /// The purpose of this method is to extend the ToString() method in 
+        /// the AdjacencyMatrix class by converting both the fullNetwork, 
+        /// the currentStatus, and the labels to a string representation.
         /// </summary>
-        public void displayNetwork()
+        public override String ToString()
         {
-            Console.WriteLine("The full network is:");
-            fullNetwork.displayGraph();
-            Console.WriteLine(Environment.NewLine);
-            Console.WriteLine("The current network state is:");
-            currentStatus.displayGraph();
-            Console.WriteLine(Environment.NewLine);
+            String s = "The full network is:\n";
+            fullNetwork.ToString();
+            s += "\nThe current network state is:\n";
+            currentStatus.ToString();
 
-            Console.Write("Labels: ");
+            s += "\nLabels: ";
             for (int i = 0; i < labels.Length; i++)
-                Console.Write("{0} ", labels[i]);
-            Console.WriteLine();
+            {
+                s += labels[i];
+                s += " ";
+            }
+            s += "\n";
+
+            return s;
         }
     }
 }

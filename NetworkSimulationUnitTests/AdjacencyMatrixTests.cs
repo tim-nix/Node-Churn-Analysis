@@ -7,6 +7,29 @@ namespace NetworkSimulationUnitTests
     [TestClass]
     public class AdjacencyMatrixTests
     {
+
+        [TestMethod]
+        [ExpectedException(typeof(System.ArgumentException))]
+        public void ConstructorTest1()
+        {
+            int[,] nonSquareMatrix = new int[,] {{0, 1, 1, 1, 1, 0, 0, 0, 0, 0 },
+                                                 {1, 0, 1, 0, 1, 0, 0, 0, 0, 0 },
+                                                 {1, 1, 0, 1, 0, 0, 0, 0, 0, 0 },
+                                                 {1, 0, 1, 0, 1, 0, 0, 0, 0, 0 },
+                                                 {1, 1, 0, 1, 0, 0, 0, 0, 0, 0 } };
+
+            AdjacencyMatrix graph = new AdjacencyMatrix(nonSquareMatrix);
+        }
+
+
+        [TestMethod]
+        [ExpectedException(typeof(System.ArgumentException))]
+        public void ConstructorTest2()
+        {
+            AdjacencyMatrix graph = new AdjacencyMatrix(0);
+        }
+
+
         [TestMethod]
         public void smallestCycleTest1()
         {
@@ -478,6 +501,95 @@ namespace NetworkSimulationUnitTests
             AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.GuntherHartnell(s * (s + 1)));
 
             Assert.AreEqual(graph.numEdges(), ((s * s) * (s + 1)) / 2, "A full Gunther-Hartnell graph should have s^2 (s + 1) / 2 edges.");
+        }
+
+
+        [TestMethod]
+        public void degreeDistroTest1()
+        {
+            int n = 100;
+            AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.Path(n));
+
+            int[] distro = graph.degreeDistro();
+
+            Assert.AreEqual(distro[1], 2, "A path end node should have 2 nodes if degree 1.");
+            Assert.AreEqual(distro[2], n - 2, "A path end node should have n - 2 nodes if degree 2.");
+        }
+
+
+        [TestMethod]
+        public void degreeDistroTest2()
+        {
+            int n = 20;
+
+            AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.Clique(n));
+
+            int[] distro = graph.degreeDistro();
+
+            Assert.AreEqual(distro[n - 1], n, "All clique nodes should have degree of n - 1.");
+        }
+
+
+        [TestMethod]
+        public void degreeDistroTest3()
+        {
+            int n = 10;
+
+            AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.Cycle(n));
+
+            int[] distro = graph.degreeDistro();
+
+            Assert.AreEqual(distro[2], n, "All cycle nodes should have a degree of 2.");
+        }
+
+
+        [TestMethod]
+        public void degreeDistroTest4()
+        {
+            AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.PetersonGraph);
+
+            int[] distro = graph.degreeDistro();
+
+            Assert.AreEqual(distro[3], 10, "All Peterson Graph nodes should have a degree of 3.");
+        }
+
+
+        [TestMethod]
+        public void degreeDistroTest5()
+        {
+            int c = 4;
+
+            AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.GuntherHartnell(c * (c + 1)));
+
+            int[] distro = graph.degreeDistro();
+
+            Assert.AreEqual(distro[c], c * (c + 1), "All full Gunther-Hartnell graph nodes should have a degree same as clique size.");
+        }
+
+
+        [TestMethod]
+        public void degreeDistroTest6()
+        {
+            int[,] am = new int[,] {{0, 1, 1, 1, 1, 0, 0, 0, 0, 0 },
+                                    {1, 0, 1, 0, 1, 0, 0, 0, 0, 0 },
+                                    {1, 1, 0, 1, 0, 0, 0, 0, 0, 0 },
+                                    {1, 0, 1, 0, 1, 0, 0, 0, 0, 0 },
+                                    {1, 1, 0, 1, 0, 0, 0, 0, 0, 0 },
+                                    {0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                    {0, 0, 0, 0, 0, 0, 0, 1, 1, 0 },
+                                    {0, 0, 0, 0, 0, 1, 1, 0, 0, 1 },
+                                    {0, 0, 0, 0, 0, 1, 1, 0, 0, 1 },
+                                    {0, 0, 0, 0, 0, 0, 0, 1, 1, 0 } };
+
+            AdjacencyMatrix graph = new AdjacencyMatrix(am);
+
+            int[] distro = graph.degreeDistro();
+
+            Assert.AreEqual(distro[0], 0, "Example graph has 0 nodes of degree 0.");
+            Assert.AreEqual(distro[1], 0, "Example graph has 0 nodes of degree 1.");
+            Assert.AreEqual(distro[2], 3, "Example graph has 3 nodes of degree 2.");
+            Assert.AreEqual(distro[3], 6, "Example graph has 6 nodes of degree 3.");
+            Assert.AreEqual(distro[4], 1, "Example graph has 1 nodes of degree 4.");
         }
     }
 }

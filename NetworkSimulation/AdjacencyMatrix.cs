@@ -20,7 +20,7 @@ namespace NetworkSimulation
         {
             get
             {
-                return (int[,])this.graph.Clone();
+                return (int[,])graph.Clone();
             }
         }
 
@@ -59,6 +59,8 @@ namespace NetworkSimulation
                     }
                 }
             }
+            else
+                throw new ArgumentException("Error: Positive number of vertices are required!");
         }
 
 
@@ -362,22 +364,26 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// The purpose of this method is to print the values contained in 
-        /// class member graph to the console.  It displays the array as a
+        /// The purpose of this method is to convert the values contained in 
+        /// class member graph to a string.  It presents the array as a
         /// simple square matrix and does not assume anything about the size
-        /// of the array or the console.  It is primarily used for testing 
-        /// purposes.
+        /// of the array.
         /// </summary>
-        public void displayGraph()
+        public override String ToString()
         {
+            String s = "";
+
             for (int i = 0; i < graph.GetLength(0); i++)
             {
                 for (int j = 0; j < graph.GetLength(1); j++)
                 {
-                    Console.Write(" {0} ", graph[i, j]);
+                    s += graph[i, j];
+                    s += " ";
                 }
-                Console.WriteLine();
+                s += "\n";
             }
+
+            return s;
         }
     }
 }
