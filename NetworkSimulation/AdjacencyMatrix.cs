@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NetworkSimulation
 {
@@ -10,7 +7,7 @@ namespace NetworkSimulation
     /// The purpose of this class is to provide functionality for various graph
     /// algorithms on an adjacency matrix representation.
     /// </summary>
-    class AdjacencyMatrix
+    public class AdjacencyMatrix
     {
         int[,] graph;
 
@@ -47,7 +44,7 @@ namespace NetworkSimulation
         /// A constructor for the AdjacencyMatrix class.  Creates a square matrix
         /// numVertices x numVertices in size and initializes all values to zero.
         /// </summary>
-        /// <param name="numVertices">The number of vertices in the graph.</param>
+        /// <param name="numVertices">The number of vertices.</param>
         public AdjacencyMatrix(int numVertices)
         {
             if (numVertices > 0)
@@ -73,7 +70,7 @@ namespace NetworkSimulation
         /// vertex as the root of the search tree.
         /// </summary>
         /// <param name="startVertex">The starting vertex in the path.</param>
-        /// <returns>The shortest cycle length starting from the given vertex.</returns>
+        /// <returns>The shortest cycle length from the given vertex.</returns>
         public int smallestCycle(int startVertex)
         {
             if ((startVertex < 0) || (startVertex > graph.GetLength(0)))
@@ -132,9 +129,9 @@ namespace NetworkSimulation
 
         /// <summary>
         /// The purpose of this method is to determine the girth of a graph; that
-        /// is, the length of a shortest cycle contained in the graph.  If the graph
-        /// does not contain any cycles, if girth is mathematically defined as infinity.
-        /// However, this method returns the value -1.
+        /// is, the length of a shortest cycle contained in the graph.  If the 
+        /// graph does not contain any cycles, if girth is mathematically defined 
+        /// as infinity.  However, this method returns the value -1.
         /// </summary>
         /// <returns>The girth of the graph class member.</returns>
         public int girth()
@@ -162,7 +159,7 @@ namespace NetworkSimulation
         /// The purpose of this method is to determine if the graph class member
         /// is connected; that is, a path exists between every pair of vertices.
         /// </summary>
-        /// <returns>The boolean answer as to whether the graph is connected.</returns>
+        /// <returns>True/False - whether the graph is connected.</returns>
         public bool isConnected()
         {
 
@@ -193,93 +190,12 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// The purpose of this method is to determine is the class member graph
-        /// is regular; that is, if each vertex has the same number of neighbors.
+        /// The purpose of this method is to return the value of the degree of 
+        /// the given node within the class member graph; that is the number 
+        /// of neighbors of the given vertex.
         /// </summary>
-        /// <returns>The boolean answer as to whether the graph is regular.</returns>
-        public bool isRegular()
-        {
-            int degree = 0;
-
-            for (int j = 0; j < graph.GetLength(1); j++)
-            {
-                if (graph[0, j] == 1)
-                    degree++;
-            }
-
-            //Console.WriteLine("Node 0 had degree {0}.", degree);
-
-            for (int i = 1; i < graph.GetLength(0); i++)
-            {
-                int thisDegree = 0;
-                for (int j = 0; j < graph.GetLength(1); j++)
-                {
-                    if (graph[i, j] == 1)
-                        thisDegree++;
-                }
-
-                //Console.WriteLine("Node {0} had degree {1}.", i, thisDegree);
-                if (degree != thisDegree)
-                    return false;
-            }
-
-            return true;
-        }
-
-
-        /// <summary>
-        /// The purpose of this method is to return the value of the smallest degree
-        /// within the class member graph; that is the fewest number of neighbors had
-        /// by any vertex.
-        /// </summary>
-        /// <returns>The minimum degree of the class member graph.</returns>
-        public int minDegree()
-        {
-            int degree = graph.GetLength(0);
-
-            for (int i = 0; i < graph.GetLength(0); i++)
-            {
-                int thisDegree = 0;
-                for (int j = 0; j < graph.GetLength(1); j++)
-                {
-                    if (graph[i, j] == 1)
-                        thisDegree++;
-                }
-
-                if (thisDegree < degree)
-                    degree = thisDegree;
-            }
-
-            return degree;
-        }
-
-
-        /// <summary>
-        /// The purpose of this method is to return the value of the largest degree
-        /// within the class member graph; that is the most number of neighbors had
-        /// by any vertex.
-        /// </summary>
-        /// <returns>The maximum degree of the class member graph.</returns>
-        public int maxDegree()
-        {
-            int degree = 0;
-
-            for (int i = 0; i < graph.GetLength(0); i++)
-            {
-                int thisDegree = 0;
-                for (int j = 0; j < graph.GetLength(1); j++)
-                {
-                    if (graph[i, j] == 1)
-                        thisDegree++;
-                }
-
-                if (thisDegree > degree)
-                    degree = thisDegree;
-            }
-
-            return degree;
-        }
-
+        /// <param name="node">The given vertex</param>
+        /// <returns>The degree of the given vertex.</returns>
         public int getDegree(int node)
         {
             if (node >= graph.GetLength(0))
@@ -298,12 +214,83 @@ namespace NetworkSimulation
 
 
         /// <summary>
+        /// The purpose of this method is to return the value of the smallest 
+        /// degree within the class member graph; that is the fewest number 
+        /// of neighbors had by any vertex.
+        /// </summary>
+        /// <returns>The minimum degree of the class member graph.</returns>
+        public int minDegree()
+        {
+            int degree = graph.GetLength(0);
+            int thisDegree = 0;
+
+            for (int i = 0; i < graph.GetLength(0); i++)
+            {
+                thisDegree = getDegree(i);
+
+                if (thisDegree < degree)
+                    degree = thisDegree;
+            }
+
+            return degree;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to return the value of the largest 
+        /// degree within the class member graph; that is the most number of 
+        /// neighbors had by any vertex.
+        /// </summary>
+        /// <returns>The maximum degree of the class member graph.</returns>
+        public int maxDegree()
+        {
+            int degree = 0;
+            int thisDegree = 0;
+
+            for (int i = 0; i < graph.GetLength(0); i++)
+            {
+
+                thisDegree = getDegree(i);
+
+                if (thisDegree > degree)
+                    degree = thisDegree;
+            }
+
+            return degree;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to determine is the class member graph
+        /// is regular; that is, if each vertex has the same number of neighbors.
+        /// </summary>
+        /// <returns>True/False - whether the graph is  regular.</returns>
+        public bool isRegular()
+        {
+            int degree = getDegree(0);
+
+            //Console.WriteLine("Node 0 had degree {0}.", degree);
+
+            for (int i = 1; i < graph.GetLength(0); i++)
+            {
+                int thisDegree = getDegree(i);
+
+                //Console.WriteLine("Node {0} had degree {1}.", i, thisDegree);
+                if (degree != thisDegree)
+                    return false;
+            }
+
+            return true;
+        }
+
+
+        /// <summary>
         /// The purpose of this method is to modify the class member graph by
         /// removing the specified row and column from the adjecency matrix.
         /// </summary>
-        /// <param name="rowToRemove">The row of the matrix to remove.</param>
-        /// <param name="columnToRemove">The column of the matrix to remove.</param>
-        public void TrimArray(int rowToRemove, int columnToRemove)
+        /// <param name="rowToRemove">The row to remove.</param>
+        /// <param name="columnToRemove">The column to remove.</param>
+        public void trimArray(int rowToRemove, int columnToRemove)
         {
             int[,] result = new int[graph.GetLength(0) - 1, graph.GetLength(1) - 1];
 
@@ -329,11 +316,11 @@ namespace NetworkSimulation
 
         /// <summary>
         /// The purpose of this method is to return the size of the class member
-        /// graph; that is, the number of edges within the graph.  This method assumes
-        /// that the graph is undirected and unweighted.  Thus, the existence of an
-        /// edge will be denoted by the value 1 and that both graph[i, j] == 1 and 
-        /// graph[j, i] == 1.  Thus, the edge count is divided by 2 prior to being
-        /// returned.
+        /// graph; that is, the number of edges within the graph.  This method 
+        /// assumes that the graph is undirected and unweighted.  Thus, the 
+        /// existence of an edge will be denoted by the value 1 and that both 
+        /// graph[i, j] == 1 and graph[j, i] == 1.  Thus, the edge count is 
+        /// divided by 2 prior to being returned.
         /// </summary>
         /// <returns>The number of edges in the class member graph.</returns>
         public int numEdges()

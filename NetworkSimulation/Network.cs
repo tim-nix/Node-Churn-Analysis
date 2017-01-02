@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NetworkSimulation
 {
@@ -12,7 +8,7 @@ namespace NetworkSimulation
     /// the second version is based on only a portion of the nodes being
     /// live.
     /// </summary>
-    class Network
+    public class Network
     {
         int[] labels;
         AdjacencyMatrix fullNetwork;
@@ -65,7 +61,7 @@ namespace NetworkSimulation
             {
                 if (!nodeStatus[i])
                 {
-                    currentStatus.TrimArray(i - trimmed, i - trimmed);
+                    currentStatus.trimArray(i - trimmed, i - trimmed);
                     trimmed++;
                 }
             }

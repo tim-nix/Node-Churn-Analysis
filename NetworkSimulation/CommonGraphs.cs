@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace NetworkSimulation
 {
-    class CommonGraphs
+    public class CommonGraphs
     {
         public static int[,] PetersonGraph = new int[,] {{0, 1, 0, 0, 1, 1, 0, 0, 0, 0},
                                                          {1, 0, 1, 0, 0, 0, 1, 0, 0, 0},
