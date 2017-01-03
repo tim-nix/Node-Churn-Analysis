@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace NetworkSimulation
 {
@@ -21,7 +18,7 @@ namespace NetworkSimulation
             for (int i = 0; i < nodeSessions.Length; i++)
             {
                 nodeSessions[i] = new NodeTimeline(numSessions, baseTime);
-                nodeSessions[i].generateTimeline();
+                nodeSessions[i].generatePETimeline();
             }
         }
 
@@ -51,7 +48,7 @@ namespace NetworkSimulation
             double sum = 0.0;
 
             for (int i = 0; i < nodeSessions.Length; i++)
-                sum += nodeSessions[i].averageLiveTime();
+                sum += nodeSessions[i].averageUpTime();
 
             return sum / Convert.ToDouble(nodeSessions.Length);
         }

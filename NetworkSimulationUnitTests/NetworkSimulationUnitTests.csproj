@@ -55,6 +55,7 @@
     <Compile Include="AdjacencyMatrixTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="NetworkTests.cs" />
+    <Compile Include="SessionTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NetworkSimulation\NetworkSimulation.csproj">
