@@ -10,21 +10,39 @@ namespace NetworkSimulation
     /// sessions.  This provides the lifecycle time to evolve.
     /// The timeline attribute stores all sessions.
     /// </summary>
-    class NodeTimeline
+    public class NodeTimeline
     {
         private double baseTime = 0.0;  // the earliest possible start time  
         private Session[] timeline;     // the collection of tracked sessions
 
 
         /// <summary>
-        /// The purpose of this 'getter' is to return a the endtime
-        /// of the last tracked session.
+        /// The purpose of this 'getter' is to return a copy of the class
+        /// member baseTime.
         /// </summary>
-        public double finalTime
+        public double BaseTime
         {
             get
             {
-                return timeline[timeline.Length - 1].EndTime;
+                return baseTime;
+            }
+        }
+
+
+        /// <summary>
+        /// The purpose of this 'getter' is to return a copy of the class
+        /// member timeline.
+        /// </summary>
+        public Session[] TimeLine
+        {
+            get
+            {
+                Session[] tl = new Session[timeline.Length];
+
+                for (int i = 0; i < tl.Length; i++)
+                    tl[i] = new Session(timeline[i].StartTime, timeline[i].EndTime);
+
+                return tl;
             }
         }
 
@@ -72,10 +90,10 @@ namespace NetworkSimulation
 
             for (int i = 0; i < timeline.Length; i++)
             {
-                timeline[i] = new Session(startTime, endTime);
-
                 startTime = endTime + randomNum.genrand_real1();
                 endTime = startTime + randomNum.genrand_real1();
+
+                timeline[i] = new Session(startTime, endTime);
             }
         }
 
@@ -91,13 +109,9 @@ namespace NetworkSimulation
         /// for each uptime and an exponential distribution for
         /// each downtime.
         /// </summary>
-        public void generatePETimeline()
+        public void generatePETimeline(double alpha = 3.0, double beta = 1.0, double lambda = 2.0)
         {
             MersenneTwister randomNum = new MersenneTwister();
-
-            double alpha = 3.0;
-            double beta = 1.0;
-            double lambda = 2.0;
 
             double startTime = 0.0;
             double endTime = 0.0;
@@ -109,10 +123,10 @@ namespace NetworkSimulation
 
             for(int i = 0; i < timeline.Length; i++)
             {
-                timeline[i] = new Session(startTime, endTime);
-
                 startTime = endTime + randomNum.genexp_real(lambda);
                 endTime = startTime + randomNum.genparet_real(alpha, beta);
+
+                timeline[i] = new Session(startTime, endTime);
             }
         }
 
@@ -127,12 +141,9 @@ namespace NetworkSimulation
         /// This particular method uses a Paretto distribution
         /// for each uptime as well as each downtime.
         /// </summary>
-        public void generatePPTimeline()
+        public void generatePPTimeline(double alpha = 3.0, double beta = 1.0)
         {
             MersenneTwister randomNum = new MersenneTwister();
-
-            double alpha = 3.0;
-            double beta = 1.0;
 
             double startTime = 0.0;
             double endTime = 0.0;
@@ -144,10 +155,10 @@ namespace NetworkSimulation
 
             for (int i = 0; i < timeline.Length; i++)
             {
-                timeline[i] = new Session(startTime, endTime);
-
                 startTime = endTime + randomNum.genparet_real(alpha, beta);
                 endTime = startTime + randomNum.genparet_real(alpha, beta);
+
+                timeline[i] = new Session(startTime, endTime);
             }
         }
 
@@ -162,11 +173,9 @@ namespace NetworkSimulation
         /// This particular method uses an exponential distribution
         /// for each uptime as well as each downtime.
         /// </summary>
-        public void generateEETimeline()
+        public void generateEETimeline(double lambda = 2.0)
         {
             MersenneTwister randomNum = new MersenneTwister();
-
-            double lambda = 2.0;
 
             double startTime = 0.0;
             double endTime = 0.0;
@@ -178,11 +187,37 @@ namespace NetworkSimulation
 
             for (int i = 0; i < timeline.Length; i++)
             {
-                timeline[i] = new Session(startTime, endTime);
-
                 startTime = endTime + randomNum.genexp_real(lambda);
                 endTime = startTime + randomNum.genexp_real(lambda);
+
+                timeline[i] = new Session(startTime, endTime);
             }
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to return a the start
+        /// time of the first tracked session.
+        /// </summary>
+        public double getFirstTime()
+        {
+            if (timeline[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+            else
+                return timeline[0].StartTime;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to return a the endtime
+        /// of the last tracked session.
+        /// </summary>
+        public double getFinalTime()
+        {
+            if (timeline[timeline.Length - 1] == null)
+                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+            else
+                return timeline[timeline.Length - 1].EndTime;
         }
 
 
@@ -194,33 +229,34 @@ namespace NetworkSimulation
         /// <returns>Whether any session is live.</returns>
         public bool timeIsLive(double time_t)
         {
+            if (timeline[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+
             if (time_t < 0)
                 throw new ArgumentException("Error: Argument error in timeIsLive!");
 
-            if (finalTime < time_t)
-                return false;
-            else
+            for (int i = 0; i < timeline.Length; i++)
             {
-                bool live = false;
-                int index = 0;
-
-                while (timeline[index].EndTime < time_t)
-                {
-                    live = timeline[index].isLive(time_t);
-                    index++;
-                }
-
-                return live;
+                if (timeline[i].isLive(time_t))
+                    return true;
+                if (time_t < timeline[i].EndTime)
+                    return false;
             }
+
+            return false;
         }
 
 
         /// <summary>
-        /// Calculate the 
+        /// The purpose of this method is to calculate the average
+        /// up time across all tracked sessions.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The average up time.</returns>
         public double averageUpTime()
         {
+            if (timeline[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+
             double sum = 0.0;
             for (int i = 0; i < timeline.Length; i++)
                 sum += timeline[i].getDurationLive();
@@ -228,20 +264,125 @@ namespace NetworkSimulation
             return sum / Convert.ToDouble(timeline.Length);
         }
 
+
+        /// <summary>
+        /// The purpose of this method is to calculate the average
+        /// downtime across all tracked sessions.  The first down 
+        /// time follows the end of the first tracked session.
+        /// </summary>
+        /// <returns>The average downtime.</returns>
         public double averageDownTime()
         {
+            if (timeline[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+
             double sum = 0.0;
             for (int i = 1; i < timeline.Length; i++)
-                sum += timeline[i].StartTime - timeline[i - 1].EndTime;
+                sum += (timeline[i].StartTime - timeline[i - 1].EndTime);
 
-            return sum / Convert.ToDouble(timeline.Length);
+            return sum / Convert.ToDouble(timeline.Length - 1);
         }
 
 
-        public void displayTimeline()
+        /// <summary>
+        /// The purpose of this method is to calculate the cumulative 
+        /// distribution function of the session durations from the 
+        /// generated timeline.
+        /// </summary>
+        /// <param name="hSize">The number of discrete steps.</param>
+        /// <param name="rate">The step rate for each step.</param>
+        /// <returns>The ccdf distribution.</returns>
+        public double[] getUpTimeCDF(int hSize = 50, double rate = 0.5)
         {
+            if (timeline[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+
+            if (hSize <= 0)
+                throw new ArgumentException("Error: Argument error in timeIsLive!");
+
+            if (rate <= 0)
+                throw new ArgumentException("Error: Argument error in timeIsLive!");
+
+            double[] cdf = new double[hSize];
+
+            double cap = 0.0;
+            for (int i = 0; i < hSize; i++)
+            {
+                for (int j = 0; j < timeline.Length; j++)
+                {
+                    if (timeline[j].getDurationLive() < cap)
+                        cdf[i] += 1.0;
+                }
+
+                cap += rate;
+            }
+
+            for (int i = 0; i < hSize; i++)
+                cdf[i] = cdf[i] / timeline.Length;
+
+            return cdf;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to calculate the complementary
+        /// cumulative distribution function of the down times between 
+        /// sessions from the generated timeline.  The first down time
+        /// follows the end of the first tracked session.
+        /// </summary>
+        /// <param name="hSize">The number of discrete steps.</param>
+        /// <param name="rate">The step rate for each step.</param>
+        /// <returns>The ccdf distribution.</returns>
+        public double[] getDownTimeCDF(int hSize = 50, double rate = 0.5)
+        {
+            if (timeline[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+
+            if (hSize <= 0)
+                throw new ArgumentException("Error: Argument error in timeIsLive!");
+
+            if (rate <= 0)
+                throw new ArgumentException("Error: Argument error in timeIsLive!");
+
+            double[] cdf = new double[hSize];
+
+            double cap = 0.0;
+            for (int i = 0; i < hSize; i++)
+            {
+                for (int j = 1; j < timeline.Length; j++)
+                {
+                    if ((timeline[j].EndTime - timeline[j-1].StartTime) < cap)
+                        cdf[i] += 1.0;
+                }
+
+                cap += rate;
+            }
+
+            for (int i = 0; i < hSize; i++)
+                cdf[i] = cdf[i] / timeline.Length;
+
+            return cdf;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to convert the values contained in 
+        /// class attributes baseTime and timeline to a string.
+        /// </summary>
+        /// <returns>The class attributes as a string.</returns>
+        public override String ToString()
+        {
+            if (timeline[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+
+            String s = "Base Time: " + baseTime + "\n";
             for (int i = 0; i < timeline.Length; i++)
-                Console.WriteLine(timeline[i].ToString());
+            {
+                s += timeline[i].ToString();
+                s += "\n";
+            }
+
+            return s;
         }
     }
 }

@@ -89,7 +89,7 @@ namespace NetworkSimulation
         /// <returns>The class attributes as a string.</returns>
         public override String ToString()
         {
-            return ("Start = " + start + " and End = " + end);
+            return ("Start Time = " + start + " and End Time = " + end);
         }
             
     }

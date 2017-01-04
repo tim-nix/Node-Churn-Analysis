@@ -3,9 +3,17 @@
 
 namespace NetworkSimulation
 {
+    /// <summary>
+    /// The purpose of this class is to represent a set of
+    /// peers within a peer-to-peer network that will join
+    /// the network for a duration (a session) and then 
+    /// depart the network for a duration (downtime) and
+    /// then rejoin the network.  Thus, the lifecycle of
+    /// each peer is represented as a NodeTimeline.
+    /// </summary>
     class NetworkChurn
     {
-        private NodeTimeline[] nodeSessions;
+        private NodeTimeline[] nodeSessions;    // the timelines of all peers
 
         public NetworkChurn(int numNodes)
         {
@@ -33,17 +41,17 @@ namespace NetworkSimulation
 
         public double getQuickestFinalTime()
         {
-            double shortestTime = nodeSessions[0].finalTime;
+            double shortestTime = nodeSessions[0].getFinalTime();
             for (int i = 1; i < nodeSessions.Length; i++)
             {
-                if (nodeSessions[i].finalTime < shortestTime)
-                    shortestTime = nodeSessions[i].finalTime;
+                if (nodeSessions[i].getFinalTime() < shortestTime)
+                    shortestTime = nodeSessions[i].getFinalTime();
             }
 
             return shortestTime;
         }
 
-        public double getAverageLiveTime()
+        public double getAverageUpTime()
         {
             double sum = 0.0;
 
