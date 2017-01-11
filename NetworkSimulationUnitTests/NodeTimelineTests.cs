@@ -44,7 +44,7 @@ namespace NetworkSimulationUnitTests
             Assert.IsTrue((avgUp > 0.48) && (avgUp < 0.52), "Expected time of (uniform) up time is 0.5");
 
             double avgDown = nodeTL.averageDownTime();
-            Assert.IsTrue((avgUp > 0.48) && (avgUp < 0.52), "Expected time of (uniform) down time is 0.5");
+            Assert.IsTrue((avgDown > 0.48) && (avgDown < 0.52), "Expected time of (uniform) down time is 0.5");
         }
 
 
@@ -74,7 +74,7 @@ namespace NetworkSimulationUnitTests
             Assert.IsTrue((avgUp > (expP - delta)) && (avgUp < (expP + delta)), "Expected time of (Paretto) up time is 0.5");
 
             double avgDown = nodeTL.averageDownTime();
-            Assert.IsTrue((avgUp > (expE - delta)) && (avgUp < (expE + delta)), "Expected time of (exponential) down time is 0.5");
+            Assert.IsTrue((avgDown > (expE - delta)) && (avgDown < (expE + delta)), "Expected time of (exponential) down time is 0.5");
         }
 
 
@@ -102,7 +102,7 @@ namespace NetworkSimulationUnitTests
             Assert.IsTrue((avgUp > (expP - delta)) && (avgUp < (expP + delta)), "Expected time of (Paretto) up time is 0.5");
 
             double avgDown = nodeTL.averageDownTime();
-            Assert.IsTrue((avgUp > (expP - delta)) && (avgUp < (expP + delta)), "Expected time of (Paretto) down time is 0.5");
+            Assert.IsTrue((avgDown > (expP - delta)) && (avgDown < (expP + delta)), "Expected time of (Paretto) down time is 0.5");
         }
 
 
@@ -129,7 +129,7 @@ namespace NetworkSimulationUnitTests
             Assert.IsTrue((avgUp > (expE - delta)) && (avgUp < (expE + delta)), "Expected time of (exponential) up time is 0.5");
 
             double avgDown = nodeTL.averageDownTime();
-            Assert.IsTrue((avgUp > (expE - delta)) && (avgUp < (expE + delta)), "Expected time of (exponential) down time is 0.5");
+            Assert.IsTrue((avgDown > (expE - delta)) && (avgDown < (expE + delta)), "Expected time of (exponential) down time is 0.5");
         }
 
 

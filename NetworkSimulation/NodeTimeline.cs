@@ -52,7 +52,7 @@ namespace NetworkSimulation
         /// baseTime, the numSessions and creates the array that 
         /// will be used to store the tracked sessions.
         /// </summary>
-        /// <param name="numToTrack">The number of sessions to track</param>
+        /// <param name="numToTrack">The number of live sessions to track</param>
         /// <param name="earliestTime">The earliest time to track sessions</param>
         public NodeTimeline(int numToTrack, double earliestTime)
         {

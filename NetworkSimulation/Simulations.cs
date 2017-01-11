@@ -41,19 +41,22 @@ namespace NetworkSimulation
 
         public void simClique()
         {
+            double alpha = 3.0;
+            double beta = 1.0;
+            double lambda = 2.0;
             int numSessions = 100;
             for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
             {
                 Network network = new Network(CommonGraphs.Clique(numNodes));
 
                 NetworkChurn netChurn = new NetworkChurn(numNodes);
-                netChurn.generateChurn(numSessions, baseTime);
+                netChurn.generatePEChurn(numSessions, baseTime, alpha, beta, lambda);
 
                 double time = baseTime;
                 double connectionCount = 0.0;
                 double iterations = 0.0;
                 double percentLive = 0;
-                endTime = netChurn.getQuickestFinalTime();
+                endTime = netChurn.getEarliestFinalTime();
 
                 while (time < endTime)
                 {
@@ -95,6 +98,10 @@ namespace NetworkSimulation
             double percentLive = 0.0;
             double iterations = 0.0;
 
+            double alpha = 3.0;
+            double beta = 1.0;
+            double lambda = 2.0;
+
             int index = 0;
             int numNodes = 0;
             for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
@@ -110,14 +117,14 @@ namespace NetworkSimulation
                     Network network = new Network(CommonGraphs.GuntherHartnell(numNodes));
 
                     NetworkChurn netChurn = new NetworkChurn(numNodes);
-                    netChurn.generateChurn(numSessions, baseTime);
+                    netChurn.generatePEChurn(numSessions, baseTime, alpha, beta, lambda);
 
                     double time = baseTime;
                     double connectionCount = 0.0;
                     percentLive = 0.0;
                     iterations = 0;
 
-                    endTime = netChurn.getQuickestFinalTime();
+                    endTime = netChurn.getEarliestFinalTime();
 
                     while (time < endTime)
                     {
@@ -171,6 +178,10 @@ namespace NetworkSimulation
             double iterations = 0.0;
             double p = 0.0;
 
+            double alpha = 3.0;
+            double beta = 1.0;
+            double lambda = 2.0;
+
             int index = 0;
             int numNodes = 0;
             for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
@@ -188,14 +199,14 @@ namespace NetworkSimulation
                     Network network = new Network(CommonGraphs.Gnp(numNodes, p));
 
                     NetworkChurn netChurn = new NetworkChurn(numNodes);
-                    netChurn.generateChurn(numSessions, baseTime);
+                    netChurn.generatePEChurn(numSessions, baseTime, alpha, beta, lambda);
 
                     double time = baseTime;
                     double connectionCount = 0.0;
                     percentLive = 0.0;
                     iterations = 0;
 
-                    endTime = netChurn.getQuickestFinalTime();
+                    endTime = netChurn.getEarliestFinalTime();
 
                     while (time < endTime)
                     {
