@@ -27,8 +27,10 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void generateUUTimelineTest1()
         {
+            ContinuousUniform upD = new ContinuousUniform(0.0, 1.0);
+            ContinuousUniform downD = new ContinuousUniform(0.0, 1.0);
             NodeTimeline nodeTL = new NodeTimeline(1000, 200);
-            nodeTL.generateUUTimeline();
+            nodeTL.generateTimeline(upD, downD);
 
             Assert.IsTrue(nodeTL.getFirstTime() >= nodeTL.BaseTime, "First session start time should be at or after basetime.");
         }
@@ -37,22 +39,29 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void generateUUTimelineTest2()
         {
+            ContinuousUniform upD = new ContinuousUniform(0.0, 1.0);
+            ContinuousUniform downD = new ContinuousUniform(0.0, 1.0);
             NodeTimeline nodeTL = new NodeTimeline(1000, 200);
-            nodeTL.generateUUTimeline();
+            nodeTL.generateTimeline(upD, downD);
 
             double avgUp = nodeTL.averageUpTime();
-            Assert.IsTrue((avgUp > 0.48) && (avgUp < 0.52), "Expected time of (uniform) up time is 0.5");
+            Assert.IsTrue((avgUp > 0.48) && (avgUp < 0.52), "Actual (Uniform) up time is " + avgUp);
 
             double avgDown = nodeTL.averageDownTime();
-            Assert.IsTrue((avgDown > 0.48) && (avgDown < 0.52), "Expected time of (uniform) down time is 0.5");
+            Assert.IsTrue((avgDown > 0.48) && (avgDown < 0.52), "Actual (Uniform) down time is " + avgDown);
         }
 
 
         [TestMethod]
         public void generatePETimelineTest1()
         {
-            NodeTimeline nodeTL = new NodeTimeline(1000, 200);
-            nodeTL.generatePETimeline();
+            double alpha = 3.0;
+            double beta = 1.0;
+            double lambda = 2.0;
+            Paretto upD = new Paretto(alpha, beta);
+            Exponential downD = new Exponential(lambda);
+            NodeTimeline nodeTL = new NodeTimeline(1000, 200.0);
+            nodeTL.generateTimeline(upD, downD);
 
             Assert.IsTrue(nodeTL.getFirstTime() >= nodeTL.BaseTime, "First session start time should be at or after basetime.");
         }
@@ -61,28 +70,34 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void generatePETimelineTest2()
         {
-            NodeTimeline nodeTL = new NodeTimeline(10000, 200);
             double alpha = 3.0;
             double beta = 1.0;
             double lambda = 2.0;
-            nodeTL.generatePETimeline(alpha, beta, lambda);
+            Paretto upD = new Paretto(alpha, beta);
+            Exponential downD = new Exponential(lambda);
+            NodeTimeline nodeTL = new NodeTimeline(10000, 200.0);
+            nodeTL.generateTimeline(upD, downD);
 
             double delta = 0.02;
             double expP = beta / (alpha - 1);
             double expE = 1.0 / lambda;
             double avgUp = nodeTL.averageUpTime();
-            Assert.IsTrue((avgUp > (expP - delta)) && (avgUp < (expP + delta)), "Expected time of (Paretto) up time is 0.5");
+            Assert.IsTrue((avgUp > (expP - delta)) && (avgUp < (expP + delta)), "Actual (Paretto) up time is " + avgUp);
 
             double avgDown = nodeTL.averageDownTime();
-            Assert.IsTrue((avgDown > (expE - delta)) && (avgDown < (expE + delta)), "Expected time of (exponential) down time is 0.5");
+            Assert.IsTrue((avgDown > (expE - delta)) && (avgDown < (expE + delta)), "Actual (Paretto) down time is " + avgDown);
         }
 
 
         [TestMethod]
         public void generatePPTimelineTest1()
         {
-            NodeTimeline nodeTL = new NodeTimeline(1000, 200);
-            nodeTL.generatePPTimeline();
+            double alpha = 3.0;
+            double beta = 1.0;
+            Paretto upD = new Paretto(alpha, beta);
+            Paretto downD = new Paretto(alpha, beta);
+            NodeTimeline nodeTL = new NodeTimeline(10000, 200.0);
+            nodeTL.generateTimeline(upD, downD);
 
             Assert.IsTrue(nodeTL.getFirstTime() >= nodeTL.BaseTime, "First session start time should be at or after basetime.");
         }
@@ -91,26 +106,31 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void generatePPTimelineTest2()
         {
-            NodeTimeline nodeTL = new NodeTimeline(10000, 200);
             double alpha = 3.0;
             double beta = 1.0;
-            nodeTL.generatePPTimeline(alpha, beta);
+            Paretto upD = new Paretto(alpha, beta);
+            Paretto downD = new Paretto(alpha, beta);
+            NodeTimeline nodeTL = new NodeTimeline(10000, 200.0);
+            nodeTL.generateTimeline(upD, downD);
 
             double delta = 0.02;
             double expP = beta / (alpha - 1);
             double avgUp = nodeTL.averageUpTime();
-            Assert.IsTrue((avgUp > (expP - delta)) && (avgUp < (expP + delta)), "Expected time of (Paretto) up time is 0.5");
+            Assert.IsTrue((avgUp > (expP - delta)) && (avgUp < (expP + delta)), "Actual (Paretto) up time is " + avgUp);
 
             double avgDown = nodeTL.averageDownTime();
-            Assert.IsTrue((avgDown > (expP - delta)) && (avgDown < (expP + delta)), "Expected time of (Paretto) down time is 0.5");
+            Assert.IsTrue((avgDown > (expP - delta)) && (avgDown < (expP + delta)), "Actual (Paretto) down time is " + avgDown);
         }
 
 
         [TestMethod]
         public void generateEETimelineTest1()
         {
-            NodeTimeline nodeTL = new NodeTimeline(1000, 200);
-            nodeTL.generateEETimeline();
+            double lambda = 2.0;
+            Exponential upD = new Exponential(lambda);
+            Exponential downD = new Exponential(lambda);
+            NodeTimeline nodeTL = new NodeTimeline(10000, 200.0);
+            nodeTL.generateTimeline(upD, downD);
 
             Assert.IsTrue(nodeTL.getFirstTime() >= nodeTL.BaseTime, "First session start time should be at or after basetime.");
         }
@@ -119,17 +139,19 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void generateEETimelineTest2()
         {
-            NodeTimeline nodeTL = new NodeTimeline(10000, 200);
             double lambda = 2.0;
-            nodeTL.generateEETimeline(lambda);
+            Exponential upD = new Exponential(lambda);
+            Exponential downD = new Exponential(lambda);
+            NodeTimeline nodeTL = new NodeTimeline(10000, 200.0);
+            nodeTL.generateTimeline(upD, downD);
 
-            double delta = 0.02;
+            double delta = 0.2;
             double expE = 1.0 / lambda;
             double avgUp = nodeTL.averageUpTime();
-            Assert.IsTrue((avgUp > (expE - delta)) && (avgUp < (expE + delta)), "Expected time of (exponential) up time is 0.5");
+            Assert.IsTrue((avgUp > (expE - delta)) && (avgUp < (expE + delta)), "Actual (Exponential) up time is " + avgUp);
 
             double avgDown = nodeTL.averageDownTime();
-            Assert.IsTrue((avgDown > (expE - delta)) && (avgDown < (expE + delta)), "Expected time of (exponential) down time is 0.5");
+            Assert.IsTrue((avgDown > (expE - delta)) && (avgDown < (expE + delta)), "Actual (Exponential) down time is " + avgDown);
         }
 
 
@@ -137,7 +159,7 @@ namespace NetworkSimulationUnitTests
         [ExpectedException(typeof(System.NullReferenceException))]
         public void getFirstTimeTest1()
         {
-            NodeTimeline nodeTL = new NodeTimeline(1000, 200);
+            NodeTimeline nodeTL = new NodeTimeline(10000, 200);
             nodeTL.getFirstTime();
         }
 
@@ -145,8 +167,10 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void getFirstTimeTest2()
         {
-            NodeTimeline nodeTL = new NodeTimeline(1000, 200);
-            nodeTL.generateUUTimeline();
+            ContinuousUniform upD = new ContinuousUniform(0.0, 1.0);
+            ContinuousUniform downD = new ContinuousUniform(0.0, 1.0);
+            NodeTimeline nodeTL = new NodeTimeline(10000, 200);
+            nodeTL.generateTimeline(upD, downD);
             Session[] tl = nodeTL.TimeLine;
 
             Assert.AreEqual(tl[0].StartTime, nodeTL.getFirstTime(), "getFirstTime should return the earliest time in the timeline.");
@@ -157,7 +181,7 @@ namespace NetworkSimulationUnitTests
         [ExpectedException(typeof(System.NullReferenceException))]
         public void getFinalTimeTest1()
         {
-            NodeTimeline nodeTL = new NodeTimeline(1000, 200);
+            NodeTimeline nodeTL = new NodeTimeline(10000, 200);
             nodeTL.getFinalTime();
         }
 
@@ -165,8 +189,10 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void getFinalTimeTest2()
         {
-            NodeTimeline nodeTL = new NodeTimeline(1000, 200);
-            nodeTL.generateUUTimeline();
+            ContinuousUniform upD = new ContinuousUniform(0.0, 1.0);
+            ContinuousUniform downD = new ContinuousUniform(0.0, 1.0);
+            NodeTimeline nodeTL = new NodeTimeline(10000, 200);
+            nodeTL.generateTimeline(upD, downD);
             Session[] tl = nodeTL.TimeLine;
 
             Assert.AreEqual(tl[tl.Length - 1].EndTime, nodeTL.getFinalTime(), "getFinalTime should return the last stop time in the timeline.");
@@ -177,7 +203,7 @@ namespace NetworkSimulationUnitTests
         [ExpectedException(typeof(System.NullReferenceException))]
         public void timeIsLiveTest1()
         {
-            NodeTimeline nodeTL = new NodeTimeline(1000, 200);
+            NodeTimeline nodeTL = new NodeTimeline(10000, 200);
             nodeTL.timeIsLive(205.0);
         }
 
@@ -193,8 +219,10 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void timeIsLiveTest3()
         {
+            ContinuousUniform upD = new ContinuousUniform(0.0, 1.0);
+            ContinuousUniform downD = new ContinuousUniform(0.0, 1.0);
             NodeTimeline nodeTL = new NodeTimeline(100, 100.0);
-            nodeTL.generateUUTimeline();
+            nodeTL.generateTimeline(upD, downD);
             Session[] tl = nodeTL.TimeLine;
 
             double time_t = tl[50].StartTime + (tl[50].getDurationLive() / 2.0);
@@ -206,8 +234,10 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void timeIsLiveTest4()
         {
+            ContinuousUniform upD = new ContinuousUniform(0.0, 1.0);
+            ContinuousUniform downD = new ContinuousUniform(0.0, 1.0);
             NodeTimeline nodeTL = new NodeTimeline(100, 100.0);
-            nodeTL.generateUUTimeline();
+            nodeTL.generateTimeline(upD, downD);
             Session[] tl = nodeTL.TimeLine;
 
             double time_t = tl[20].EndTime + ((tl[21].StartTime - tl[20].EndTime) / 2.0);
@@ -228,8 +258,10 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void averageUpTimeTest2()
         {
+            ContinuousUniform upD = new ContinuousUniform(0.0, 1.0);
+            ContinuousUniform downD = new ContinuousUniform(0.0, 1.0);
             NodeTimeline nodeTL = new NodeTimeline(1000, 200);
-            nodeTL.generateUUTimeline();
+            nodeTL.generateTimeline(upD, downD);
             Session[] tl = nodeTL.TimeLine;
 
             double avg = 0.0;
@@ -255,8 +287,10 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void averageDownTimeTest2()
         {
+            ContinuousUniform upD = new ContinuousUniform(0.0, 1.0);
+            ContinuousUniform downD = new ContinuousUniform(0.0, 1.0);
             NodeTimeline nodeTL = new NodeTimeline(1000, 200);
-            nodeTL.generateUUTimeline();
+            nodeTL.generateTimeline(upD, downD);
             Session[] tl = nodeTL.TimeLine;
 
             double avg = 0;

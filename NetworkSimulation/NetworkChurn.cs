@@ -63,78 +63,12 @@ namespace NetworkSimulation
         /// </summary>
         /// <param name="numSessions">The number of live sessions to track</param>
         /// <param name="baseTime">The earliest time to track sessions</param>
-        public void generateUUChurn(int numSessions, double baseTime)
+        public void generateChurn(int numSessions, double baseTime, Distribution upDistro, Distribution downDistro)
         {
             for (int i = 0; i < nodeSessions.Length; i++)
             {
                 nodeSessions[i] = new NodeTimeline(numSessions, baseTime);
-                nodeSessions[i].generateUUTimeline();
-            }
-        }
-
-        /// <summary>
-        /// The purpose of this method is to generate a timeline
-        /// for each node using the NodeTimeline class with each
-        /// up time generated using the Paretto distribution and
-        /// each down time generated using the exponential
-        /// distribution.  The parameters specify the number of 
-        /// live sessions to track for each node and the base time 
-        /// to start tracking each timeline.  Thus, the start time 
-        /// of the first session for each node will be at or later 
-        /// than the base time.
-        /// </summary>
-        /// <param name="numSessions">The number of live sessions to track</param>
-        /// <param name="baseTime">The earliest time to track sessions</param>
-        public void generatePEChurn(int numSessions, double baseTime, double alpha, double beta, double lambda)
-        {
-            for (int i = 0; i < nodeSessions.Length; i++)
-            {
-                nodeSessions[i] = new NodeTimeline(numSessions, baseTime);
-                nodeSessions[i].generatePETimeline(alpha, beta, lambda);
-            }
-        }
-
-
-        /// <summary>
-        /// The purpose of this method is to generate a timeline
-        /// for each node using the NodeTimeline class with each
-        /// up time as well as each down time generated using the 
-        /// Paretto distribution.  The parameters specify the 
-        /// number of live sessions to track for each node and the 
-        /// base time to start tracking each timeline.  Thus, the 
-        /// start time of the first session for each node will be 
-        /// at or later than the base time.
-        /// </summary>
-        /// <param name="numSessions">The number of live sessions to track</param>
-        /// <param name="baseTime">The earliest time to track sessions</param>
-        public void generatePPChurn(int numSessions, double baseTime, double alpha, double beta)
-        {
-            for (int i = 0; i < nodeSessions.Length; i++)
-            {
-                nodeSessions[i] = new NodeTimeline(numSessions, baseTime);
-                nodeSessions[i].generatePPTimeline(alpha, beta);
-            }
-        }
-
-
-        /// <summary>
-        /// The purpose of this method is to generate a timeline
-        /// for each node using the NodeTimeline class with each
-        /// up time as well as each down time generated using the 
-        /// exponential distribution.  The parameters specify the 
-        /// number of live sessions to track for each node and the 
-        /// base time to start tracking each timeline.  Thus, the 
-        /// start time of the first session for each node will be 
-        /// at or later than the base time.
-        /// </summary>
-        /// <param name="numSessions">The number of live sessions to track</param>
-        /// <param name="baseTime">The earliest time to track sessions</param>
-        public void generateEEChurn(int numSessions, double baseTime, double lambda)
-        {
-            for (int i = 0; i < nodeSessions.Length; i++)
-            {
-                nodeSessions[i] = new NodeTimeline(numSessions, baseTime);
-                nodeSessions[i].generateEETimeline(lambda);
+                nodeSessions[i].generateTimeline(upDistro, downDistro);
             }
         }
 

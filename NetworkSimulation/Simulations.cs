@@ -8,55 +8,86 @@ namespace NetworkSimulation
 {
     class Simulations
     {
-        private int minOrder = 0;
-        private int maxOrder = 0;
-        private int nodeDelta = 0;
-        private double baseTime = 0.0;
-        private double endTime = 0.0;
-        private double timeDelta = 0.0;
-        private int numSessions = 0;
+        private int minOrder = 0;           // smallest graph order to simulate
+        private int maxOrder = 0;           // largest graph order to simulate
+        private int nodeDelta = 0;          // rate of change in graph order
+        private double baseTime = 0.0;      // earliest time to track churn
+        private double timeDelta = 0.0;     // time increment
+        private int numSessions = 0;        // number of sessions per node to track
+        private Distribution upDistro;      // distribution for drawing session up times
+        private Distribution downDistro;    // distribution for drawing session down times
 
-        public Simulations()
+
+        public Simulations(int minN = 100, 
+                           int maxN = 1000, 
+                           int nDelta = 100, 
+                           double startTime = 200.0, 
+                           double tDelta = 0.1, 
+                           int sessionsPerNode = 200)
         {
-            minOrder = 100;
-            maxOrder = 1000;
-            nodeDelta = 100;
-            baseTime = 200.0;
-            endTime = 300.0;
-            timeDelta = 0.1;
-            numSessions = 200;
+            setNodeRange(minN, maxN, nDelta);
+            setTimeRange(startTime, tDelta);
+            setNumberOfSessions(sessionsPerNode);
         }
 
-        public Simulations(int minN, int maxN, int nDelta, double startTime, double finishTime, double sampleD, int sessions)
+        public void setNodeRange(int minN, int maxN, int nDelta)
         {
-            minOrder = minN;
-            maxOrder = maxN;
-            nodeDelta = nDelta;
-            baseTime = startTime;
-            endTime = finishTime;
-            timeDelta = sampleD;
-            numSessions = sessions;
+            if ((minN <= maxN) && (minN + nDelta <= maxN) && (minN > 0) && (nDelta > 0))
+            {
+                minOrder = minN;
+                maxOrder = maxN;
+                nodeDelta = nDelta;
+            }
+            else
+                throw new ArgumentException("Error: Faulty arguments for node range!");
+        }
+
+
+        public void setTimeRange(double startTime, double tDelta)
+        {
+            if ((startTime >= 0) && (tDelta > 0))
+            {
+                baseTime = startTime;
+                timeDelta = tDelta;
+            }
+            else
+                throw new ArgumentException("Error: Faulty arguments for time range!");
+        }
+
+
+        public void setNumberOfSessions(int sessionsPerNode)
+        {
+            if (sessionsPerNode > 0)
+                numSessions = sessionsPerNode;
+            else
+                throw new ArgumentException("Error: Faulty arguments for number of sessions!");
+        }
+
+
+        public void setUpDistro(Distribution upD, Distribution downD)
+        {
+            upDistro = upD;
+            downDistro = downD;
         }
 
 
         public void simClique()
         {
-            double alpha = 3.0;
-            double beta = 1.0;
-            double lambda = 2.0;
-            int numSessions = 100;
+            if (upDistro == null)
+                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
+
             for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
             {
                 Network network = new Network(CommonGraphs.Clique(numNodes));
 
                 NetworkChurn netChurn = new NetworkChurn(numNodes);
-                netChurn.generatePEChurn(numSessions, baseTime, alpha, beta, lambda);
+                netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
 
                 double time = baseTime;
                 double connectionCount = 0.0;
                 double iterations = 0.0;
                 double percentLive = 0;
-                endTime = netChurn.getEarliestFinalTime();
+                double endTime = netChurn.getEarliestFinalTime();
 
                 while (time < endTime)
                 {
@@ -85,10 +116,19 @@ namespace NetworkSimulation
 
         public void simGH()
         {
+            if (upDistro == null)
+                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
+
             int numSims = 100;
 
-            int cliqueMin = 3;
-            int cliqueMax = 31;
+            int cliqueMin = 0;
+            while (cliqueMin * (cliqueMin - 1) < minOrder)
+                cliqueMin++;
+
+
+            int cliqueMax = cliqueMin;
+            while (cliqueMax * (cliqueMax - 1) < maxOrder)
+                cliqueMax++;
 
             int[] nValues = new int[cliqueMax - cliqueMin];
 
@@ -97,10 +137,6 @@ namespace NetworkSimulation
 
             double percentLive = 0.0;
             double iterations = 0.0;
-
-            double alpha = 3.0;
-            double beta = 1.0;
-            double lambda = 2.0;
 
             int index = 0;
             int numNodes = 0;
@@ -117,14 +153,14 @@ namespace NetworkSimulation
                     Network network = new Network(CommonGraphs.GuntherHartnell(numNodes));
 
                     NetworkChurn netChurn = new NetworkChurn(numNodes);
-                    netChurn.generatePEChurn(numSessions, baseTime, alpha, beta, lambda);
+                    netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
 
                     double time = baseTime;
                     double connectionCount = 0.0;
                     percentLive = 0.0;
                     iterations = 0;
 
-                    endTime = netChurn.getEarliestFinalTime();
+                    double endTime = netChurn.getEarliestFinalTime();
 
                     while (time < endTime)
                     {
@@ -162,51 +198,36 @@ namespace NetworkSimulation
             System.IO.File.WriteAllLines("cvalues_gh.txt", connectivity.Select(d => d.ToString()).ToArray());
         }
 
-        public void simGnp()
+        public void simGnp(double p)
         {
             int numSims = 100;
 
-            int cliqueMin = 3;
-            int cliqueMax = 31;
+            int[] nValues = new int[maxOrder - minOrder];
 
-            int[] nValues = new int[cliqueMax - cliqueMin];
-
-            double[] pValues = new double[cliqueMax - cliqueMin];
-            double[] connectivity = new double[cliqueMax - cliqueMin];
+            double[] connectivity = new double[maxOrder - minOrder];
 
             double percentLive = 0.0;
             double iterations = 0.0;
-            double p = 0.0;
-
-            double alpha = 3.0;
-            double beta = 1.0;
-            double lambda = 2.0;
 
             int index = 0;
-            int numNodes = 0;
-            for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
+            for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
             {
-                numNodes = numCliques * (numCliques - 1);
-                p = Convert.ToDouble(numCliques - 1) / Convert.ToDouble(numNodes);
-
                 nValues[index] = numNodes;
-                pValues[index] = p;
                 connectivity[index] = 0.0;
-                
 
                 for (int sim = 0; sim < numSims; sim++)
                 {
                     Network network = new Network(CommonGraphs.Gnp(numNodes, p));
 
                     NetworkChurn netChurn = new NetworkChurn(numNodes);
-                    netChurn.generatePEChurn(numSessions, baseTime, alpha, beta, lambda);
+                    netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
 
                     double time = baseTime;
                     double connectionCount = 0.0;
                     percentLive = 0.0;
                     iterations = 0;
 
-                    endTime = netChurn.getEarliestFinalTime();
+                    double endTime = netChurn.getEarliestFinalTime();
 
                     while (time < endTime)
                     {
@@ -234,14 +255,13 @@ namespace NetworkSimulation
 
                 connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
                 
-                Console.WriteLine("Gnp graph family with {0} nodes and p = {1:N2} is connected {2:N2}% of the time.", nValues[index], pValues[index], connectivity[index]);
+                Console.WriteLine("Gnp graph family with {0} nodes and p = {1:N2} is connected {2:N2}% of the time.", nValues[index], p, connectivity[index]);
                 Console.WriteLine("Each node is live {0:N2}% of the time", (percentLive / iterations) * 100.0);
 
                 index++;
             }
 
             System.IO.File.WriteAllLines("nvalues_gnp.txt", nValues.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("pvalues_gnp.txt", pValues.Select(d => d.ToString()).ToArray());
             System.IO.File.WriteAllLines("cvalues_gnp.txt", connectivity.Select(d => d.ToString()).ToArray());
         }
 

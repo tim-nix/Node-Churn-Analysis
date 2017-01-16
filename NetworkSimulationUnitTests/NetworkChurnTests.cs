@@ -18,9 +18,11 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void generateUUChurnTest1()
         {
+            ContinuousUniform upD = new ContinuousUniform(0.0, 1.0);
+            ContinuousUniform downD = new ContinuousUniform(0.0, 1.0);
             double basetime = 200.0;
             NetworkChurn netChurn = new NetworkChurn(1000);
-            netChurn.generateUUChurn(100, basetime);
+            netChurn.generateChurn(100, basetime, upD, downD);
 
             Assert.IsTrue(netChurn.getEarliestFirstTime() >= basetime, "Earliest session start time should be at or after basetime.");
         }
@@ -29,9 +31,11 @@ namespace NetworkSimulationUnitTests
         [TestMethod]
         public void generateUUChurnTest2()
         {
+            ContinuousUniform upD = new ContinuousUniform(0.0, 1.0);
+            ContinuousUniform downD = new ContinuousUniform(0.0, 1.0);
             double basetime = 200.0;
             NetworkChurn netChurn = new NetworkChurn(1000);
-            netChurn.generateUUChurn(100, basetime);
+            netChurn.generateChurn(100, basetime, upD, downD);
 
             double avgUp = netChurn.getAverageUpTime();
             Assert.IsTrue((avgUp > 0.48) && (avgUp < 0.52), "Expected time of (uniform) up time is 0.5");
@@ -48,8 +52,10 @@ namespace NetworkSimulationUnitTests
             double alpha = 3.0;
             double beta = 1.0;
             double lambda = 2.0;
+            Paretto upD = new Paretto(alpha, beta);
+            Exponential downD = new Exponential(lambda);
             NetworkChurn netChurn = new NetworkChurn(1000);
-            netChurn.generatePEChurn(100, basetime, alpha, beta, lambda);
+            netChurn.generateChurn(100, basetime, upD, downD);
 
             Assert.IsTrue(netChurn.getEarliestFirstTime() >= basetime, "Earliest session start time should be at or after basetime.");
         }
@@ -62,8 +68,10 @@ namespace NetworkSimulationUnitTests
             double alpha = 3.0;
             double beta = 1.0;
             double lambda = 2.0;
+            Paretto upD = new Paretto(alpha, beta);
+            Exponential downD = new Exponential(lambda);
             NetworkChurn netChurn = new NetworkChurn(1000);
-            netChurn.generatePEChurn(100, basetime, alpha, beta, lambda);
+            netChurn.generateChurn(100, basetime, upD, downD);
 
             double delta = 0.02;
             double expP = beta / (alpha - 1);
@@ -82,8 +90,10 @@ namespace NetworkSimulationUnitTests
             double basetime = 200.0;
             double alpha = 3.0;
             double beta = 1.0;
+            Paretto upD = new Paretto(alpha, beta);
+            Paretto downD = new Paretto(alpha, beta);
             NetworkChurn netChurn = new NetworkChurn(1000);
-            netChurn.generatePPChurn(100, basetime, alpha, beta);
+            netChurn.generateChurn(100, basetime, upD, downD);
 
             Assert.IsTrue(netChurn.getEarliestFirstTime() >= basetime, "Earliest session start time should be at or after basetime.");
         }
@@ -95,8 +105,10 @@ namespace NetworkSimulationUnitTests
             double basetime = 200.0;
             double alpha = 3.0;
             double beta = 1.0;
+            Paretto upD = new Paretto(alpha, beta);
+            Paretto downD = new Paretto(alpha, beta);
             NetworkChurn netChurn = new NetworkChurn(1000);
-            netChurn.generatePPChurn(100, basetime, alpha, beta);
+            netChurn.generateChurn(100, basetime, upD, downD);
 
             double delta = 0.02;
             double expP = beta / (alpha - 1);
@@ -113,8 +125,10 @@ namespace NetworkSimulationUnitTests
         {
             double basetime = 200.0;
             double lambda = 2.0;
+            Exponential upD = new Exponential(lambda);
+            Exponential downD = new Exponential(lambda);
             NetworkChurn netChurn = new NetworkChurn(1000);
-            netChurn.generateEEChurn(100, basetime, lambda);
+            netChurn.generateChurn(100, basetime, upD, downD);
 
             Assert.IsTrue(netChurn.getEarliestFirstTime() >= basetime, "Earliest session start time should be at or after basetime.");
         }
@@ -125,8 +139,10 @@ namespace NetworkSimulationUnitTests
         {
             double basetime = 200.0;
             double lambda = 2.0;
+            Exponential upD = new Exponential(lambda);
+            Exponential downD = new Exponential(lambda);
             NetworkChurn netChurn = new NetworkChurn(1000);
-            netChurn.generateEEChurn(100, basetime, lambda);
+            netChurn.generateChurn(100, basetime, upD, downD);
 
             double delta = 0.02;
             double expE = 1.0 / lambda;
@@ -154,9 +170,11 @@ namespace NetworkSimulationUnitTests
             double alpha = 3.0;
             double beta = 1.0;
             double lambda = 2.0;
+            Paretto upD = new Paretto(alpha, beta);
+            Exponential downD = new Exponential(lambda);
             double time_t = 205.5;
             NetworkChurn netChurn = new NetworkChurn(1000);
-            netChurn.generatePEChurn(100, basetime, alpha, beta, lambda);
+            netChurn.generateChurn(100, basetime, upD, downD);
 
             bool[] statusAtT = netChurn.getStatusAtTime(time_t);
             bool actualStatus = statusAtT[500];
@@ -185,10 +203,12 @@ namespace NetworkSimulationUnitTests
             double alpha = 3.0;
             double beta = 1.0;
             double lambda = 2.0;
+            Paretto upD = new Paretto(alpha, beta);
+            Exponential downD = new Exponential(lambda);
             int numSessions = 100;
             int numNodes = 1000;
             NetworkChurn netChurn = new NetworkChurn(numNodes);
-            netChurn.generatePEChurn(numSessions, basetime, alpha, beta, lambda);
+            netChurn.generateChurn(numSessions, basetime, upD, downD);
 
             double actualEarliest = netChurn.getEarliestFirstTime();
 
@@ -220,10 +240,12 @@ namespace NetworkSimulationUnitTests
             double alpha = 3.0;
             double beta = 1.0;
             double lambda = 2.0;
+            Paretto upD = new Paretto(alpha, beta);
+            Exponential downD = new Exponential(lambda);
             int numSessions = 100;
             int numNodes = 1000;
             NetworkChurn netChurn = new NetworkChurn(numNodes);
-            netChurn.generatePEChurn(numSessions, basetime, alpha, beta, lambda);
+            netChurn.generateChurn(numSessions, basetime, upD, downD);
 
             double actualEarliest = netChurn.getEarliestFinalTime();
 
@@ -255,10 +277,12 @@ namespace NetworkSimulationUnitTests
             double alpha = 3.0;
             double beta = 1.0;
             double lambda = 2.0;
+            Paretto upD = new Paretto(alpha, beta);
+            Exponential downD = new Exponential(lambda);
             int numSessions = 100;
             int numNodes = 1000;
             NetworkChurn netChurn = new NetworkChurn(numNodes);
-            netChurn.generatePEChurn(numSessions, basetime, alpha, beta, lambda);
+            netChurn.generateChurn(numSessions, basetime, upD, downD);
 
             double delta = 0.02;
             double expP = beta / (alpha - 1);
@@ -283,10 +307,12 @@ namespace NetworkSimulationUnitTests
             double alpha = 3.0;
             double beta = 1.0;
             double lambda = 2.0;
+            Paretto upD = new Paretto(alpha, beta);
+            Exponential downD = new Exponential(lambda);
             int numSessions = 100;
             int numNodes = 1000;
             NetworkChurn netChurn = new NetworkChurn(numNodes);
-            netChurn.generatePEChurn(numSessions, basetime, alpha, beta, lambda);
+            netChurn.generateChurn(numSessions, basetime, upD, downD);
 
             double delta = 0.02;
             double expE = 1.0 / lambda;

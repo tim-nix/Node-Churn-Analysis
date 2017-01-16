@@ -76,119 +76,20 @@ namespace NetworkSimulation
         /// This particular method uses a uniform distribution,
         /// [0, 1] for each uptime as well as each downtime.
         /// </summary>
-        public void generateUUTimeline()
+        public void generateTimeline(Distribution upDistro, Distribution downDistro)
         {
-            MersenneTwister randomNum = new MersenneTwister();
-
             double startTime = 0.0;
             double endTime = 0.0;
             while (endTime < baseTime)
             {
-                startTime = endTime + randomNum.genrand_real1();
-                endTime = startTime + randomNum.genrand_real1();
+                startTime = endTime + downDistro.generateRandom();
+                endTime = startTime + upDistro.generateRandom();
             }
 
             for (int i = 0; i < timeline.Length; i++)
             {
-                startTime = endTime + randomNum.genrand_real1();
-                endTime = startTime + randomNum.genrand_real1();
-
-                timeline[i] = new Session(startTime, endTime);
-            }
-        }
-
-
-        /// <summary>
-        /// The purpose of this method is to randomly generate the 
-        /// sessions.  First, the method iterates through a series
-        /// of random sessions without storing them to allow the
-        /// session timeline to evolve.  Once the timeline reaches
-        /// the baseTime, sessions will be tracked.
-        /// 
-        /// This particular method uses a Paretto distribution
-        /// for each uptime and an exponential distribution for
-        /// each downtime.
-        /// </summary>
-        public void generatePETimeline(double alpha = 3.0, double beta = 1.0, double lambda = 2.0)
-        {
-            MersenneTwister randomNum = new MersenneTwister();
-
-            double startTime = 0.0;
-            double endTime = 0.0;
-            while (endTime < baseTime)
-            {
-                startTime = endTime + randomNum.genexp_real(lambda);
-                endTime = startTime + randomNum.genparet_real(alpha, beta);
-            }
-
-            for(int i = 0; i < timeline.Length; i++)
-            {
-                startTime = endTime + randomNum.genexp_real(lambda);
-                endTime = startTime + randomNum.genparet_real(alpha, beta);
-
-                timeline[i] = new Session(startTime, endTime);
-            }
-        }
-
-
-        /// <summary>
-        /// The purpose of this method is to randomly generate the 
-        /// sessions.  First, the method iterates through a series
-        /// of random sessions without storing them to allow the
-        /// session timeline to evolve.  Once the timeline reaches
-        /// the baseTime, sessions will be tracked.
-        /// 
-        /// This particular method uses a Paretto distribution
-        /// for each uptime as well as each downtime.
-        /// </summary>
-        public void generatePPTimeline(double alpha = 3.0, double beta = 1.0)
-        {
-            MersenneTwister randomNum = new MersenneTwister();
-
-            double startTime = 0.0;
-            double endTime = 0.0;
-            while (endTime < baseTime)
-            {
-                startTime = endTime + randomNum.genparet_real(alpha, beta);
-                endTime = startTime + randomNum.genparet_real(alpha, beta);
-            }
-
-            for (int i = 0; i < timeline.Length; i++)
-            {
-                startTime = endTime + randomNum.genparet_real(alpha, beta);
-                endTime = startTime + randomNum.genparet_real(alpha, beta);
-
-                timeline[i] = new Session(startTime, endTime);
-            }
-        }
-
-
-        /// <summary>
-        /// The purpose of this method is to randomly generate the 
-        /// sessions.  First, the method iterates through a series
-        /// of random sessions without storing them to allow the
-        /// session timeline to evolve.  Once the timeline reaches
-        /// the baseTime, sessions will be tracked.
-        /// 
-        /// This particular method uses an exponential distribution
-        /// for each uptime as well as each downtime.
-        /// </summary>
-        public void generateEETimeline(double lambda = 2.0)
-        {
-            MersenneTwister randomNum = new MersenneTwister();
-
-            double startTime = 0.0;
-            double endTime = 0.0;
-            while (endTime < baseTime)
-            {
-                startTime = endTime + randomNum.genexp_real(lambda);
-                endTime = startTime + randomNum.genexp_real(lambda);
-            }
-
-            for (int i = 0; i < timeline.Length; i++)
-            {
-                startTime = endTime + randomNum.genexp_real(lambda);
-                endTime = startTime + randomNum.genexp_real(lambda);
+                startTime = endTime + downDistro.generateRandom();
+                endTime = startTime + upDistro.generateRandom();
 
                 timeline[i] = new Session(startTime, endTime);
             }
