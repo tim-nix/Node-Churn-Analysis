@@ -11,7 +11,6 @@ namespace NetworkSimulation
         MersenneTwister randomNum;
         double a = 0.0;
         double b = 0.0;
-        double distroRate = 0.5;
 
         public double Min
         {
@@ -30,14 +29,6 @@ namespace NetworkSimulation
             }
         }
 
-
-        public double Rate
-        {
-            get
-            {
-                return distroRate;
-            }
-        }
 
         public ContinuousUniform(double min, double max)
         {
@@ -62,7 +53,7 @@ namespace NetworkSimulation
 
         public override double[] getPMF(int hSize = 50)
         {
-            distroRate = (b - a) / Convert.ToDouble(hSize);
+            setRate((b - a) / Convert.ToDouble(hSize - 1));
             double[] pmf = new double[hSize];
 
             for (int i = 0; i < hSize; i++)

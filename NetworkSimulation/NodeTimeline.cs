@@ -171,6 +171,19 @@ namespace NetworkSimulation
         }
 
 
+        public double[] getResiduals(NodeTimeline tl2)
+        {
+            double[] residuals = new double[timeline.Length];
+
+            for (int i = 0; i < timeline.Length; i++)
+            {
+                residuals[i] = getResidual(tl2.timeline[i].StartTime);
+            }
+
+            return residuals;
+        }
+
+
         /// <summary>
         /// The purpose of this method is to calculate the average
         /// up time across all tracked sessions.

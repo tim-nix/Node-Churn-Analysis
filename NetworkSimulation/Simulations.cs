@@ -266,6 +266,78 @@ namespace NetworkSimulation
         }
 
 
+        /// <summary>
+        /// This method generates a mechanism for sampling the residual distribution
+        /// H(x) = P(R(t) &lt; x) that does not require restarting the process.  We
+        /// generated a bus schedule from the Paretto distribution and the arrival
+        /// times of passengers (waiting on the next bus) from the exponential
+        /// distribution.
+        /// 
+        /// Using these times, we then calculated the wait time (residual) for each 
+        /// passenger.  From multiple runs, we generated the CDF of the sampled
+        /// residuals.
+        /// </summary>
+        public static void sampling()
+        {
+            const int SAMPLE_RUNS = 10000;
+            const int NUMBER_SESSIONS = 10000;
+            const int MONITOR_START = 200;
+            const int H_SIZE = 500;
+
+            double alpha = 3.0;
+            double beta = 1.0;
+            double lambda = (alpha - 1.0) / beta;
+
+            // This distribution is for bus arrivals.  That is, each session
+            // corresponds to the length of time from one bus arrival to the
+            // next. 
+            Paretto distro1 = new Paretto(alpha, beta);
+
+            // This distribution is used to specify the amount of time between
+            // the arrival of one bus and its departure. In this case, bus 
+            // arrival /departure is treated as instantaneous; that is, the bus 
+            // arrives and departs both within the single moment in time.
+            Constant distro2 = new Constant(0);    
+            
+            // This distribution is used for passenger arrivals.  Passengers
+            // arrive at this rate to wait for the next bus.         
+            Exponential distro3 = new Exponential(lambda);
+
+            NodeTimeline busTimeline = new NodeTimeline(NUMBER_SESSIONS, MONITOR_START);
+            NodeTimeline passengerTimeline = new NodeTimeline(NUMBER_SESSIONS, MONITOR_START);
+
+            // Repeatedly calculate new bus timelines and passenger arrival timelines.
+            // From these, calculate the residual wait times for the passengers.  Then,
+            // add these to the histogram.
+            double[] residuals;
+            double[] cdf = new double[H_SIZE];
+            for (int run = 0; run < SAMPLE_RUNS; run++)
+            {
+                busTimeline.generateTimeline(distro1, distro2);
+                passengerTimeline.generateTimeline(distro3, distro2);
+
+                residuals = busTimeline.getResiduals(passengerTimeline);
+                double threshold = 0.0;
+                for (int i = 0; i < H_SIZE; i++)
+                {
+                    threshold = Convert.ToDouble(i);
+                    for (int j = 0; j < residuals.Length; j++)
+                    {
+                        if (residuals[j] <= threshold)
+                            cdf[i]++;
+                    }
+                }
+            }
+
+            // Generate the cdf from the histogram.
+            for (int i = 0; i < cdf.Length; i++)
+                cdf[i] = cdf[i] / Convert.ToDouble(NUMBER_SESSIONS * SAMPLE_RUNS);
+
+            // Write the cdf to a text file.
+            System.IO.File.AppendAllLines("c:/Temp_For_Grading/sampling.txt", cdf.Select(d => d.ToString()).ToArray());
+        }
+
+
         public static void Superposition1()
         {
             MersenneTwister randomNum = new MersenneTwister();

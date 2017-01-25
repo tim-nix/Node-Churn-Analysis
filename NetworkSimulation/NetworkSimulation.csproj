@@ -60,6 +60,7 @@
   <ItemGroup>
     <Compile Include="AdjacencyMatrix.cs" />
     <Compile Include="CommonGraphs.cs" />
+    <Compile Include="Constant.cs" />
     <Compile Include="Distribution.cs" />
     <Compile Include="Exponential.cs" />
     <Compile Include="MersenneTwister.cs" />

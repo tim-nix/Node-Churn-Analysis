@@ -11,7 +11,6 @@ namespace NetworkSimulation
         MersenneTwister randomNum;
         double alpha = 0.0;
         double beta = 0.0;
-        double distroRate = 0.5;
 
 
         public double Alpha
@@ -31,15 +30,7 @@ namespace NetworkSimulation
             }
         }
 
-        public double Rate
-        {
-            get
-            {
-                return distroRate;
-            }
-        }
-
-
+        
         public Paretto(double a, double b)
         {
             if (a <= 1.0)
@@ -63,13 +54,6 @@ namespace NetworkSimulation
             return beta / (alpha - 1.0);
         }
 
-        public void setRate(double r)
-        {
-            if (r <= 0.0)
-                throw new ArgumentException("Error: Distribution increase rate must be positive!");
-
-            distroRate = r;
-        }
 
         public override double[] getPMF(int hSize = 50)
         {
@@ -78,7 +62,7 @@ namespace NetworkSimulation
             for (int i = 0; i < hSize; i++)
             {
                 pmf[i] = 1.0 - Math.Pow(1.0 + (cap / beta), -alpha);
-                cap += distroRate;
+                cap += Rate;
             }
 
             return pmf;

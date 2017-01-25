@@ -8,11 +8,32 @@ namespace NetworkSimulation
 {
     public abstract class Distribution
     {
+        double distroRate = 0.5;
+
+        public double Rate
+        {
+            get
+            {
+                return distroRate;
+            }
+        }
+
+
         public abstract double generateRandom();
 
         public abstract double getExpectedValue();
 
         public abstract double[] getPMF(int hSize = 50);
+
+
+        public void setRate(double r)
+        {
+            if (r <= 0.0)
+                throw new ArgumentException("Error: Distribution increase rate must be positive!");
+
+            distroRate = r;
+        }
+
 
         public double[] getCDF(int hSize = 50)
         {
@@ -23,6 +44,7 @@ namespace NetworkSimulation
 
             return cdf;
         }
+
 
         public double[] getCCDF(int hSize = 50)
         {
