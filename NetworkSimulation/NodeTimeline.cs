@@ -140,11 +140,34 @@ namespace NetworkSimulation
             {
                 if (timeline[i].isLive(time_t))
                     return true;
-                if (time_t < timeline[i].EndTime)
-                    return false;
             }
 
             return false;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to return the amount
+        /// of time remaining in the live session, if any, at
+        /// time_t.
+        /// </summary>
+        /// <param name="time_t">The time to test.</param>
+        /// <returns>The time remaining in the session.</returns>
+        public double getResidual(double time_t)
+        {
+            if (timeline[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+
+            if (time_t < 0)
+                throw new ArgumentException("Error: Argument error in timeIsLive!");
+
+            for (int i = 0; i < timeline.Length; i++)
+            {
+                if (timeline[i].isLive(time_t))
+                    return timeline[i].getResidual(time_t);
+            }
+
+            return 0.0;
         }
 
 

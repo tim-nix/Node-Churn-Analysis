@@ -70,6 +70,21 @@ namespace NetworkSimulation
                 return false;
         }
 
+        /// <summary>
+        /// The purpose of this method is to return the
+        /// remaining time in the session, if any, at 
+        /// time_t.
+        /// </summary>
+        /// <param name="time_t">The time to test.</param>
+        /// <returns>The time remaining.</returns>
+        public double getResidual(double time_t)
+        {
+            if (isLive(time_t))
+                return end - time_t;
+            else
+                return 0.0;
+        }
+
 
         /// <summary>
         /// The purpose of this method is to calculate the
