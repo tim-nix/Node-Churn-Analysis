@@ -22,8 +22,8 @@ namespace NetworkSimulation
                            int maxN = 1000, 
                            int nDelta = 100, 
                            double startTime = 200.0, 
-                           double tDelta = 0.1, 
-                           int sessionsPerNode = 200)
+                           double tDelta = 0.5, 
+                           int sessionsPerNode = 100)
         {
             setNodeRange(minN, maxN, nDelta);
             setTimeRange(startTime, tDelta);
@@ -121,7 +121,7 @@ namespace NetworkSimulation
 
             int numSims = 100;
 
-            int cliqueMin = 0;
+            int cliqueMin = 30;
             while (cliqueMin * (cliqueMin - 1) < minOrder)
                 cliqueMin++;
 
@@ -194,8 +194,8 @@ namespace NetworkSimulation
                 index++;
             }
 
-            System.IO.File.WriteAllLines("nvalues_gh.txt", nValues.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("cvalues_gh.txt", connectivity.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/nvalues_gh.txt", nValues.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/cvalues_gh.txt", connectivity.Select(d => d.ToString()).ToArray());
         }
 
         public void simGnp(double p)
@@ -261,8 +261,8 @@ namespace NetworkSimulation
                 index++;
             }
 
-            System.IO.File.WriteAllLines("nvalues_gnp.txt", nValues.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("cvalues_gnp.txt", connectivity.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/nvalues_gnp.txt", nValues.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/cvalues_gnp.txt", connectivity.Select(d => d.ToString()).ToArray());
         }
 
 
@@ -338,6 +338,86 @@ namespace NetworkSimulation
         }
 
 
+        /// <summary>
+        /// Assume that a P2P system has n participating users whose online
+        /// presence is given by independently alternating renewal processes.
+        /// Each user's ON duration is drawn from a Paretto distribution where 
+        /// alpha = 3, and its OFF duration is drawn from an Exponential 
+        /// distribution where lambda = 2.
+        /// 
+        /// The purpose of this simulation is to examine the arrival process
+        /// of all users in the system and to determine the cdf of the inter-
+        /// arrival delays between successive joins into the system.
+        /// </summary>
+        public static void superposition1()
+        {
+            const int SAMPLE_RUNS = 10000;
+            const int NUMBER_NODES = 100;
+            const int NUMBER_SESSIONS = 500;
+            const int SAMPLE_SIZE = 1000;
+            const int MONITOR_START = 200;
+            const int H_SIZE = 100;
+
+            double alpha = 3.0;
+            double beta = 1.0;
+            double lambda = 1.0;
+
+            // This distribution is for up time generation.  That is, each 
+            // session corresponds to the length of time that the node is
+            // live.
+            Paretto distro1 = new Paretto(alpha, beta);
+
+            // This distribution is for down time generation.  That is, 
+            // each value corresponds to the length of time from the 
+            // previous session ends until the new session begins.
+            Exponential distro2 = new Exponential(lambda);
+
+            double[] interArrivalDelay = new double[SAMPLE_SIZE];
+            double[] cdf = new double[H_SIZE];
+
+            double mean = 0.0;
+            for (int run = 0; run < SAMPLE_RUNS; run++)
+            {
+                Console.WriteLine("Run #" + run);
+                NetworkChurn churn = new NetworkChurn(NUMBER_NODES);
+                churn.generateChurn(NUMBER_SESSIONS, MONITOR_START, distro1, distro2);
+                double[] startTimes = churn.getStartTimes();
+
+                for (int i = 0; i < interArrivalDelay.Length; i++)
+                {
+                    interArrivalDelay[i] = startTimes[i + 1] - startTimes[i];
+                    mean += interArrivalDelay[i];
+                }
+
+                double cap = 0.0;
+                double rate = 0.01;
+                for (int i = 0; i < H_SIZE; i++)
+                {
+                    for (int j = 0; j < interArrivalDelay.Length; j++)
+                    {
+                        if (interArrivalDelay[j] <= cap)
+                            cdf[i]++;
+                    }
+                    cap += rate;
+                }
+            }
+
+            mean = mean / (SAMPLE_RUNS * interArrivalDelay.Length);
+            Console.WriteLine("Mean = " + mean);
+            
+            // Generate the cdf from the histogram.
+            for (int i = 0; i < cdf.Length; i++)
+                cdf[i] = cdf[i] / (SAMPLE_RUNS * interArrivalDelay.Length);
+
+            // Write the cdf to a text file.
+            System.IO.File.WriteAllText("c:/Temp_For_Grading/superposition1.txt", mean.ToString());
+            System.IO.File.AppendAllLines("c:/Temp_For_Grading/superposition1.txt", cdf.Select(d => d.ToString()).ToArray());
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
         public static void Superposition1()
         {
             MersenneTwister randomNum = new MersenneTwister();
@@ -346,7 +426,7 @@ namespace NetworkSimulation
             const long SAMPLE_RUNS = 1000;
 
             const long SAMPLE_SIZE = 10000;
-            const int H_SIZE = 50;
+            const int H_SIZE = 100;
 
             double[] next_arrival = new double[n];
 
@@ -354,8 +434,8 @@ namespace NetworkSimulation
             double[] cdf = new double[H_SIZE];
 
             double alpha = 3.0;
-            double beta = n;
-            double lambda = 1.0 / n;
+            double beta = 1.0;
+            double lambda = 1.0;
 
             double mean = 0.0;
 
@@ -386,7 +466,7 @@ namespace NetworkSimulation
                 }
 
                 double cap = 0.0;
-                double rate = 0.5;
+                double rate = 0.01;
                 for (int j = 0; j < H_SIZE; j++)
                 {
                     for (int k = 0; k < SAMPLE_SIZE; k++)
@@ -405,8 +485,8 @@ namespace NetworkSimulation
                 cdf[i] = cdf[i] / (SAMPLE_SIZE * SAMPLE_RUNS);
             }
 
-            System.IO.File.WriteAllText("superposition1.txt", mean.ToString());
-            System.IO.File.AppendAllLines("superposition1.txt", cdf.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllText("c:/Temp_For_Grading/superposition1.txt", mean.ToString());
+            System.IO.File.AppendAllLines("c:/Temp_For_Grading/superposition1.txt", cdf.Select(d => d.ToString()).ToArray());
         }
 
         public static void Superposition2()

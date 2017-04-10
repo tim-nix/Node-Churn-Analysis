@@ -15,6 +15,14 @@ namespace NetworkSimulation
         private double baseTime = 0.0;  // the earliest possible start time  
         private Session[] timeline;     // the collection of tracked sessions
 
+        public int numSessions
+        {
+            get
+            {
+                return timeline.Length;
+            }
+        }
+
 
         /// <summary>
         /// The purpose of this 'getter' is to return a copy of the class
@@ -181,6 +189,17 @@ namespace NetworkSimulation
             }
 
             return residuals;
+        }
+
+
+        public double[] getStartTimes()
+        {
+            double[] startTimes = new double[timeline.Length];
+
+            for (int i = 0; i < timeline.Length; i++)
+                startTimes[i] = timeline[i].StartTime;
+
+            return startTimes;
         }
 
 

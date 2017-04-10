@@ -138,6 +138,34 @@ namespace NetworkSimulation
 
 
         /// <summary>
+        /// The purpose of this method is to store the start times for all sessions
+        /// across all nodes.  The method sorts the start times before returning 
+        /// the results.
+        /// </summary>
+        /// <returns>The sorted start times of all sessions.</returns>
+        public double[] getStartTimes()
+        {
+            int numSessions = 0;
+            for (int i = 0; i < nodeSessions.Length; i++)
+                numSessions += nodeSessions[i].numSessions;
+
+            double[] startTimes = new double[numSessions];
+
+            int baseValue = 0;
+            for (int i = 0; i < nodeSessions.Length; i++)
+            {
+                double[] sessionStarts = nodeSessions[i].getStartTimes();
+                for (int j = 0; j < sessionStarts.Length; j++)
+                    startTimes[baseValue + j] = sessionStarts[j];
+                    
+                baseValue += sessionStarts.Length;
+            }
+
+            Array.Sort(startTimes);
+            return startTimes;
+        }
+
+        /// <summary>
         /// The purpose of this method is to calculate the 
         /// average live (up) session time across all sessions
         /// and all nodes.
@@ -175,5 +203,6 @@ namespace NetworkSimulation
 
             return sum / Convert.ToDouble(nodeSessions.Length);
         }
+
     }
 }

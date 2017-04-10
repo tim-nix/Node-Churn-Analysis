@@ -46,7 +46,7 @@ namespace NetworkSimulation
         /// <param name="endTime">The end time of the session.</param>
         public Session(double startTime, double endTime)
         {
-            if (startTime < endTime)
+            if (startTime <= endTime)
             {
                 start = startTime;
                 end = endTime;
