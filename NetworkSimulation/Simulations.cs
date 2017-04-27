@@ -121,7 +121,7 @@ namespace NetworkSimulation
 
             int numSims = 100;
 
-            int cliqueMin = 30;
+            int cliqueMin = 11;
             while (cliqueMin * (cliqueMin - 1) < minOrder)
                 cliqueMin++;
 
@@ -263,6 +263,96 @@ namespace NetworkSimulation
 
             System.IO.File.WriteAllLines("c:/Temp_For_Grading/nvalues_gnp.txt", nValues.Select(d => d.ToString()).ToArray());
             System.IO.File.WriteAllLines("c:/Temp_For_Grading/cvalues_gnp.txt", connectivity.Select(d => d.ToString()).ToArray());
+        }
+
+        /// <summary>
+        /// This simulation is set up for direct comparison of Gnp to Gunther-Hartnell.
+        /// </summary>
+        public void simGnp2()
+        {
+            if (upDistro == null)
+                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
+
+            int numSims = 100;
+
+            int cliqueMin = 11;
+            while (cliqueMin * (cliqueMin - 1) < minOrder)
+                cliqueMin++;
+
+
+            int cliqueMax = cliqueMin;
+            while (cliqueMax * (cliqueMax - 1) < maxOrder)
+                cliqueMax++;
+
+            int[] nValues = new int[cliqueMax - cliqueMin];
+
+            double[] pValues = new double[cliqueMax - cliqueMin];
+            double[] connectivity = new double[cliqueMax - cliqueMin];
+
+            double percentLive = 0.0;
+            double iterations = 0.0;
+
+            int index = 0;
+            int numNodes = 0;
+            int numEdges = 0;
+            double p;
+            for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
+            {
+                numNodes = numCliques * (numCliques - 1);
+                numEdges = numNodes * (numCliques - 1) / 2;
+                p = Convert.ToDouble(numEdges) / (Convert.ToDouble(numNodes * (numNodes - 1)) / 2.0);
+                nValues[index] = numNodes;
+                connectivity[index] = 0.0;
+
+
+                for (int sim = 0; sim < numSims; sim++)
+                {
+                    Network network = new Network(CommonGraphs.Gnp(numNodes, p));
+
+                    NetworkChurn netChurn = new NetworkChurn(numNodes);
+                    netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
+
+                    double time = baseTime;
+                    double connectionCount = 0.0;
+                    percentLive = 0.0;
+                    iterations = 0;
+
+                    double endTime = netChurn.getEarliestFinalTime();
+
+                    while (time < endTime)
+                    {
+                        bool[] status = netChurn.getStatusAtTime(time);
+
+                        double numLive = 0;
+                        for (int i = 0; i < status.Length; i++)
+                        {
+                            if (status[i])
+                                numLive += 1.0;
+                        }
+
+                        percentLive += numLive / Convert.ToDouble(status.Length);
+
+                        network.updateStatus(status);
+                        if (network.isCurrentNetworkConnected())
+                            connectionCount += 1.0;
+
+                        iterations += 1.0;
+                        time += timeDelta;
+                    }
+
+                    connectivity[index] += (connectionCount / iterations) * 100.0;
+                }
+
+                connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
+
+                Console.WriteLine("GH graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
+                Console.WriteLine("Each node is live {0:N2}% of the time", (percentLive / iterations) * 100.0);
+
+                index++;
+            }
+
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/nvalues_gh.txt", nValues.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/cvalues_gh.txt", connectivity.Select(d => d.ToString()).ToArray());
         }
 
 
