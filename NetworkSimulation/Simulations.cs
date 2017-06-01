@@ -288,6 +288,7 @@ namespace NetworkSimulation
 
             double[] pValues = new double[cliqueMax - cliqueMin];
             double[] connectivity = new double[cliqueMax - cliqueMin];
+            double[] liveTime = new double[cliqueMax - cliqueMin];
 
             double percentLive = 0.0;
             double iterations = 0.0;
@@ -344,15 +345,16 @@ namespace NetworkSimulation
                 }
 
                 connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
-
+                liveTime[index] = (percentLive / iterations) * 100.0;
                 Console.WriteLine("GH graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
-                Console.WriteLine("Each node is live {0:N2}% of the time", (percentLive / iterations) * 100.0);
+                Console.WriteLine("Each node is live {0:N2}% of the time", liveTime[index]);
 
                 index++;
             }
 
             System.IO.File.WriteAllLines("c:/Temp_For_Grading/nvalues_gh.txt", nValues.Select(d => d.ToString()).ToArray());
             System.IO.File.WriteAllLines("c:/Temp_For_Grading/cvalues_gh.txt", connectivity.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/lvalues_gh.txt", liveTime.Select(d => d.ToString()).ToArray());
         }
 
 
