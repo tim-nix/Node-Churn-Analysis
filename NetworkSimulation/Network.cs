@@ -13,6 +13,7 @@ namespace NetworkSimulation
         private int[] labels;
         private AdjacencyMatrix fullNetwork;
         private AdjacencyMatrix currentStatus;
+        private static Random r = new Random();
 
 
         /// <summary>
@@ -103,6 +104,43 @@ namespace NetworkSimulation
         public bool isCurrentNetworkConnected()
         {
             return currentStatus.isConnected();
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public bool isPathinCurrentNetwork()
+        {
+            //Console.WriteLine("Current graph has " + currentStatus.Order + " nodes.");
+            if (currentStatus.Order < 2)
+                throw new Exception("Not enough nodes!");
+            
+            int startVertex = r.Next(0, currentStatus.Order);
+            int endVertex = startVertex;
+
+            while (startVertex == endVertex)
+                endVertex = r.Next(0, currentStatus.Order);
+
+            //Console.WriteLine("Finding path from " + startVertex + " to " + endVertex);
+
+            return currentStatus.isPath(startVertex, endVertex);
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="checkVertex"></param>
+        /// <returns></returns>
+        public int getNewNodeLabel(int checkVertex)
+        {
+            for (int i = 0; i < labels.Length; i++)
+                if (labels[i] == checkVertex)
+                    return i;
+
+            return -1;
         }
 
 

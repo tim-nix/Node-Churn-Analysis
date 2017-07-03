@@ -16,6 +16,7 @@ namespace NetworkSimulation
         private int numSessions = 0;        // number of sessions per node to track
         private Distribution upDistro;      // distribution for drawing session up times
         private Distribution downDistro;    // distribution for drawing session down times
+        private static Random r = new Random();
 
 
         public Simulations(int minN = 100, 
@@ -289,6 +290,7 @@ namespace NetworkSimulation
             double[] pValues = new double[cliqueMax - cliqueMin];
             double[] connectivity = new double[cliqueMax - cliqueMin];
             double[] liveTime = new double[cliqueMax - cliqueMin];
+            double[] pathExists = new double[cliqueMax - cliqueMin];
 
             double percentLive = 0.0;
             double iterations = 0.0;
@@ -304,6 +306,7 @@ namespace NetworkSimulation
                 p = Convert.ToDouble(numEdges) / (Convert.ToDouble(numNodes * (numNodes - 1)) / 2.0);
                 nValues[index] = numNodes;
                 connectivity[index] = 0.0;
+                pathExists[index] = 0.0;
 
 
                 for (int sim = 0; sim < numSims; sim++)
@@ -315,6 +318,7 @@ namespace NetworkSimulation
 
                     double time = baseTime;
                     double connectionCount = 0.0;
+                    double pathCount = 0.0;
                     percentLive = 0.0;
                     iterations = 0;
 
@@ -337,16 +341,23 @@ namespace NetworkSimulation
                         if (network.isCurrentNetworkConnected())
                             connectionCount += 1.0;
 
+                        if (network.isPathinCurrentNetwork())
+                            pathCount += 1.0;
+
                         iterations += 1.0;
                         time += timeDelta;
                     }
 
                     connectivity[index] += (connectionCount / iterations) * 100.0;
+                    pathExists[index] += (pathCount / iterations) * 100.0;
+                    //Console.WriteLine("On this iteration, a path existed " + (pathCount / iterations) * 100.0 + " percent of the time.");
                 }
 
                 connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
+                pathExists[index] = pathExists[index] / Convert.ToDouble(numSims);
                 liveTime[index] = (percentLive / iterations) * 100.0;
                 Console.WriteLine("GH graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
+                Console.WriteLine("A path exists between two random live nodes {0:N2}% of the time.", pathExists[index]);
                 Console.WriteLine("Each node is live {0:N2}% of the time", liveTime[index]);
 
                 index++;
@@ -354,6 +365,7 @@ namespace NetworkSimulation
 
             System.IO.File.WriteAllLines("c:/Temp_For_Grading/nvalues_gh.txt", nValues.Select(d => d.ToString()).ToArray());
             System.IO.File.WriteAllLines("c:/Temp_For_Grading/cvalues_gh.txt", connectivity.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/pathvalues_gh.txt", pathExists.Select(d => d.ToString()).ToArray());
             System.IO.File.WriteAllLines("c:/Temp_For_Grading/lvalues_gh.txt", liveTime.Select(d => d.ToString()).ToArray());
         }
 

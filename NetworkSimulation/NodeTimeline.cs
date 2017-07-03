@@ -94,7 +94,9 @@ namespace NetworkSimulation
                 endTime = startTime + upDistro.generateRandom();
             }
 
-            for (int i = 0; i < timeline.Length; i++)
+            timeline[0] = new Session(startTime, endTime);
+
+            for (int i = 1; i < timeline.Length; i++)
             {
                 startTime = endTime + downDistro.generateRandom();
                 endTime = startTime + upDistro.generateRandom();
@@ -116,6 +118,18 @@ namespace NetworkSimulation
                 return timeline[0].StartTime;
         }
 
+
+        /// <summary>
+        /// The purpose of this method is to return a the end
+        /// time of the first tracked session.
+        /// </summary>
+        public double getFirstEnd()
+        {
+            if (timeline[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+            else
+                return timeline[0].EndTime;
+        }
 
         /// <summary>
         /// The purpose of this method is to return a the endtime

@@ -24,7 +24,7 @@ namespace NetworkSimulationUnitTests
             NetworkChurn netChurn = new NetworkChurn(1000);
             netChurn.generateChurn(100, basetime, upD, downD);
 
-            Assert.IsTrue(netChurn.getEarliestFirstTime() >= basetime, "Earliest session start time should be at or after basetime.");
+            Assert.IsTrue(netChurn.getEarliestFirstEnd() >= basetime, "Earliest session end time should be at or after basetime.");
         }
 
 
@@ -57,7 +57,7 @@ namespace NetworkSimulationUnitTests
             NetworkChurn netChurn = new NetworkChurn(1000);
             netChurn.generateChurn(100, basetime, upD, downD);
 
-            Assert.IsTrue(netChurn.getEarliestFirstTime() >= basetime, "Earliest session start time should be at or after basetime.");
+            Assert.IsTrue(netChurn.getEarliestFirstEnd() >= basetime, "Earliest session end time should be at or after basetime.");
         }
 
 
@@ -95,7 +95,7 @@ namespace NetworkSimulationUnitTests
             NetworkChurn netChurn = new NetworkChurn(1000);
             netChurn.generateChurn(100, basetime, upD, downD);
 
-            Assert.IsTrue(netChurn.getEarliestFirstTime() >= basetime, "Earliest session start time should be at or after basetime.");
+            Assert.IsTrue(netChurn.getEarliestFirstEnd() >= basetime, "Earliest session end time should be at or after basetime.");
         }
 
 
@@ -130,7 +130,7 @@ namespace NetworkSimulationUnitTests
             NetworkChurn netChurn = new NetworkChurn(1000);
             netChurn.generateChurn(100, basetime, upD, downD);
 
-            Assert.IsTrue(netChurn.getEarliestFirstTime() >= basetime, "Earliest session start time should be at or after basetime.");
+            Assert.IsTrue(netChurn.getEarliestFirstEnd() >= basetime, "Earliest session end time should be at or after basetime.");
         }
 
 

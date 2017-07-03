@@ -24,6 +24,14 @@ namespace NetworkSimulation
             }
         }
 
+        public int Order
+        {
+            get
+            {
+                return graph.GetLength(0);
+            }
+        }
+
 
         /// <summary>
         /// A constructor for the AdjacencyMatrix class.  
@@ -188,6 +196,50 @@ namespace NetworkSimulation
             }
 
             return (visited.Count == graph.GetLength(0));
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to determine if a path exists between the 
+        /// starting vertex and the ending vertex.
+        /// </summary>
+        /// <param name="startVertex">the starting vertex</param>
+        /// <param name="endVertex">the destination vertex</param>
+        /// <returns>True/False - whether a path exists between the specified vertices.</returns>
+        public bool isPath(int startVertex, int endVertex)
+        {
+
+            if (numEdges() == 0)
+                return false;
+
+            if ((startVertex < 0) || (startVertex > graph.GetLength(0)))
+                throw new ArgumentException("Error: Starting vertex does not exist!");
+
+            if ((endVertex < 0) || (endVertex > graph.GetLength(0)))
+                throw new ArgumentException("Error: Ending vertex does not exist!");
+
+            Queue<int> toVisit = new Queue<int>();
+            HashSet<int> visited = new HashSet<int>();
+
+            toVisit.Enqueue(startVertex);
+
+            while (toVisit.Count > 0)
+            {
+                int currentNode = toVisit.Dequeue();
+                if (currentNode == endVertex)
+                    return true;
+
+                visited.Add(currentNode);
+                for (int i = 0; i < graph.GetLength(0); i++)
+                {
+                    if ((graph[currentNode, i] == 1) && !visited.Contains(i))
+                    {
+                        toVisit.Enqueue(i);
+                    }
+                }
+            }
+
+            return false;
         }
 
 

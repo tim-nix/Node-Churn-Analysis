@@ -73,6 +73,14 @@ namespace NetworkSimulation
         }
 
 
+        public double getNodeResidualAtTime(int node, double time)
+        {
+            if (nodeSessions[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate churn!");
+
+            return nodeSessions[node].getResidual(time);
+        }
+
         /// <summary>
         /// The purpose of this method is to generate a boolean
         /// array that specifies the status (alive or not) of
@@ -112,6 +120,28 @@ namespace NetworkSimulation
             }
 
             return firstTime;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to iterate through all 
+        /// of the node timelines and return the earliest start 
+        /// time of the first occuring session.
+        /// </summary>
+        /// <returns>The earliest first start time</returns>
+        public double getEarliestFirstEnd()
+        {
+            if (nodeSessions[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate churn!");
+
+            double firstEnd = nodeSessions[0].getFirstEnd();
+            for (int i = 1; i < nodeSessions.Length; i++)
+            {
+                if (nodeSessions[i].getFirstEnd() < firstEnd)
+                    firstEnd = nodeSessions[i].getFirstEnd();
+            }
+
+            return firstEnd;
         }
 
 

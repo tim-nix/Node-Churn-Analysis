@@ -32,7 +32,7 @@ namespace NetworkSimulationUnitTests
             NodeTimeline nodeTL = new NodeTimeline(1000, 200);
             nodeTL.generateTimeline(upD, downD);
 
-            Assert.IsTrue(nodeTL.getFirstTime() >= nodeTL.BaseTime, "First session start time should be at or after basetime.");
+            Assert.IsTrue(nodeTL.getFirstEnd() >= nodeTL.BaseTime, "First session end time should be at or after basetime.");
         }
 
 
@@ -63,7 +63,7 @@ namespace NetworkSimulationUnitTests
             NodeTimeline nodeTL = new NodeTimeline(1000, 200.0);
             nodeTL.generateTimeline(upD, downD);
 
-            Assert.IsTrue(nodeTL.getFirstTime() >= nodeTL.BaseTime, "First session start time should be at or after basetime.");
+            Assert.IsTrue(nodeTL.getFirstEnd() >= nodeTL.BaseTime, "First session end time should be at or after basetime.");
         }
 
 
@@ -99,7 +99,7 @@ namespace NetworkSimulationUnitTests
             NodeTimeline nodeTL = new NodeTimeline(10000, 200.0);
             nodeTL.generateTimeline(upD, downD);
 
-            Assert.IsTrue(nodeTL.getFirstTime() >= nodeTL.BaseTime, "First session start time should be at or after basetime.");
+            Assert.IsTrue(nodeTL.getFirstEnd() >= nodeTL.BaseTime, "First session end time should be at or after basetime.");
         }
 
 
@@ -132,7 +132,7 @@ namespace NetworkSimulationUnitTests
             NodeTimeline nodeTL = new NodeTimeline(10000, 200.0);
             nodeTL.generateTimeline(upD, downD);
 
-            Assert.IsTrue(nodeTL.getFirstTime() >= nodeTL.BaseTime, "First session start time should be at or after basetime.");
+            Assert.IsTrue(nodeTL.getFirstEnd() >= nodeTL.BaseTime, "First session end time should be at or after basetime.");
         }
 
 
