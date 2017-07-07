@@ -73,12 +73,33 @@ namespace NetworkSimulation
         }
 
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="time"></param>
+        /// <returns></returns>
         public double getNodeResidualAtTime(int node, double time)
         {
             if (nodeSessions[0] == null)
                 throw new System.NullReferenceException("Error: Must first generate churn!");
 
+            if ((node < 0) || (node >= nodeSessions.Length))
+                throw new ArgumentException("Error: Argument error in getNodeResidualAtTime!");
+
             return nodeSessions[node].getResidual(time);
+        }
+
+
+        public double getNextStartTimeForNode(int node, double time)
+        {
+            if (nodeSessions[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate churn!");
+
+            if ((node < 0) || (node >= nodeSessions.Length))
+                throw new ArgumentException("Error: Argument error in getNodeResidualAtTime!");
+
+            return nodeSessions[node].getNextStart(time);
         }
 
         /// <summary>

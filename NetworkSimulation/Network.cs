@@ -13,7 +13,6 @@ namespace NetworkSimulation
         private int[] labels;
         private AdjacencyMatrix fullNetwork;
         private AdjacencyMatrix currentStatus;
-        private static Random r = new Random();
 
 
         /// <summary>
@@ -40,6 +39,33 @@ namespace NetworkSimulation
                 return currentStatus.Graph;
             }
         }
+
+
+        /// <summary>
+        /// The purpose of this 'getter' is to return to order of the
+        /// full topology.
+        /// </summary>
+        public int FullOrder
+        {
+            get
+            {
+                return fullNetwork.Order;
+            }
+        }
+
+
+        /// <summary>
+        /// The purpose of this 'getter' is to return to order of the
+        /// current topology.
+        /// </summary>
+        public int CurrentOrder
+        {
+            get
+            {
+                return currentStatus.Order;
+            }
+        }
+
 
         /// <summary>
         /// A constructor for the class, the full network and the current
@@ -108,32 +134,34 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// 
+        /// The purpose of this method is to determine if a path exists
+        /// between nodes in the current network.
         /// </summary>
-        /// <returns></returns>
-        public bool isPathinCurrentNetwork()
+        /// <returns>True/False - true is a path exists; false otherwise</returns>
+        public bool isPathinCurrentNetwork(int startVertex, int endVertex)
         {
-            //Console.WriteLine("Current graph has " + currentStatus.Order + " nodes.");
-            if (currentStatus.Order < 2)
-                throw new Exception("Not enough nodes!");
-            
-            int startVertex = r.Next(0, currentStatus.Order);
-            int endVertex = startVertex;
-
-            while (startVertex == endVertex)
-                endVertex = r.Next(0, currentStatus.Order);
-
-            //Console.WriteLine("Finding path from " + startVertex + " to " + endVertex);
-
             return currentStatus.isPath(startVertex, endVertex);
         }
 
 
         /// <summary>
-        /// 
+        /// The purpose of this method is to determine if a path exists
+        /// between nodes in the current network.
         /// </summary>
-        /// <param name="checkVertex"></param>
-        /// <returns></returns>
+        /// <returns>True/False - true is a path exists; false otherwise</returns>
+        public bool isPathinFullNetwork(int startVertex, int endVertex)
+        {
+            return fullNetwork.isPath(startVertex, endVertex);
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is, given a node label in the
+        /// full network, what is its corresponding label in the 
+        /// current network (assuming the node is still live).
+        /// </summary>
+        /// <param name="checkVertex">The node label in the full network</param>
+        /// <returns>The node label in the current network; -1 if node is not live</returns>
         public int getNewNodeLabel(int checkVertex)
         {
             for (int i = 0; i < labels.Length; i++)
@@ -143,6 +171,21 @@ namespace NetworkSimulation
             return -1;
         }
 
+
+        /// <summary>
+        /// The purpose of this method is, given a node label in the
+        /// current network, what is its corresponding label in the 
+        /// full network (assuming the label is valid).
+        /// </summary>
+        /// <param name="checkVertex">The node label in the current network</param>
+        /// <returns>The node label in the full network; -1 if node is not valid</returns>
+        public int getOldNodeLabel(int checkVertex)
+        {
+            if (checkVertex >= labels.Length)
+                return -1;
+
+            return labels[checkVertex]; ;
+        }
 
         /// <summary>
         /// The purpose of this method is to serve as a wrapper for the 

@@ -169,6 +169,30 @@ namespace NetworkSimulation
 
 
         /// <summary>
+        /// The purpose of this method is to return the next session starting time
+        /// given a time.
+        /// </summary>
+        /// <param name="time_t"></param>
+        /// <returns></returns>
+        public double getNextStart(double time_t)
+        {
+            if (timeline[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+
+            if ((time_t < 0) || (time_t >= timeline[timeline.Length - 1].StartTime))
+                throw new ArgumentException("Error: Argument error in timeIsLive!");
+
+            for (int i = 0; i < timeline.Length; i++)
+            {
+                if (timeline[i].StartTime > time_t)
+                    return timeline[i].StartTime;
+            }
+
+            throw new Exception("Error: Failed to find next start time!");
+        }
+
+
+        /// <summary>
         /// The purpose of this method is to return the amount
         /// of time remaining in the live session, if any, at
         /// time_t.

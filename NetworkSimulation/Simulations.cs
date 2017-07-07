@@ -274,7 +274,7 @@ namespace NetworkSimulation
             if (upDistro == null)
                 throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
 
-            int numSims = 100;
+            int numSims = 500;
 
             int cliqueMin = 11;
             while (cliqueMin * (cliqueMin - 1) < minOrder)
@@ -290,7 +290,7 @@ namespace NetworkSimulation
             double[] pValues = new double[cliqueMax - cliqueMin];
             double[] connectivity = new double[cliqueMax - cliqueMin];
             double[] liveTime = new double[cliqueMax - cliqueMin];
-            double[] pathExists = new double[cliqueMax - cliqueMin];
+            double[] msgDelays = new double[cliqueMax - cliqueMin];
 
             double percentLive = 0.0;
             double iterations = 0.0;
@@ -306,7 +306,7 @@ namespace NetworkSimulation
                 p = Convert.ToDouble(numEdges) / (Convert.ToDouble(numNodes * (numNodes - 1)) / 2.0);
                 nValues[index] = numNodes;
                 connectivity[index] = 0.0;
-                pathExists[index] = 0.0;
+                msgDelays[index] = 0.0;
 
 
                 for (int sim = 0; sim < numSims; sim++)
@@ -316,14 +316,14 @@ namespace NetworkSimulation
                     NetworkChurn netChurn = new NetworkChurn(numNodes);
                     netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
 
-                    double time = baseTime;
+                    double time = (baseTime + netChurn.getEarliestFinalTime()) / 2.0;
                     double connectionCount = 0.0;
-                    double pathCount = 0.0;
+                    double avgDelay = 0.0;
                     percentLive = 0.0;
                     iterations = 0;
 
-                    double endTime = netChurn.getEarliestFinalTime();
-
+                    //double endTime = netChurn.getEarliestFinalTime();
+                    double endTime = time + timeDelta;
                     while (time < endTime)
                     {
                         bool[] status = netChurn.getStatusAtTime(time);
@@ -341,31 +341,31 @@ namespace NetworkSimulation
                         if (network.isCurrentNetworkConnected())
                             connectionCount += 1.0;
 
-                        if (network.isPathinCurrentNetwork())
-                            pathCount += 1.0;
+                        Message msg = new Message(network, netChurn, time);
+                        avgDelay += msg.getMessageDelay();
 
                         iterations += 1.0;
                         time += timeDelta;
                     }
 
                     connectivity[index] += (connectionCount / iterations) * 100.0;
-                    pathExists[index] += (pathCount / iterations) * 100.0;
+                    msgDelays[index] += avgDelay / iterations;
                     //Console.WriteLine("On this iteration, a path existed " + (pathCount / iterations) * 100.0 + " percent of the time.");
                 }
 
                 connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
-                pathExists[index] = pathExists[index] / Convert.ToDouble(numSims);
+                msgDelays[index] = msgDelays[index] / Convert.ToDouble(numSims);
                 liveTime[index] = (percentLive / iterations) * 100.0;
                 Console.WriteLine("GH graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
-                Console.WriteLine("A path exists between two random live nodes {0:N2}% of the time.", pathExists[index]);
-                Console.WriteLine("Each node is live {0:N2}% of the time", liveTime[index]);
+                Console.WriteLine("The average message delay between two random nodes is {0:N2}.", msgDelays[index]);
+                Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
 
                 index++;
             }
 
             System.IO.File.WriteAllLines("c:/Temp_For_Grading/nvalues_gh.txt", nValues.Select(d => d.ToString()).ToArray());
             System.IO.File.WriteAllLines("c:/Temp_For_Grading/cvalues_gh.txt", connectivity.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/pathvalues_gh.txt", pathExists.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/pathvalues_gh.txt", msgDelays.Select(d => d.ToString()).ToArray());
             System.IO.File.WriteAllLines("c:/Temp_For_Grading/lvalues_gh.txt", liveTime.Select(d => d.ToString()).ToArray());
         }
 
