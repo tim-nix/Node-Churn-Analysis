@@ -77,206 +77,9 @@ namespace NetworkSimulation
             if (upDistro == null)
                 throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
 
-            for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
-            {
-                Network network = new Network(CommonGraphs.Clique(numNodes));
-
-                NetworkChurn netChurn = new NetworkChurn(numNodes);
-                netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
-
-                double time = baseTime;
-                double connectionCount = 0.0;
-                double iterations = 0.0;
-                double percentLive = 0;
-                double endTime = netChurn.getEarliestFinalTime();
-
-                while (time < endTime)
-                {
-                    bool[] status = netChurn.getStatusAtTime(time);
-
-                    double numLive = 0;
-                    for (int i = 0; i < status.Length; i++)
-                    {
-                        if (status[i])
-                            numLive += 1.0;
-                    }
-
-                    percentLive += numLive / Convert.ToDouble(status.Length);
-
-                    network.updateStatus(status);
-                    if (network.isCurrentNetworkConnected())
-                        connectionCount += 1.0;
-
-                    iterations += 1.0;
-                    time += timeDelta;
-                }
-
-                Console.WriteLine("Clique with {0} nodes is connected {1}% of the time.", numNodes, (connectionCount / iterations) * 100);
-            }
-        }
-
-        public void simGH()
-        {
-            if (upDistro == null)
-                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
-
-            int numSims = 100;
-
-            int cliqueMin = 11;
-            while (cliqueMin * (cliqueMin - 1) < minOrder)
-                cliqueMin++;
-
-
-            int cliqueMax = cliqueMin;
-            while (cliqueMax * (cliqueMax - 1) < maxOrder)
-                cliqueMax++;
-
-            int[] nValues = new int[cliqueMax - cliqueMin];
-
-            double[] pValues = new double[cliqueMax - cliqueMin];
-            double[] connectivity = new double[cliqueMax - cliqueMin];
-
-            double percentLive = 0.0;
-            double iterations = 0.0;
-
-            int index = 0;
-            int numNodes = 0;
-            for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
-            {
-                numNodes = numCliques * (numCliques - 1);
-
-                nValues[index] = numNodes;
-                connectivity[index] = 0.0;
-
-
-                for (int sim = 0; sim < numSims; sim++)
-                {
-                    Network network = new Network(CommonGraphs.GuntherHartnell(numNodes));
-
-                    NetworkChurn netChurn = new NetworkChurn(numNodes);
-                    netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
-
-                    double time = baseTime;
-                    double connectionCount = 0.0;
-                    percentLive = 0.0;
-                    iterations = 0;
-
-                    double endTime = netChurn.getEarliestFinalTime();
-
-                    while (time < endTime)
-                    {
-                        bool[] status = netChurn.getStatusAtTime(time);
-
-                        double numLive = 0;
-                        for (int i = 0; i < status.Length; i++)
-                        {
-                            if (status[i])
-                                numLive += 1.0;
-                        }
-
-                        percentLive += numLive / Convert.ToDouble(status.Length);
-
-                        network.updateStatus(status);
-                        if (network.isCurrentNetworkConnected())
-                            connectionCount += 1.0;
-
-                        iterations += 1.0;
-                        time += timeDelta;
-                    }
-
-                    connectivity[index] += (connectionCount / iterations) * 100.0;
-                }
-
-                connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
-
-                Console.WriteLine("GH graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
-                Console.WriteLine("Each node is live {0:N2}% of the time", (percentLive / iterations) * 100.0);
-
-                index++;
-            }
-
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/nvalues_gh.txt", nValues.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/cvalues_gh.txt", connectivity.Select(d => d.ToString()).ToArray());
-        }
-
-        public void simGnp(double p)
-        {
-            int numSims = 100;
-
-            int[] nValues = new int[maxOrder - minOrder];
-
-            double[] connectivity = new double[maxOrder - minOrder];
-
-            double percentLive = 0.0;
-            double iterations = 0.0;
-
-            int index = 0;
-            for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
-            {
-                nValues[index] = numNodes;
-                connectivity[index] = 0.0;
-
-                for (int sim = 0; sim < numSims; sim++)
-                {
-                    Network network = new Network(CommonGraphs.Gnp(numNodes, p));
-
-                    NetworkChurn netChurn = new NetworkChurn(numNodes);
-                    netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
-
-                    double time = baseTime;
-                    double connectionCount = 0.0;
-                    percentLive = 0.0;
-                    iterations = 0;
-
-                    double endTime = netChurn.getEarliestFinalTime();
-
-                    while (time < endTime)
-                    {
-                        bool[] status = netChurn.getStatusAtTime(time);
-
-                        double numLive = 0;
-                        for (int i = 0; i < status.Length; i++)
-                        {
-                            if (status[i])
-                                numLive += 1.0;
-                        }
-
-                        percentLive += numLive / Convert.ToDouble(status.Length);
-
-                        network.updateStatus(status);
-                        if (network.isCurrentNetworkConnected())
-                            connectionCount += 1.0;
-
-                        iterations += 1.0;
-                        time += timeDelta;
-                    }
-
-                    connectivity[index] += (connectionCount / iterations) * 100.0;
-                }
-
-                connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
-                
-                Console.WriteLine("Gnp graph family with {0} nodes and p = {1:N2} is connected {2:N2}% of the time.", nValues[index], p, connectivity[index]);
-                Console.WriteLine("Each node is live {0:N2}% of the time", (percentLive / iterations) * 100.0);
-
-                index++;
-            }
-
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/nvalues_gnp.txt", nValues.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/cvalues_gnp.txt", connectivity.Select(d => d.ToString()).ToArray());
-        }
-
-        /// <summary>
-        /// This simulation is set up for direct comparison of Gnp to Gunther-Hartnell.
-        /// </summary>
-        public void simGnp2()
-        {
-            if (upDistro == null)
-                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
-
             int numSims = 500;
 
-            int cliqueMin = 11;
+            int cliqueMin = 5;
             while (cliqueMin * (cliqueMin - 1) < minOrder)
                 cliqueMin++;
 
@@ -290,42 +93,45 @@ namespace NetworkSimulation
             double[] pValues = new double[cliqueMax - cliqueMin];
             double[] connectivity = new double[cliqueMax - cliqueMin];
             double[] liveTime = new double[cliqueMax - cliqueMin];
-            double[] msgDelays = new double[cliqueMax - cliqueMin];
+            double[] avgMsgDelays = new double[cliqueMax - cliqueMin];
 
             double percentLive = 0.0;
             double iterations = 0.0;
 
             int index = 0;
             int numNodes = 0;
-            int numEdges = 0;
-            double p;
+
+            //Console.WriteLine("The smallest number of cliques: " + cliqueMin);
+            //Console.WriteLine("The largest number of cliques: " + cliqueMax);
             for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
             {
                 numNodes = numCliques * (numCliques - 1);
-                numEdges = numNodes * (numCliques - 1) / 2;
-                p = Convert.ToDouble(numEdges) / (Convert.ToDouble(numNodes * (numNodes - 1)) / 2.0);
                 nValues[index] = numNodes;
                 connectivity[index] = 0.0;
-                msgDelays[index] = 0.0;
+                avgMsgDelays[index] = 0.0;
 
-
+                //Console.WriteLine("Number or nodes: " + numNodes);
                 for (int sim = 0; sim < numSims; sim++)
                 {
-                    Network network = new Network(CommonGraphs.Gnp(numNodes, p));
+                    //Console.WriteLine("Simulation " + (sim + 1));
+                    Network network = new Network(CommonGraphs.Clique(numNodes));
 
                     NetworkChurn netChurn = new NetworkChurn(numNodes);
                     netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
 
-                    double time = (baseTime + netChurn.getEarliestFinalTime()) / 2.0;
+
+                    double time = baseTime;
                     double connectionCount = 0.0;
                     double avgDelay = 0.0;
                     percentLive = 0.0;
                     iterations = 0;
 
                     //double endTime = netChurn.getEarliestFinalTime();
-                    double endTime = time + timeDelta;
+                    //double endTime = time + timeDelta;
+                    double endTime = baseTime + 50.0;
                     while (time < endTime)
                     {
+                        //Console.WriteLine("time = " + time);
                         bool[] status = netChurn.getStatusAtTime(time);
 
                         double numLive = 0;
@@ -349,24 +155,340 @@ namespace NetworkSimulation
                     }
 
                     connectivity[index] += (connectionCount / iterations) * 100.0;
-                    msgDelays[index] += avgDelay / iterations;
+                    avgMsgDelays[index] += avgDelay / iterations;
                     //Console.WriteLine("On this iteration, a path existed " + (pathCount / iterations) * 100.0 + " percent of the time.");
                 }
 
                 connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
-                msgDelays[index] = msgDelays[index] / Convert.ToDouble(numSims);
+                avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(numSims);
                 liveTime[index] = (percentLive / iterations) * 100.0;
                 Console.WriteLine("GH graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
-                Console.WriteLine("The average message delay between two random nodes is {0:N2}.", msgDelays[index]);
+                Console.WriteLine("The average message delay between two random nodes is {0:N3}.", avgMsgDelays[index]);
                 Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
+                Console.WriteLine();
 
                 index++;
             }
 
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/nvalues_gh.txt", nValues.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/cvalues_gh.txt", connectivity.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/pathvalues_gh.txt", msgDelays.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/lvalues_gh.txt", liveTime.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/graph_sizes_clique.txt", nValues.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_connectivity_clique.txt", connectivity.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_msg_delays_clique.txt", avgMsgDelays.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_up_time_clique.txt", liveTime.Select(d => d.ToString()).ToArray());
+        }
+
+        public void simGH()
+        {
+            if (upDistro == null)
+                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
+
+            int numSims = 500;
+
+            int cliqueMin = 5;
+            while (cliqueMin * (cliqueMin - 1) < minOrder)
+                cliqueMin++;
+
+
+            int cliqueMax = cliqueMin;
+            while (cliqueMax * (cliqueMax - 1) < maxOrder)
+                cliqueMax++;
+
+            int[] nValues = new int[cliqueMax - cliqueMin];
+
+            double[] pValues = new double[cliqueMax - cliqueMin];
+            double[] connectivity = new double[cliqueMax - cliqueMin];
+            double[] liveTime = new double[cliqueMax - cliqueMin];
+            double[] avgMsgDelays = new double[cliqueMax - cliqueMin];
+
+            double percentLive = 0.0;
+            double iterations = 0.0;
+
+            int index = 0;
+            int numNodes = 0;
+            double p;
+            //Console.WriteLine("The smallest number of cliques: " + cliqueMin);
+            //Console.WriteLine("The largest number of cliques: " + cliqueMax);
+            for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
+            {
+                numNodes = numCliques * (numCliques - 1);
+                nValues[index] = numNodes;
+                connectivity[index] = 0.0;
+                avgMsgDelays[index] = 0.0;
+
+                //Console.WriteLine("Number or nodes: " + numNodes);
+                for (int sim = 0; sim < numSims; sim++)
+                {
+                    //Console.WriteLine("Simulation " + (sim + 1));
+                    Network network = new Network(CommonGraphs.GuntherHartnell(numNodes));
+
+                    NetworkChurn netChurn = new NetworkChurn(numNodes);
+                    netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
+
+
+                    double time = baseTime;
+                    double connectionCount = 0.0;
+                    double avgDelay = 0.0;
+                    percentLive = 0.0;
+                    iterations = 0;
+
+                    //double endTime = netChurn.getEarliestFinalTime();
+                    //double endTime = time + timeDelta;
+                    double endTime = baseTime + 50.0;
+                    while (time < endTime)
+                    {
+                        //Console.WriteLine("time = " + time);
+                        bool[] status = netChurn.getStatusAtTime(time);
+
+                        double numLive = 0;
+                        for (int i = 0; i < status.Length; i++)
+                        {
+                            if (status[i])
+                                numLive += 1.0;
+                        }
+
+                        percentLive += numLive / Convert.ToDouble(status.Length);
+
+                        network.updateStatus(status);
+                        if (network.isCurrentNetworkConnected())
+                            connectionCount += 1.0;
+
+                        Message msg = new Message(network, netChurn, time);
+                        avgDelay += msg.getMessageDelay();
+
+                        iterations += 1.0;
+                        time += timeDelta;
+                    }
+
+                    connectivity[index] += (connectionCount / iterations) * 100.0;
+                    avgMsgDelays[index] += avgDelay / iterations;
+                    //Console.WriteLine("On this iteration, a path existed " + (pathCount / iterations) * 100.0 + " percent of the time.");
+                }
+
+                connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
+                avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(numSims);
+                liveTime[index] = (percentLive / iterations) * 100.0;
+                Console.WriteLine("GH graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
+                Console.WriteLine("The average message delay between two random nodes is {0:N3}.", avgMsgDelays[index]);
+                Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
+                Console.WriteLine();
+
+                index++;
+            }
+
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/graph_sizes_gh.txt", nValues.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_connectivity_gh.txt", connectivity.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_msg_delays_gh.txt", avgMsgDelays.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_up_time_gh.txt", liveTime.Select(d => d.ToString()).ToArray());
+        }
+
+        public void simGnp(double p)
+        {
+            if (upDistro == null)
+                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
+
+            int numSims = 500;
+
+            int[] nValues = new int[maxOrder - minOrder];
+
+            double[] pValues = new double[maxOrder - minOrder];
+            double[] connectivity = new double[maxOrder - minOrder];
+            double[] liveTime = new double[maxOrder - minOrder];
+            double[] avgMsgDelays = new double[maxOrder - minOrder];
+
+            double percentLive = 0.0;
+            double iterations = 0.0;
+
+            int index = 0;
+            for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
+            {
+                nValues[index] = numNodes;
+                connectivity[index] = 0.0;
+                avgMsgDelays[index] = 0.0;
+
+                //Console.WriteLine("Number or nodes: " + numNodes);
+                for (int sim = 0; sim < numSims; sim++)
+                {
+                    //Console.WriteLine("Simulation " + (sim + 1));
+                    Network network = new Network(CommonGraphs.Gnp(numNodes, p));
+
+                    // Gnp graphs are not necessarily connected.  We only want
+                    // topologies where the full network is connected.
+                    while (!network.isFullNetworkConnected())
+                        network = new Network(CommonGraphs.Gnp(numNodes, p));
+
+                    NetworkChurn netChurn = new NetworkChurn(numNodes);
+                    netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
+
+
+                    double time = baseTime;
+                    double connectionCount = 0.0;
+                    double avgDelay = 0.0;
+                    percentLive = 0.0;
+                    iterations = 0;
+
+                    //double endTime = netChurn.getEarliestFinalTime();
+                    //double endTime = time + timeDelta;
+                    double endTime = baseTime + 50.0;
+                    while (time < endTime)
+                    {
+                        //Console.WriteLine("time = " + time);
+                        bool[] status = netChurn.getStatusAtTime(time);
+
+                        double numLive = 0;
+                        for (int i = 0; i < status.Length; i++)
+                        {
+                            if (status[i])
+                                numLive += 1.0;
+                        }
+
+                        percentLive += numLive / Convert.ToDouble(status.Length);
+
+                        network.updateStatus(status);
+                        if (network.isCurrentNetworkConnected())
+                            connectionCount += 1.0;
+
+                        Message msg = new Message(network, netChurn, time);
+                        avgDelay += msg.getMessageDelay();
+
+                        iterations += 1.0;
+                        time += timeDelta;
+                    }
+
+                    connectivity[index] += (connectionCount / iterations) * 100.0;
+                    avgMsgDelays[index] += avgDelay / iterations;
+                    //Console.WriteLine("On this iteration, a path existed " + (pathCount / iterations) * 100.0 + " percent of the time.");
+                }
+
+                connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
+                avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(numSims);
+                liveTime[index] = (percentLive / iterations) * 100.0;
+                Console.WriteLine("GH graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
+                Console.WriteLine("The average message delay between two random nodes is {0:N3}.", avgMsgDelays[index]);
+                Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
+                Console.WriteLine();
+
+                index++;
+            }
+
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/graph_sizes_gnp.txt", nValues.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_connectivity_gnp.txt", connectivity.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_msg_delays_gnp.txt", avgMsgDelays.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_up_time_gnp.txt", liveTime.Select(d => d.ToString()).ToArray());
+        }
+
+        /// <summary>
+        /// This simulation is set up for direct comparison of Gnp to Gunther-Hartnell.
+        /// </summary>
+        public void simGnp2()
+        {
+            if (upDistro == null)
+                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
+
+            int numSims = 500;
+
+            int cliqueMin = 5;
+            while (cliqueMin * (cliqueMin - 1) < minOrder)
+                cliqueMin++;
+
+
+            int cliqueMax = cliqueMin;
+            while (cliqueMax * (cliqueMax - 1) < maxOrder)
+                cliqueMax++;
+
+            int[] nValues = new int[cliqueMax - cliqueMin];
+
+            double[] pValues = new double[cliqueMax - cliqueMin];
+            double[] connectivity = new double[cliqueMax - cliqueMin];
+            double[] liveTime = new double[cliqueMax - cliqueMin];
+            double[] avgMsgDelays = new double[cliqueMax - cliqueMin];
+
+            double percentLive = 0.0;
+            double iterations = 0.0;
+
+            int index = 0;
+            int numNodes = 0;
+            int numEdges = 0;
+            double p;
+            //Console.WriteLine("The smallest number of cliques: " + cliqueMin);
+            //Console.WriteLine("The largest number of cliques: " + cliqueMax);
+            for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
+            {
+                numNodes = numCliques * (numCliques - 1);
+                numEdges = numNodes * (numCliques - 1) / 2;
+                p = Convert.ToDouble(numEdges) / (Convert.ToDouble(numNodes * (numNodes - 1)) / 2.0);
+                nValues[index] = numNodes;
+                connectivity[index] = 0.0;
+                avgMsgDelays[index] = 0.0;
+
+                //Console.WriteLine("Number or nodes: " + numNodes);
+                Console.WriteLine("p = " + p);
+                for (int sim = 0; sim < numSims; sim++)
+                {
+                    //Console.WriteLine("Simulation " + (sim + 1));
+                    Network network = new Network(CommonGraphs.Gnp(numNodes, p));
+
+                    // Gnp graphs are not necessarily connected.  We only want
+                    // topologies where the full network is connected.
+                    while (!network.isFullNetworkConnected())
+                        network = new Network(CommonGraphs.Gnp(numNodes, p));
+
+                    NetworkChurn netChurn = new NetworkChurn(numNodes);
+                    netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
+
+                  
+                    double time = baseTime;
+                    double connectionCount = 0.0;
+                    double avgDelay = 0.0;
+                    percentLive = 0.0;
+                    iterations = 0;
+
+                    //double endTime = netChurn.getEarliestFinalTime();
+                    //double endTime = time + timeDelta;
+                    double endTime = baseTime + 50.0;
+                    while (time < endTime)
+                    {
+                        //Console.WriteLine("time = " + time);
+                        bool[] status = netChurn.getStatusAtTime(time);
+
+                        double numLive = 0;
+                        for (int i = 0; i < status.Length; i++)
+                        {
+                            if (status[i])
+                                numLive += 1.0;
+                        }
+
+                        percentLive += numLive / Convert.ToDouble(status.Length);
+
+                        network.updateStatus(status);
+                        if (network.isCurrentNetworkConnected())
+                            connectionCount += 1.0;
+
+                        Message msg = new Message(network, netChurn, time);
+                        avgDelay += msg.getMessageDelay();
+
+                        iterations += 1.0;
+                        time += timeDelta;
+                    }
+
+                    connectivity[index] += (connectionCount / iterations) * 100.0;
+                    avgMsgDelays[index] += avgDelay / iterations;
+                    //Console.WriteLine("On this iteration, a path existed " + (pathCount / iterations) * 100.0 + " percent of the time.");
+                }
+
+                connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
+                avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(numSims);
+                liveTime[index] = (percentLive / iterations) * 100.0;
+                Console.WriteLine("GH graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
+                Console.WriteLine("The average message delay between two random nodes is {0:N3}.", avgMsgDelays[index]);
+                Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
+                Console.WriteLine();
+
+                index++;
+            }
+
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/graph_sizes_gnp.txt", nValues.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_connectivity_gnp.txt", connectivity.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_msg_delays_gnp.txt", avgMsgDelays.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_up_time_gnp.txt", liveTime.Select(d => d.ToString()).ToArray());
         }
 
 

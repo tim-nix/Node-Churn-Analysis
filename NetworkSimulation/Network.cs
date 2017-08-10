@@ -124,11 +124,26 @@ namespace NetworkSimulation
         /// <summary>
         /// The purpose of this method is to serve as a wrapper for the 
         /// isConnected() method in the AdjacencyMatrix class called on 
+        /// the fullNetwork. 
+        /// </summary>
+        /// <returns>Whether the currentStatus network is connected.</returns>
+        public bool isFullNetworkConnected()
+        {
+            return fullNetwork.isConnected();
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to serve as a wrapper for the 
+        /// isConnected() method in the AdjacencyMatrix class called on 
         /// the currentStatus. 
         /// </summary>
         /// <returns>Whether the currentStatus network is connected.</returns>
         public bool isCurrentNetworkConnected()
         {
+            if (currentStatus == null)
+                throw new NullReferenceException("Error: Must update the status of the network!");
+
             return currentStatus.isConnected();
         }
 
