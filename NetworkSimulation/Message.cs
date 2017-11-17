@@ -48,7 +48,7 @@ namespace NetworkSimulation
                     locations.Add(j);                               // if live and path from source, then add
             }
 
-            double timeDelta = 0.01;
+            double timeDelta = 0.001;
             double curr_time = start_time;
 
             //if (locations.Contains(endVertex))

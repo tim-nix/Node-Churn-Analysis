@@ -543,16 +543,16 @@ namespace NetworkSimulation
             //Console.WriteLine("The smallest number of cliques: " + cliqueMin);
             //Console.WriteLine("The largest number of cliques: " + cliqueMax);
 
-            System.IO.File.WriteAllText("graph_sizes_gnp.txt", "");
-            System.IO.File.WriteAllText("avg_connectivity_gnp.txt", "");
-            System.IO.File.WriteAllText("avg_msg_delays_gnp.txt", "");
-            System.IO.File.WriteAllText("avg_up_time_gnp.txt", "");
+            System.IO.File.WriteAllText("c:/SimResults/graph_sizes_gnp.txt", "");
+            System.IO.File.WriteAllText("c:/SimResults/avg_connectivity_gnp.txt", "");
+            System.IO.File.WriteAllText("c:/SimResults/avg_msg_delays_gnp.txt", "");
+            System.IO.File.WriteAllText("c:/SimResults/avg_up_time_gnp.txt", "");
 
             for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
             {
                 numNodes = numCliques * (numCliques - 1);
                 numEdges = numNodes * (numCliques - 1) / 2;
-                System.IO.File.WriteAllText("msg_delays_gnp_" + numNodes.ToString() + ".txt", "");
+                System.IO.File.WriteAllText("c:/SimResults/msg_delays_gnp_" + numNodes.ToString() + ".txt", "");
                 p = Convert.ToDouble(numEdges) / (Convert.ToDouble(numNodes * (numNodes - 1)) / 2.0);
                 nValues[index] = numNodes;
                 connectivity[index] = 0.0;
@@ -602,7 +602,7 @@ namespace NetworkSimulation
                     liveTime[index] += percentLive;
                     //Console.WriteLine("On this iteration, a path existed " + (pathCount / iterations) * 100.0 + " percent of the time.");
 
-                    System.IO.File.AppendAllText("msg_delays_gnp_" + numNodes.ToString() + ".txt", avgDelay.ToString() + Environment.NewLine);
+                    System.IO.File.AppendAllText("c:/SimResults/msg_delays_gnp_" + numNodes.ToString() + ".txt", avgDelay.ToString() + Environment.NewLine);
                 }
 
                 connectivity[index] = (connectivity[index] / Convert.ToDouble(numSims)) * 100.0;
@@ -613,10 +613,10 @@ namespace NetworkSimulation
                 Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
                 Console.WriteLine();
 
-                System.IO.File.AppendAllText("graph_sizes_gnp.txt", nValues[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("avg_connectivity_gnp.txt", connectivity[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("avg_msg_delays_gnp.txt", avgMsgDelays[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("avg_up_time_gnp.txt", liveTime[index].ToString());
+                System.IO.File.AppendAllText("c:/SimResults/graph_sizes_gnp.txt", nValues[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("c:/SimResults/avg_connectivity_gnp.txt", connectivity[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("c:/SimResults/avg_msg_delays_gnp.txt", avgMsgDelays[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("c:/SimResults/avg_up_time_gnp.txt", liveTime[index].ToString());
 
                 index++;
             }
