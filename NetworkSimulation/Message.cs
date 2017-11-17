@@ -27,30 +27,37 @@ namespace NetworkSimulation
             if (network.CurrentOrder < 2)
                 throw new Exception("Not enough nodes!");
 
-            int startVertex = r.Next(0, network.CurrentOrder);
-            startVertex = network.getOldNodeLabel(startVertex);
+            int startVertex = r.Next(0, network.CurrentOrder);      // Pick a random live source
+            startVertex = network.getOldNodeLabel(startVertex);     // Convert to full network source label
             int endVertex = startVertex;
 
-            while (startVertex == endVertex)
-                endVertex = r.Next(0, network.FullOrder);
+            while (startVertex == endVertex)                        // Pick a random sink different
+                endVertex = r.Next(0, network.FullOrder);           // than the source
 
-            int currStart = network.getNewNodeLabel(startVertex);
+            int currStart = network.getNewNodeLabel(startVertex);   // Convert source to current label
             int currStop;
 
-            HashSet<Int32> locations = new HashSet<int>();
+            HashSet<Int32> locations = new HashSet<int>();          // Stores message locations
             HashSet<Int32> newLocations = new HashSet<int>();
 
-            for (int j = 0; j < network.FullOrder; j++)
+            // Determine spread of message from source at start time.
+            for (int j = 0; j < network.FullOrder; j++)             
             {
-                currStop = network.getNewNodeLabel(j);
+                currStop = network.getNewNodeLabel(j);              // Convert each full label to current label
                 if ((currStop != -1) && (network.isPathinCurrentNetwork(currStart, currStop)))
-                    locations.Add(j);
+                    locations.Add(j);                               // if live and path from source, then add
             }
 
             double timeDelta = 0.01;
             double curr_time = start_time;
 
-            while (!locations.Contains(endVertex))
+            //if (locations.Contains(endVertex))
+            //    Console.WriteLine("Source and sink both live.");
+            //else
+            //    Console.WriteLine("Residue: " + (churn.getNextStartTimeForNode(endVertex, curr_time) - curr_time));
+
+            // Track spread of message from source until the destination is reached.
+            while (!locations.Contains(endVertex))               
             {
                 curr_time += timeDelta;
                 bool[] status = churn.getStatusAtTime(curr_time);
@@ -78,6 +85,7 @@ namespace NetworkSimulation
                 newLocations.Clear();
             }
 
+            //Console.WriteLine("Message delay: " + (curr_time - start_time));
             return curr_time - start_time;
         }
     }
