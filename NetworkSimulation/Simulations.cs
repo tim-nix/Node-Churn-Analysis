@@ -182,7 +182,7 @@ namespace NetworkSimulation
             if (upDistro == null)
                 throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
 
-            int numSims = 500;
+            int numSims = 10;
 
             int cliqueMin = 5;
             while (cliqueMin * (cliqueMin - 1) < minOrder)
@@ -201,21 +201,28 @@ namespace NetworkSimulation
             double[] avgMsgDelays = new double[cliqueMax - cliqueMin];
 
             double percentLive = 0.0;
-            double iterations = 0.0;
 
             int index = 0;
             int numNodes = 0;
-            double p;
+
             //Console.WriteLine("The smallest number of cliques: " + cliqueMin);
             //Console.WriteLine("The largest number of cliques: " + cliqueMax);
+
+            System.IO.File.WriteAllText("graph_sizes_gh.txt", "");
+            System.IO.File.WriteAllText("avg_connectivity_gh.txt", "");
+            System.IO.File.WriteAllText("avg_msg_delays_gh.txt", "");
+            System.IO.File.WriteAllText("avg_up_time_gh.txt", "");
+
             for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
             {
                 numNodes = numCliques * (numCliques - 1);
+
                 nValues[index] = numNodes;
+
                 connectivity[index] = 0.0;
                 avgMsgDelays[index] = 0.0;
 
-                //Console.WriteLine("Number or nodes: " + numNodes);
+                Console.WriteLine("Number or nodes: " + numNodes);
                 for (int sim = 0; sim < numSims; sim++)
                 {
                     //Console.WriteLine("Simulation " + (sim + 1));
@@ -225,61 +232,52 @@ namespace NetworkSimulation
                     netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
 
 
-                    double time = baseTime;
-                    double connectionCount = 0.0;
+                    double time = baseTime + 25.0;
                     double avgDelay = 0.0;
                     percentLive = 0.0;
-                    iterations = 0;
 
-                    //double endTime = netChurn.getEarliestFinalTime();
-                    //double endTime = time + timeDelta;
-                    double endTime = baseTime + 50.0;
-                    while (time < endTime)
+                    //Console.WriteLine("time = " + time);
+                    bool[] status = netChurn.getStatusAtTime(time);
+
+                    double numLive = 0;
+                    for (int i = 0; i < status.Length; i++)
                     {
-                        //Console.WriteLine("time = " + time);
-                        bool[] status = netChurn.getStatusAtTime(time);
-
-                        double numLive = 0;
-                        for (int i = 0; i < status.Length; i++)
-                        {
-                            if (status[i])
-                                numLive += 1.0;
-                        }
-
-                        percentLive += numLive / Convert.ToDouble(status.Length);
-
-                        network.updateStatus(status);
-                        if (network.isCurrentNetworkConnected())
-                            connectionCount += 1.0;
-
-                        Message msg = new Message(network, netChurn, time);
-                        avgDelay += msg.getMessageDelay();
-
-                        iterations += 1.0;
-                        time += timeDelta;
+                        if (status[i])
+                            numLive += 1.0;
                     }
 
-                    connectivity[index] += (connectionCount / iterations) * 100.0;
-                    avgMsgDelays[index] += avgDelay / iterations;
-                    liveTime[index] += (percentLive / iterations) * 100.0;
+                    percentLive += (numLive / Convert.ToDouble(status.Length)) * 100.0;
+
+                    network.updateStatus(status);
+                    if (network.isCurrentNetworkConnected())
+                        connectivity[index] += 1.0;
+
+                    Message msg = new Message(network, netChurn, time);
+                    avgDelay += msg.getMessageDelay();
+
+                    avgMsgDelays[index] += avgDelay;
+                    liveTime[index] += percentLive;
                     //Console.WriteLine("On this iteration, a path existed " + (pathCount / iterations) * 100.0 + " percent of the time.");
+
+                    System.IO.File.AppendAllText("msg_delays_gh_" + numNodes.ToString() + ".txt", avgDelay.ToString() + Environment.NewLine);
                 }
 
-                connectivity[index] = connectivity[index] / Convert.ToDouble(numSims);
+                connectivity[index] = (connectivity[index] / Convert.ToDouble(numSims)) * 100.0;
                 avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(numSims);
-                liveTime[index] += liveTime[index] / Convert.ToDouble(numSims);
+                liveTime[index] = liveTime[index] / Convert.ToDouble(numSims);
+
                 Console.WriteLine("GH graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
-                Console.WriteLine("The average message delay between two random nodes is {0:N3}.", avgMsgDelays[index]);
+                Console.WriteLine("The average message delay between two random nodes is {0:N4}.", avgMsgDelays[index]);
                 Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
                 Console.WriteLine();
 
+                System.IO.File.AppendAllText("graph_sizes_gh.txt", nValues[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("avg_connectivity_gh.txt", connectivity[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("avg_msg_delays_gh.txt", avgMsgDelays[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("avg_up_time_gh.txt", liveTime[index].ToString() + Environment.NewLine);
+
                 index++;
             }
-
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/graph_sizes_gh.txt", nValues.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_connectivity_gh.txt", connectivity.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_msg_delays_gh.txt", avgMsgDelays.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_up_time_gh.txt", liveTime.Select(d => d.ToString()).ToArray());
         }
 
         public void simGnp(double p)
@@ -543,16 +541,16 @@ namespace NetworkSimulation
             //Console.WriteLine("The smallest number of cliques: " + cliqueMin);
             //Console.WriteLine("The largest number of cliques: " + cliqueMax);
 
-            System.IO.File.WriteAllText("c:/SimResults/graph_sizes_gnp.txt", "");
-            System.IO.File.WriteAllText("c:/SimResults/avg_connectivity_gnp.txt", "");
-            System.IO.File.WriteAllText("c:/SimResults/avg_msg_delays_gnp.txt", "");
-            System.IO.File.WriteAllText("c:/SimResults/avg_up_time_gnp.txt", "");
+            System.IO.File.WriteAllText("graph_sizes_gnp.txt", "");
+            System.IO.File.WriteAllText("avg_connectivity_gnp.txt", "");
+            System.IO.File.WriteAllText("avg_msg_delays_gnp.txt", "");
+            System.IO.File.WriteAllText("avg_up_time_gnp.txt", "");
 
             for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
             {
                 numNodes = numCliques * (numCliques - 1);
                 numEdges = numNodes * (numCliques - 1) / 2;
-                System.IO.File.WriteAllText("c:/SimResults/msg_delays_gnp_" + numNodes.ToString() + ".txt", "");
+                System.IO.File.WriteAllText("msg_delays_gnp_" + numNodes.ToString() + ".txt", "");
                 p = Convert.ToDouble(numEdges) / (Convert.ToDouble(numNodes * (numNodes - 1)) / 2.0);
                 nValues[index] = numNodes;
                 connectivity[index] = 0.0;
@@ -602,7 +600,7 @@ namespace NetworkSimulation
                     liveTime[index] += percentLive;
                     //Console.WriteLine("On this iteration, a path existed " + (pathCount / iterations) * 100.0 + " percent of the time.");
 
-                    System.IO.File.AppendAllText("c:/SimResults/msg_delays_gnp_" + numNodes.ToString() + ".txt", avgDelay.ToString() + Environment.NewLine);
+                    System.IO.File.AppendAllText("msg_delays_gnp_" + numNodes.ToString() + ".txt", avgDelay.ToString() + Environment.NewLine);
                 }
 
                 connectivity[index] = (connectivity[index] / Convert.ToDouble(numSims)) * 100.0;
@@ -613,10 +611,10 @@ namespace NetworkSimulation
                 Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
                 Console.WriteLine();
 
-                System.IO.File.AppendAllText("c:/SimResults/graph_sizes_gnp.txt", nValues[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("c:/SimResults/avg_connectivity_gnp.txt", connectivity[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("c:/SimResults/avg_msg_delays_gnp.txt", avgMsgDelays[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("c:/SimResults/avg_up_time_gnp.txt", liveTime[index].ToString());
+                System.IO.File.AppendAllText("graph_sizes_gnp.txt", nValues[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("avg_connectivity_gnp.txt", connectivity[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("avg_msg_delays_gnp.txt", avgMsgDelays[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("avg_up_time_gnp.txt", liveTime[index].ToString() + Environment.NewLine);
 
                 index++;
             }
@@ -699,7 +697,7 @@ namespace NetworkSimulation
         /// presence is given by independently alternating renewal processes.
         /// Each user's ON duration is drawn from a Paretto distribution where 
         /// alpha = 3, and its OFF duration is drawn from an Exponential 
-        /// distribution where lambda = 2.
+        /// distribution where lambda = 1.
         /// 
         /// The purpose of this simulation is to examine the arrival process
         /// of all users in the system and to determine the cdf of the inter-
