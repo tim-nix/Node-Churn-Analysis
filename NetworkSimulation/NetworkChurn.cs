@@ -146,7 +146,7 @@ namespace NetworkSimulation
 
         /// <summary>
         /// The purpose of this method is to iterate through all 
-        /// of the node timelines and return the earliest start 
+        /// of the node timelines and return the earliest end 
         /// time of the first occuring session.
         /// </summary>
         /// <returns>The earliest first start time</returns>
@@ -185,6 +185,28 @@ namespace NetworkSimulation
             }
 
             return shortestTime;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to iterate through all 
+        /// of the node timelines and return the last stop 
+        /// time of the last occuring session.
+        /// </summary>
+        /// <returns>The earliest final stop time</returns>
+        public double getLastFinalTime()
+        {
+            if (nodeSessions[0] == null)
+                throw new System.NullReferenceException("Error: Must first generate churn!");
+
+            double lastTime = nodeSessions[0].getFinalTime();
+            for (int i = 1; i < nodeSessions.Length; i++)
+            {
+                if (nodeSessions[i].getFinalTime() > lastTime)
+                   lastTime = nodeSessions[i].getFinalTime();
+            }
+
+            return lastTime;
         }
 
 

@@ -20,8 +20,8 @@ namespace NetworkSimulation
         private static Random r = new Random();
 
 
-        public Simulations(int minN = 100,
-                           int maxN = 500,
+        public Simulations(int minN = 20,
+                           int maxN = 200,
                            int nDelta = 100,
                            double startTime = 200.0,
                            double tDelta = 0.1,
@@ -182,9 +182,9 @@ namespace NetworkSimulation
             if (upDistro == null)
                 throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
 
-            int numSims = 10;
+            int numSims = 10000;
 
-            int cliqueMin = 5;
+            int cliqueMin = 1;
             while (cliqueMin * (cliqueMin - 1) < minOrder)
                 cliqueMin++;
 
@@ -222,7 +222,7 @@ namespace NetworkSimulation
                 connectivity[index] = 0.0;
                 avgMsgDelays[index] = 0.0;
 
-                Console.WriteLine("Number or nodes: " + numNodes);
+                Console.WriteLine("Number of nodes: " + numNodes);
                 for (int sim = 0; sim < numSims; sim++)
                 {
                     //Console.WriteLine("Simulation " + (sim + 1));
@@ -253,13 +253,21 @@ namespace NetworkSimulation
                         connectivity[index] += 1.0;
 
                     Message msg = new Message(network, netChurn, time);
-                    avgDelay += msg.getMessageDelay();
+                    try
+                    {
+                        avgDelay += msg.getMessageDelay();
 
-                    avgMsgDelays[index] += avgDelay;
-                    liveTime[index] += percentLive;
-                    //Console.WriteLine("On this iteration, a path existed " + (pathCount / iterations) * 100.0 + " percent of the time.");
+                        avgMsgDelays[index] += avgDelay;
+                        liveTime[index] += percentLive;
+                        //Console.WriteLine("On this iteration, a path existed " + (pathCount / iterations) * 100.0 + " percent of the time.");
 
-                    System.IO.File.AppendAllText("msg_delays_gh_" + numNodes.ToString() + ".txt", avgDelay.ToString() + Environment.NewLine);
+                        System.IO.File.AppendAllText("msg_delays_gh_" + numNodes.ToString() + ".txt", avgDelay.ToString() + Environment.NewLine);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        sim--;
+                    }
                 }
 
                 connectivity[index] = (connectivity[index] / Convert.ToDouble(numSims)) * 100.0;

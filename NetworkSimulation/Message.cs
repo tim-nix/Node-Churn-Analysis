@@ -11,6 +11,7 @@ namespace NetworkSimulation
         private Network network;
         private NetworkChurn churn;
         private double start_time;
+        private double final_time;
 
         private static Random r = new Random();
 
@@ -19,6 +20,7 @@ namespace NetworkSimulation
             network = nw;
             churn = ch;
             start_time = time_t;
+            final_time = churn.getLastFinalTime();
         }
 
 
@@ -57,7 +59,8 @@ namespace NetworkSimulation
             //    Console.WriteLine("Residue: " + (churn.getNextStartTimeForNode(endVertex, curr_time) - curr_time));
 
             // Track spread of message from source until the destination is reached.
-            while (!locations.Contains(endVertex))               
+
+            while (!locations.Contains(endVertex) && (curr_time < final_time))               
             {
                 curr_time += timeDelta;
                 bool[] status = churn.getStatusAtTime(curr_time);
@@ -86,6 +89,9 @@ namespace NetworkSimulation
             }
 
             //Console.WriteLine("Message delay: " + (curr_time - start_time));
+            if (curr_time >= final_time)
+                throw new Exception("Error: Message not delivered!");
+
             return curr_time - start_time;
         }
     }
