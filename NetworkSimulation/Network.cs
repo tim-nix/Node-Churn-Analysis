@@ -271,9 +271,10 @@ namespace NetworkSimulation
         public override String ToString()
         {
             String s = "The full network is:\n";
-            fullNetwork.ToString();
+            s += fullNetwork.ToString();
+            
             s += "\nThe current network state is:\n";
-            currentStatus.ToString();
+            s += currentStatus.ToString();
 
             s += "\nLabels: ";
             for (int i = 0; i < labels.Length; i++)

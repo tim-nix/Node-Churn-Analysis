@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -179,6 +179,69 @@ namespace NetworkSimulation
                 }
             }
 
+            return c;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to generate a Barabasi-Albert
+        /// random scale-free network topology.  The construction uses
+        /// preferential attachment; that is, as new edges are added to
+        /// the topololy, nodes with high degree are more likely to gain
+        /// an edge than nodes with low degree.
+        /// </summary>
+        /// <param name="numNodes">The number of nodes in the topology.</param>
+        /// <param name="mo">The number of nodes in the initial clique.</param>
+        /// <param name="m">The number of initial edges each additional node.</param>
+        /// <returns>The adjacency matrix of the constructed graph.</returns>
+        public static int[,] BarabasiAlbert(int numNodes, int mo, int m)
+        {
+            int[,] c = new int[numNodes, numNodes];
+            ArrayList pSet = new ArrayList();
+            MersenneTwister randomNum = new MersenneTwister();
+
+            if (numNodes <= mo)
+                throw new Exception("Error: Barabasi-Albert requires more than " + m + " nodes.");
+
+            if (mo <= m)
+                throw new Exception("Error: Barabasi-Albert requires m < mo.");
+                        
+            // Build a clique of mo nodes.
+            for (int i = 0; i < mo; i++)
+            {
+                for (int j = 0; j < mo; j++)
+                {
+                    if (i != j)
+                    {
+                        c[i, j] = 1;
+                        c[j, i] = 1;
+                        pSet.Add(i);
+                        pSet.Add(j);
+                    }
+                }
+            }
+
+            int index = 0;
+            int node2 = 0;
+            for (int i = mo; i < numNodes; i++)
+            {
+                int j = 0;
+
+                while (j < m)
+                {
+                    index = Convert.ToInt32(randomNum.genrand_int(pSet.Count));
+                    node2 = Convert.ToInt32(pSet[index]);
+                    if ((0 == c[i, node2]) && (i != node2))
+                    {
+                        c[i, node2] = 1;
+                        c[node2, i] = 1;
+                        pSet.Add(i);
+                        pSet.Add(node2);
+                        j++;
+                    }
+                }
+            }
+                        
             return c;
         }
     }

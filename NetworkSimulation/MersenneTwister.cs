@@ -240,6 +240,11 @@ namespace NetworkSimulation
 
             return exprand;
         }
+
+        public long genrand_int(int ceiling)
+        {
+            return genrand_Int32() % ceiling;
+        }
         #endregion
         /* These real versions are due to Tim Nix, 2016/09/30 added */
 
