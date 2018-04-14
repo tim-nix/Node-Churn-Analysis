@@ -17,7 +17,9 @@ namespace NetworkSimulation
         private int numSessions = 0;        // number of sessions per node to track
         private Distribution upDistro;      // distribution for drawing session up times
         private Distribution downDistro;    // distribution for drawing session down times
-        private static Random r = new Random();
+
+        private const int _numlocks = 5;
+        private static readonly object[] _lock = new object[_numlocks];  // lock for shared variables across threads
 
 
         public Simulations(int minN = 20,
@@ -30,6 +32,10 @@ namespace NetworkSimulation
             setNodeRange(minN, maxN, nDelta);
             setTimeRange(startTime, tDelta);
             setNumberOfSessions(sessionsPerNode);
+            for (int i = 0; i < _numlocks; i++)
+            {
+                _lock[i] = new object();
+            }
         }
 
         public void setNodeRange(int minN, int maxN, int nDelta)
@@ -833,9 +839,8 @@ namespace NetworkSimulation
         }
 
         /// <summary>
-        /// This simulation is set up for direct comparison of Barabasi-Albert 
-        /// scale-free topologies to Gunther-Hartnell.  It also only samples 
-        /// each measured parameter once per generated graph.
+        /// This simulation is set up for direct comparison of Barabasi-Albert scale-free topologies to Gunther-Hartnell.  
+        /// It also only samples each measured parameter once per generated graph.
         /// </summary>
         public void simBA3()
         {
@@ -931,6 +936,128 @@ namespace NetworkSimulation
                         sim--;
                     }
                 }
+
+                connectivity[index] = (connectivity[index] / Convert.ToDouble(totalSims)) * 100.0;
+                avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(numSims);
+                liveTime[index] = liveTime[index] / Convert.ToDouble(totalSims);
+                Console.WriteLine("BA graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
+                Console.WriteLine("The average message delay between two random nodes is {0:N4}.", avgMsgDelays[index]);
+                Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
+                Console.WriteLine();
+
+                System.IO.File.AppendAllText("graph_sizes_ba.txt", nValues[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("avg_connectivity_ba.txt", connectivity[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("avg_msg_delays_ba.txt", avgMsgDelays[index].ToString() + Environment.NewLine);
+                System.IO.File.AppendAllText("avg_up_time_ba.txt", liveTime[index].ToString() + Environment.NewLine);
+
+                index++;
+            }
+        }
+
+
+        /// <summary>
+        /// This simulation is a modification of the sim3BA method to implement parallelism.
+        /// </summary>
+        public void simBA3Parallel()
+        {
+            if (upDistro == null)
+                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
+
+            int numSims = 10000;
+
+            int cliqueMin = 5;
+            while (cliqueMin * (cliqueMin - 1) < minOrder)
+                cliqueMin++;
+
+
+            int cliqueMax = cliqueMin;
+            while (cliqueMax * (cliqueMax - 1) < maxOrder)
+                cliqueMax++;
+
+            int[] nValues = new int[cliqueMax - cliqueMin];
+
+            double[] pValues = new double[cliqueMax - cliqueMin];
+            double[] connectivity = new double[cliqueMax - cliqueMin];
+            double[] liveTime = new double[cliqueMax - cliqueMin];
+            double[] avgMsgDelays = new double[cliqueMax - cliqueMin];
+                        
+            int index = 0;
+            int numNodes = 0;
+            int numEdges = 0;
+            int totalSims = 0;
+            double p;
+            //Console.WriteLine("The smallest number of cliques: " + cliqueMin);
+            //Console.WriteLine("The largest number of cliques: " + cliqueMax);
+
+            System.IO.File.WriteAllText("graph_sizes_ba.txt", "");
+            System.IO.File.WriteAllText("avg_connectivity_ba.txt", "");
+            System.IO.File.WriteAllText("avg_msg_delays_ba.txt", "");
+            System.IO.File.WriteAllText("avg_up_time_ba.txt", "");
+
+            for (int numCliques = cliqueMin; numCliques < cliqueMax; numCliques++)
+            {
+                numNodes = numCliques * (numCliques - 1);
+                numEdges = numNodes * (numCliques - 1) / 2;
+                System.IO.File.WriteAllText("msg_delays_ba_" + numNodes.ToString() + ".txt", "");
+                nValues[index] = numNodes;
+                connectivity[index] = 0.0;
+                avgMsgDelays[index] = 0.0;
+                totalSims = 0;
+                
+                //Console.WriteLine("Number or nodes: " + numNodes);
+                #region Parallel_Loop
+                Parallel.For(0, numSims, sim =>
+                {
+                    lock (_lock[0])
+                    {
+                        totalSims++;
+                    }
+                    //Console.WriteLine("Simulation " + (sim + 1));
+                    Network network = new Network(CommonGraphs.BarabasiAlbert(numNodes, 4, 3));
+
+                    NetworkChurn netChurn = new NetworkChurn(numNodes);
+                    lock (_lock[1])
+                    {
+                        netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
+                    }
+
+                    double time = baseTime + 25.0;
+                    double delay = 0.0;
+                    double percentLive = 0.0;
+
+                    //Console.WriteLine("time = " + time);
+                    bool[] status = netChurn.getStatusAtTime(time);
+
+                    double numLive = 0;
+                    for (int i = 0; i < status.Length; i++)
+                    {
+                        if (status[i])
+                            numLive += 1.0;
+                    }
+
+                    percentLive += (numLive / Convert.ToDouble(status.Length)) * 100.0;
+                    lock (_lock[2])
+                    {
+                        liveTime[index] += percentLive;
+                    }
+                    network.updateStatus(status);
+                    if (network.isCurrentNetworkConnected())
+                    {
+                        lock (_lock[3])
+                        {
+                            connectivity[index] += 1.0;
+                        }
+                    }
+
+                    Message msg = new Message(network, netChurn, time);
+                    delay = msg.getMessageDelay();
+                    lock (_lock[4])
+                    {
+                        avgMsgDelays[index] += delay;
+                        System.IO.File.AppendAllText("msg_delays_ba_" + numNodes.ToString() + ".txt", delay.ToString() + Environment.NewLine);
+                    }
+                });
+                #endregion
 
                 connectivity[index] = (connectivity[index] / Convert.ToDouble(totalSims)) * 100.0;
                 avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(numSims);

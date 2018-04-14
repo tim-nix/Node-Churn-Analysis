@@ -11,7 +11,7 @@ namespace NetworkSimulation
             Distribution upD = new Exponential(1.0);
             Distribution downD = new Exponential(1.0);
             sim.setUpDistro(upD, downD);
-            sim.simBA3();
+            sim.simBA3Parallel();
         }
     }
 }
