@@ -73,6 +73,52 @@ namespace NetworkSimulation
 
 
         /// <summary>
+        /// The purpose of this method is to add an edge between two
+        /// existing vertices.  This method does not confirm/deny 
+        /// whether there is already an existing edge between the
+        /// two vertices.  Given that multiedges are not allowed, if
+        /// the edge already exists then no change is made.  If the
+        /// edge does not exist, then it is added to the adjacency
+        /// matrix.
+        /// </summary>
+        /// <param name="vertex1">one end of the edge</param>
+        /// <param name="vertex2">the other end of the edge</param>
+        public void addEdge(int vertex1, int vertex2)
+        {
+            if ((vertex1 < 0) || (vertex1 > graph.GetLength(0)))
+                throw new ArgumentException("Error: Vertex 1 does not exist!");
+
+            if ((vertex2 < 0) || (vertex2 > graph.GetLength(0)))
+                throw new ArgumentException("Error: Vertex 2 does not exist!");
+
+            graph[vertex1, vertex2] = 1;
+            graph[vertex2, vertex1] = 1;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to remove an edge between
+        /// two existing vertices.  This method does not confirm/deny 
+        /// whether there is already an existing edge between the
+        /// two vertices.  If the edge already does not exist, then 
+        /// no change is made.  If the edge exists, then it is removed
+        /// from the adjacency matrix.
+        /// </summary>
+        /// <param name="vertex1">one end of the edge</param>
+        /// <param name="vertex2">the other end of the edge</param>
+        public void removeEdge(int vertex1, int vertex2)
+        {
+            if ((vertex1 < 0) || (vertex1 > graph.GetLength(0)))
+                throw new ArgumentException("Error: Vertex 1 does not exist!");
+
+            if ((vertex2 < 0) || (vertex2 > graph.GetLength(0)))
+                throw new ArgumentException("Error: Vertex 2 does not exist!");
+
+            graph[vertex1, vertex2] = 0;
+            graph[vertex2, vertex1] = 0;
+        }
+
+        /// <summary>
         /// The purpose of this method is to determine the shortest cycle 
         /// starting from a given vertex that returns to the same vertex 
         /// without traversing the any edge more than once.  The
@@ -134,6 +180,135 @@ namespace NetworkSimulation
 
             //Console.WriteLine("No cycle found!");
             return -1;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to determine the shortest path
+        /// length starting from a given vertex and traversing to the
+        /// destination vertex.  The approach is to use a breadth-first  
+        /// search with the starting vertex as the root of the search tree.  
+        /// The method returns -1 if no path exists between the two vertices.
+        /// </summary>
+        /// <param name="startVertex">the starting vertex</param>
+        /// <param name="endVertex">the destination vertex</param>
+        /// <returns>The path length between the starting vertex and destination vertex.</returns>
+        public int getDistance(int startVertex, int endVertex)
+        {
+            if ((startVertex < 0) || (startVertex > graph.GetLength(0)))
+                throw new ArgumentException("Error: Starting vertex does not exist!");
+
+            if ((endVertex < 0) || (endVertex > graph.GetLength(0)))
+                throw new ArgumentException("Error: Ending vertex does not exist!");
+
+            //Console.WriteLine("Starting BFS.  Starting node is {0}", startVertex);
+            int depth = 0;
+            Queue<int> toVisitNow = new Queue<int>();
+            Queue<int> toVisitNext = new Queue<int>();
+            HashSet<int> visited = new HashSet<int>();
+
+            toVisitNow.Enqueue(startVertex);
+
+            while ((toVisitNow.Count > 0) || (toVisitNext.Count > 0))
+            {
+                int currentNode = toVisitNow.Dequeue();
+                if (currentNode == endVertex)
+                    return depth;
+
+                visited.Add(currentNode);
+                for (int i = 0; i < graph.GetLength(0); i++)
+                {
+                    if ((graph[currentNode, i] == 1) && !visited.Contains(i))
+                    {
+                        toVisitNext.Enqueue(i);
+                    }
+                }
+
+                if (toVisitNow.Count == 0)
+                {
+                    //Console.WriteLine("Depth {0} complete!", depth);
+                    toVisitNow = toVisitNext;
+                    toVisitNext = new Queue<int>();
+                    depth++;
+                }
+            }
+
+            //Console.WriteLine("No cycle found!");
+            return -1;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to determine the shortest path
+        /// from the startVertex to the endVertex.
+        /// </summary>
+        /// <param name="startVertex">the starting vertex</param>
+        /// <param name="endVertex">the destination vertex</param>
+        /// <returns>An array of the nodes within the path.</returns>
+        public int[] getShortestPath(int startVertex, int endVertex)
+        {
+            if ((startVertex < 0) || (startVertex > graph.GetLength(0)))
+                throw new ArgumentException("Error: Starting vertex does not exist!");
+
+            if ((endVertex < 0) || (endVertex > graph.GetLength(0)))
+                throw new ArgumentException("Error: Ending vertex does not exist!");
+
+            //Console.WriteLine("Starting BFS.  Starting node is {0}", startVertex);
+            int depth = 0;
+            Queue<int> toVisitNow = new Queue<int>();
+            Queue<int> toVisitNext = new Queue<int>();
+            HashSet<int> visited = new HashSet<int>();
+            int[] parents = new int[Order];
+            for (int i = 0; i < Order; i++)
+            {
+                parents[i] = -1;
+            }
+
+            toVisitNow.Enqueue(startVertex);
+
+            while ((toVisitNow.Count > 0) || (toVisitNext.Count > 0))
+            {
+                int currentNode = toVisitNow.Dequeue();
+                if (currentNode == endVertex)
+                {
+                    int[] path = new int[depth + 1];
+                    path[0] = currentNode;
+                    int i = 1;
+                    while (currentNode != startVertex)
+                    {
+                        currentNode = parents[currentNode];
+                        path[i] = currentNode;
+                        i++;
+                    }
+
+                    return path;
+                }
+
+                visited.Add(currentNode);
+                for (int i = 0; i < Order; i++)
+                {
+                    if ((1 == graph[currentNode, i]) && !visited.Contains(i))
+                    {
+                        toVisitNext.Enqueue(i);
+                        if (-1 == parents[i])
+                        {
+                            parents[i] = currentNode;
+                        } 
+                    }
+                }
+
+                if (0 == toVisitNow.Count)
+                {
+                    //Console.WriteLine("Depth {0} complete!", depth);
+                    toVisitNow = toVisitNext;
+                    toVisitNext = new Queue<int>();
+                    depth++;
+                }
+            }
+
+
+            //Console.WriteLine("No cycle found!");
+            return new int[] { -1 };
         }
 
 

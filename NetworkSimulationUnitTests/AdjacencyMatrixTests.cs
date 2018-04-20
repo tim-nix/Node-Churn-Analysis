@@ -78,6 +78,81 @@ namespace NetworkSimulationUnitTests
 
 
         [TestMethod]
+        public void getDistanceTest1()
+        {
+            AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.Path(100));
+
+            Assert.AreEqual(graph.getDistance(0, 1), 1, "Adjacent vertices should have distance 1.");
+        }
+
+
+        [TestMethod]
+        public void getDistanceTest2()
+        {
+            AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.Path(100));
+
+            Assert.AreEqual(graph.getDistance(0, 99), 99, "A path between vertices 0 and 99 should have distance 99.");
+        }
+
+
+        [TestMethod]
+        public void getShortestPathTest1()
+        {
+            int n = 100;
+            AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.Path(n));
+
+            int[] path = graph.getShortestPath(0, 99);
+
+            for (int i = 0; i < path.Length; i++)
+            {
+                Assert.AreEqual(path[i], 99 - i, "A path must through every node to get from the first node to the last.");
+            }
+        }
+
+
+        [TestMethod]
+        public void getShortestPathTest2()
+        {
+            int n = 100;
+            AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.Path(n));
+
+            int[] path = graph.getShortestPath(99, 0);
+
+            for (int i = 0; i < path.Length; i++)
+            {
+                Assert.AreEqual(path[i], i, "A path must through every node to get from the first node to the last.");
+            }
+        }
+
+
+        [TestMethod]
+        public void getShortestPathTest3()
+        {
+            int n = 100;
+            AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.Clique(n));
+
+            int[] path = graph.getShortestPath(0, 99);
+
+            Assert.AreEqual(path[0], 99, "In a clique, the source is directly connected to the destination.");
+            Assert.AreEqual(path[1], 0, "In a clique, the source is directly connected to the destination.");
+        }
+
+
+        [TestMethod]
+        public void getShortestPathTest4()
+        {
+            int n = 100;
+            AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.Cycle(n));
+
+            int[] path = graph.getShortestPath(0, 95);
+
+            for (int i = 0; i < path.Length; i++) {
+                Assert.AreEqual(path[i], (i + 95) % n, "In a cycle, the shortest path may cross the Node 0 to Node 99.");
+            }
+        }
+
+
+        [TestMethod]
         public void girthTest1()
         {
             AdjacencyMatrix graph = new AdjacencyMatrix(CommonGraphs.Path(100));

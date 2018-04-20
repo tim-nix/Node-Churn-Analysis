@@ -122,6 +122,58 @@ namespace NetworkSimulation
 
 
         /// <summary>
+        /// The purpose of this method is to serve as a wrapper for 
+        /// the addEdge() method in the AdjacencyMatrix class called
+        /// on the fullNetwork topology.
+        /// </summary>
+        /// <param name="vertex1">one end of the edge</param>
+        /// <param name="vertex2">the other end of the edge</param>
+        public void addEdgeFull(int vertex1, int vertex2)
+        {
+            fullNetwork.addEdge(vertex1, vertex2);
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to serve as a wrapper for 
+        /// the removeEdge() method in the AdjacencyMatrix class called
+        /// on the fullNetwork topology.
+        /// </summary>
+        /// <param name="vertex1">one end of the edge</param>
+        /// <param name="vertex2">the other end of the edge</param>
+        public void removeEdgeFull(int vertex1, int vertex2)
+        {
+            fullNetwork.removeEdge(vertex1, vertex2);
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to serve as a wrapper for 
+        /// the addEdge() method in the AdjacencyMatrix class called
+        /// on the currentStatus topology.
+        /// </summary>
+        /// <param name="vertex1">one end of the edge</param>
+        /// <param name="vertex2">the other end of the edge</param>
+        public void addEdgeCurrent(int vertex1, int vertex2)
+        {
+            currentStatus.addEdge(vertex1, vertex2);
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to serve as a wrapper for 
+        /// the removeEdge() method in the AdjacencyMatrix class called
+        /// on the currentStatus topology.
+        /// </summary>
+        /// <param name="vertex1">one end of the edge</param>
+        /// <param name="vertex2">the other end of the edge</param>
+        public void removeEdgeCurrent(int vertex1, int vertex2)
+        {
+            currentStatus.removeEdge(vertex1, vertex2);
+        }
+
+
+        /// <summary>
         /// The purpose of this method is to serve as a wrapper for the 
         /// isConnected() method in the AdjacencyMatrix class called on 
         /// the fullNetwork. 
@@ -260,6 +312,73 @@ namespace NetworkSimulation
         public int[] getDistroCurrent()
         {
             return currentStatus.degreeDistro();
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to determine the shortest path distance
+        /// from a specified vertex to all other vertices within the fullNetwork.
+        /// </summary>
+        /// <param name="startVertex">the starting vertex</param>
+        /// <returns>An array of the number of nodes that are a given distance
+        /// from the startVertex in the full topology.  The index of the array 
+        /// corresponds to the shortest path distance from the start vertex.</returns>
+        public int[] getDistanceDistroFull(int startVertex)
+        {
+            if ((startVertex < 0) || (startVertex >= FullOrder))
+                throw new ArgumentException("Error: Starting vertex does not exist!");
+
+            int[] distD = new int[fullNetwork.Order];
+
+            distD[0] = 1;
+
+            for (int endVertex = 0; endVertex < fullNetwork.Order; endVertex++)
+            {
+                if (startVertex != endVertex)
+                {
+                    distD[fullNetwork.getDistance(startVertex, endVertex)]++;
+                }
+            }
+
+            return distD;
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to serve as a wrapper for the 
+        /// getShortestPath() method in the AdjacencyMatrix class called on 
+        /// the fullNetwork.
+        /// </summary>
+        /// <param name="startVertex">the starting vertex</param>
+        /// <param name="endVertex">the destination vertex</param>
+        /// <returns>An array of the nodes within the path.</returns>
+        public int[] getShortestPathFull(int startVertex, int endVertex)
+        {
+            return fullNetwork.getShortestPath(startVertex, endVertex);
+        }
+
+
+        /// <summary>
+        /// The purpose of this method is to serve as a wrapper for the 
+        /// getShortestPath() method in the AdjacencyMatrix class called on 
+        /// the currentNetwork.
+        /// </summary>
+        /// <param name="startVertex">the starting vertex</param>
+        /// <param name="endVertex">the destination vertex</param>
+        /// <returns>An array of the nodes within the path.</returns>
+        public int[] getShortestPathCurrent(int startVertex, int endVertex)
+        {
+            int[] path = currentStatus.getShortestPath(Array.IndexOf(labels, startVertex), Array.IndexOf(labels, endVertex));
+
+            for (int i = 0; i < path.Length; i++)
+            {
+                if (-1 != path[i])
+                {
+                    path[i] = labels[path[i]];
+                }
+            }
+
+            return path;
         }
 
 

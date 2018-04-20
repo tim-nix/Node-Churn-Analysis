@@ -985,7 +985,6 @@ namespace NetworkSimulation
             int numNodes = 0;
             int numEdges = 0;
             int totalSims = 0;
-            double p;
             //Console.WriteLine("The smallest number of cliques: " + cliqueMin);
             //Console.WriteLine("The largest number of cliques: " + cliqueMax);
 

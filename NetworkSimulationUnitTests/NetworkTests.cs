@@ -408,5 +408,152 @@ namespace NetworkSimulationUnitTests
 
             Assert.AreEqual(n / 2, distro[0], "All nodes should have degree 0.");
         }
+
+
+        [TestMethod]
+        public void getDistanceDistroFullTest1()
+        {
+            int n = 10;
+            int startVertex = 0;
+            Network network = new Network(CommonGraphs.Path(n));
+
+            int[] distances = network.getDistanceDistroFull(startVertex);
+
+            for (int i = 0; i < n - 1; i++)
+            {
+                Assert.AreEqual(distances[i], 1, "In a path, every node should be a unique distance from the first node.");
+            }
+        }
+
+
+        [TestMethod]
+        public void getDistanceDistroFullTest2()
+        {
+            int n = 11;
+            int startVertex = n / 2;
+            Network network = new Network(CommonGraphs.Path(n));
+
+            int[] distances = network.getDistanceDistroFull(startVertex);
+
+            Assert.AreEqual(distances[0], 1, "In any simple graph, a node is 0 distance from itself.");
+
+            for (int i = 1; i <= startVertex; i++)
+            {
+                Assert.AreEqual(distances[i], 2, "In a path, two nodes should be a unique distance from the center node.");
+            }
+
+            for (int i = startVertex + 1; i < n; i++)
+            {
+                Assert.AreEqual(distances[i], 0, "In a path, no node should be farther away than n/2 from the center node.");
+            }
+        }
+
+
+        [TestMethod]
+        public void getDistanceDistroTFullest3()
+        {
+            int n = 11;
+            int startVertex = 0;
+            Network network = new Network(CommonGraphs.Cycle(n));
+
+            int[] distances = network.getDistanceDistroFull(startVertex);
+
+            Assert.AreEqual(distances[0], 1, "In any simple graph, a node is 0 distance from itself.");
+
+            for (int i = 1; i <= n / 2; i++)
+            {
+                Assert.AreEqual(distances[i], 2, "In a cycle with odd number of nodes, two nodes should be a unique distance from the center node.");
+            }
+
+            for (int i = n / 2 + 1; i < n; i++)
+            {
+                Assert.AreEqual(distances[i], 0, "In a cycle with odd number of nodes, no node should be farther away than n/2 from the center node.");
+            }
+        }
+
+
+        [TestMethod]
+        public void getDistanceDistroFullTest4()
+        {
+            int n = 10;
+            int startVertex = 0;
+            Network network = new Network(CommonGraphs.Cycle(n));
+
+            int[] distances = network.getDistanceDistroFull(startVertex);
+
+            Assert.AreEqual(distances[0], 1, "In any simple graph, a node is 0 distance from itself.");
+
+            for (int i = 1; i < n / 2 - 1; i++)
+            {
+                Assert.AreEqual(distances[i], 2, "In a cycle with even number of nodes, two nodes for each distance up to n/2.");
+            }
+
+            Assert.AreEqual(distances[n / 2], 1, "In a cycle with even number of nodes, one node for distance n/2.");
+
+            for (int i = n / 2 + 1; i < n; i++)
+            {
+                Assert.AreEqual(distances[i], 0, "In a cycle with even number of nodes, no node should be farther away than n/2 from the center node.");
+            }
+        }
+
+
+        [TestMethod]
+        public void getShortestPathFullTest1()
+        {
+            int n = 100;
+           Network graph = new Network(CommonGraphs.Path(n));
+
+            int[] path = graph.getShortestPathFull(0, 99);
+
+            for (int i = 0; i < path.Length; i++)
+            {
+                Assert.AreEqual(path[i], 99 - i, "A path must through every node to get from the first node to the last.");
+            }
+        }
+
+
+        [TestMethod]
+        public void getShortestPathTest2()
+        {
+            int n = 100;
+            Network graph = new Network(CommonGraphs.Path(n));
+
+            int[] path = graph.getShortestPathFull(99, 0);
+
+            for (int i = 0; i < path.Length; i++)
+            {
+                Assert.AreEqual(path[i], i, "A path must through every node to get from the first node to the last.");
+            }
+        }
+
+
+        [TestMethod]
+        public void getShortestPathTest3()
+        {
+            int n = 100;
+            int start = 25;
+            int end = 75;
+            Network graph = new Network(CommonGraphs.Clique(n));
+
+            int[] path = graph.getShortestPathFull(start, end);
+
+            Assert.AreEqual(path[0], end, "In a clique, the source is directly connected to the destination.");
+            Assert.AreEqual(path[1], start, "In a clique, the source is directly connected to the destination.");
+        }
+
+
+        [TestMethod]
+        public void getShortestPathTest4()
+        {
+            int n = 100;
+            Network graph = new Network(CommonGraphs.Cycle(n));
+
+            int[] path = graph.getShortestPathFull(5, 95);
+
+            for (int i = 0; i < path.Length; i++)
+            {
+                Assert.AreEqual(path[i], (i + 95) % n, "In a cycle, the shortest path may cross the Node 0 to Node 99.");
+            }
+        }
     }
 }
