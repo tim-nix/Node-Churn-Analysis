@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 
 namespace NetworkSimulation
 {
@@ -379,6 +380,45 @@ namespace NetworkSimulation
             }
 
             return path;
+        }
+
+
+        public ArrayList getShortestIndependentPathLengths(int startVertex, int endVertex)
+        {
+            int[] path;
+            bool[] status = new bool[fullNetwork.Order];
+            ArrayList pathLengths = new ArrayList();
+
+            AdjacencyMatrix oldFull = new AdjacencyMatrix(fullNetwork.Graph);
+            AdjacencyMatrix oldCurrent = new AdjacencyMatrix(currentStatus.Graph);
+
+            for (int i = 0; i < fullNetwork.Order; i++)
+            {
+                status[i] = true;
+            }
+
+            path = getShortestPathFull(startVertex, endVertex);
+            while (-1 != path[0])
+            {
+                pathLengths.Add(path.Length - 1);
+                if (2 == path.Length)
+                {
+                    removeEdgeFull(startVertex, endVertex);
+                }
+
+                for (int i = 1; i < path.Length - 1; i++)
+                {
+                    status[path[i]] = false;
+                }
+
+                updateStatus(status);
+                path = getShortestPathCurrent(startVertex, endVertex);
+            }
+
+            fullNetwork = oldFull;
+            currentStatus = oldCurrent;
+
+            return pathLengths;
         }
 
 

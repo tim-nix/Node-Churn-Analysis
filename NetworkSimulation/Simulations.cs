@@ -1,8 +1,5 @@
 ﻿using System;
-using System.IO;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace NetworkSimulation
@@ -965,7 +962,7 @@ namespace NetworkSimulation
 
             int numSims = 10000;
 
-            int cliqueMin = 5;
+            int cliqueMin = 11; // Change back to 5
             while (cliqueMin * (cliqueMin - 1) < minOrder)
                 cliqueMin++;
 
@@ -1012,44 +1009,57 @@ namespace NetworkSimulation
                         totalSims++;
                     }
                     //Console.WriteLine("Simulation " + (sim + 1));
-                    Network network = new Network(CommonGraphs.BarabasiAlbert(numNodes, 4, 3));
-
-                    NetworkChurn netChurn = new NetworkChurn(numNodes);
-                    lock (_lock[1])
-                    {
-                        netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
-                    }
-
-                    double time = baseTime + 25.0;
                     double delay = 0.0;
-                    double percentLive = 0.0;
-
-                    //Console.WriteLine("time = " + time);
-                    bool[] status = netChurn.getStatusAtTime(time);
-
-                    double numLive = 0;
-                    for (int i = 0; i < status.Length; i++)
+                    bool tryMessage = false;
+                    while (!tryMessage)
                     {
-                        if (status[i])
-                            numLive += 1.0;
-                    }
+                        Network network = new Network(CommonGraphs.BarabasiAlbert(numNodes, 4, 3));
 
-                    percentLive += (numLive / Convert.ToDouble(status.Length)) * 100.0;
-                    lock (_lock[2])
-                    {
-                        liveTime[index] += percentLive;
-                    }
-                    network.updateStatus(status);
-                    if (network.isCurrentNetworkConnected())
-                    {
-                        lock (_lock[3])
+                        NetworkChurn netChurn = new NetworkChurn(numNodes);
+                        lock (_lock[1])
                         {
-                            connectivity[index] += 1.0;
+                            netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
+                        }
+
+                        double time = baseTime + 25.0;
+                        double percentLive = 0.0;
+
+                        //Console.WriteLine("time = " + time);
+                        bool[] status = netChurn.getStatusAtTime(time);
+
+                        double numLive = 0;
+                        for (int i = 0; i < status.Length; i++)
+                        {
+                            if (status[i])
+                                numLive += 1.0;
+                        }
+
+                        percentLive += (numLive / Convert.ToDouble(status.Length)) * 100.0;
+                        lock (_lock[2])
+                        {
+                            liveTime[index] += percentLive;
+                        }
+                        network.updateStatus(status);
+                        if (network.isCurrentNetworkConnected())
+                        {
+                            lock (_lock[3])
+                            {
+                                connectivity[index] += 1.0;
+                            }
+                        }
+
+                    
+                        try
+                        {
+                            Message msg = new Message(network, netChurn, time);
+                            delay = msg.getMessageDelay();
+                            tryMessage = true;
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Error: Failed message attempt!  Trying again at {0:N2}%.", time);
                         }
                     }
-
-                    Message msg = new Message(network, netChurn, time);
-                    delay = msg.getMessageDelay();
                     lock (_lock[4])
                     {
                         avgMsgDelays[index] += delay;
