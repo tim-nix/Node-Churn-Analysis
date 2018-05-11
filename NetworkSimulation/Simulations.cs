@@ -962,7 +962,7 @@ namespace NetworkSimulation
 
             int numSims = 10000;
 
-            int cliqueMin = 11; // Change back to 5
+            int cliqueMin = 14;
             while (cliqueMin * (cliqueMin - 1) < minOrder)
                 cliqueMin++;
 
@@ -1002,7 +1002,7 @@ namespace NetworkSimulation
                 
                 //Console.WriteLine("Number or nodes: " + numNodes);
                 #region Parallel_Loop
-                Parallel.For(0, numSims, sim =>
+                Parallel.For(0, numSims, new ParallelOptions { MaxDegreeOfParallelism = 20 }, sim =>
                 {
                     lock (_lock[0])
                     {
@@ -1023,6 +1023,7 @@ namespace NetworkSimulation
 
                         double time = baseTime + 25.0;
                         double percentLive = 0.0;
+                        bool isConnected = false;
 
                         //Console.WriteLine("time = " + time);
                         bool[] status = netChurn.getStatusAtTime(time);
@@ -1034,30 +1035,36 @@ namespace NetworkSimulation
                                 numLive += 1.0;
                         }
 
-                        percentLive += (numLive / Convert.ToDouble(status.Length)) * 100.0;
-                        lock (_lock[2])
-                        {
-                            liveTime[index] += percentLive;
-                        }
+                        percentLive = (numLive / Convert.ToDouble(status.Length)) * 100.0;
+                        
                         network.updateStatus(status);
                         if (network.isCurrentNetworkConnected())
                         {
-                            lock (_lock[3])
-                            {
-                                connectivity[index] += 1.0;
-                            }
+                            isConnected = true;
                         }
 
-                    
                         try
                         {
                             Message msg = new Message(network, netChurn, time);
                             delay = msg.getMessageDelay();
+                            lock (_lock[2])
+                            {
+                                liveTime[index] += percentLive;
+                            }
+
+                            if (isConnected)
+                            {
+                                lock (_lock[3])
+                                {
+                                    connectivity[index] += 1.0;
+                                }
+                            }
+
                             tryMessage = true;
                         }
-                        catch
+                        catch (Exception e)
                         {
-                            Console.WriteLine("Error: Failed message attempt!  Trying again at {0:N2}%.", time);
+                            Console.WriteLine("Error: Failed message attempt! " + e.Message);
                         }
                     }
                     lock (_lock[4])
