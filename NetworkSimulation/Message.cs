@@ -23,7 +23,7 @@ namespace NetworkSimulation
             final_time = churn.getLastFinalTime();
         }
 
-
+        
         public double getMessageDelay()
         {
             if (network.CurrentOrder < 1)
@@ -98,6 +98,13 @@ namespace NetworkSimulation
             return curr_time - start_time;
         }
 
+
+        /// The purpose of this method is to calculate the message delay from source to destination
+        /// within a path topology.  The source node is Node 0.  The destination node is Node n - 1
+        /// where n is the number of nodes in the network.  Node 0 must be ON at time_t, otherwise
+        /// it could not have generated the message. The message can only be transmitted if a node 
+        /// that contains the message and the neighbor to which it is trying to transmit the message
+        /// are both ON (one to transmit the message; the other to receive the transmission).
         public double getPathMessageDelay()
         {
             if (network.getNewNodeLabel(0) == -1)
@@ -154,6 +161,59 @@ namespace NetworkSimulation
                 foreach (int i in newLocations)
                     locations.Add(i);
                 newLocations.Clear();
+            }
+
+            //Console.WriteLine("Message delay: " + (curr_time - start_time));
+            if (curr_time >= final_time)
+                throw new Exception("Error: Message not delivered!");
+
+            return curr_time - start_time;
+        }
+
+
+        /// The purpose of this method is to calculate the message delay from source to destination
+        /// within a path topology.  The source node is Node 0.  The destination node is Node n - 1
+        /// where n is the number of nodes in the network.  Node 0 must be ON at time_t, otherwise
+        /// it could not have generated the message. The message can only be transmitted if a node 
+        /// that contains the message and the neighbor to which it is trying to transmit the message
+        /// are both ON (one to transmit the message; the other to receive the transmission).
+        ///
+        /// Unlike the method getPathMessageDelay(), a node trying to transmit a message to a 
+        /// neighbor will remain ON until the neighbor turns ON and can receive the message.
+        public double getPathMessageDelay2()
+        {
+            if (network.getNewNodeLabel(0) == -1)                   // Start only if source is ON
+                throw new Exception("Node 0 is not live!");
+
+            int startVertex = 0;                                    // Pick the source from full network
+            int endVertex = network.FullOrder - 1;                  // Pick the destination from full network
+
+            int currStart = network.getNewNodeLabel(startVertex);   // Convert source to current label
+            int currStop;
+
+            // Determine spread of message from source at start time.
+            int currLoc = startVertex;                      // Source has a copy of the message
+            for (int j = 0; j < network.FullOrder; j++)
+            {
+                currStop = network.getNewNodeLabel(j);              // Convert each full label to current label
+                if ((currStart != currStop) && (currStop != -1) && (network.isPathinCurrentNetwork(currStart, currStop)))
+                    currLoc = j;
+            }
+
+            double timeDelta = 0.001;
+            double curr_time = start_time;
+
+            // Track spread of message from source until the destination is reached.
+
+            while ((currLoc != endVertex) && (curr_time < final_time))
+            {
+                curr_time += timeDelta;
+                bool[] status = churn.getStatusAtTime(curr_time);
+                network.updateStatus(status);
+
+                currStop = network.getNewNodeLabel(currLoc + 1);
+                if (currStop != -1)
+                    currLoc += 1;
             }
 
             //Console.WriteLine("Message delay: " + (curr_time - start_time));
