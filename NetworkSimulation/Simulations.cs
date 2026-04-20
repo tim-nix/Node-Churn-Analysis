@@ -75,6 +75,18 @@ namespace NetworkSimulation
             downDistro = downD;
         }
 
+        private double GetValidStartTime(NetworkChurn churn, double time)
+        {
+            bool[] status = churn.getStatusAtTime(time);
+
+            if (!status[0])
+            {
+                time = churn.getNextStartTimeForNode(0, time);
+            }
+
+            return time;
+        }
+
 
         // The purpose of this method is to run simulations to determine the amount of time required
         // to deliver a message from a source node to a destination node.  The source node is the
@@ -86,7 +98,7 @@ namespace NetworkSimulation
             if ((upDistro == null) || (downDistro == null))
                 throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
 
-            int numSims = 10000;  // Number of simulations to run (for each topology order)
+            int numSims = 100;  // Number of simulations to run (for each topology order)
 
             int[] nValues = new int[maxOrder - minOrder];
 
@@ -118,18 +130,18 @@ namespace NetworkSimulation
                 for (int sim = 0; sim < numSims; sim++)
                 {
                     totalSims++;
-                    //Console.WriteLine("Simulation " + (sim + 1));
+                    Console.WriteLine("Simulation " + (sim + 1));
                     Network network = new Network(CommonGraphs.Path(numNodes));
 
                     NetworkChurn netChurn = new NetworkChurn(numNodes);
                     netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
 
 
-                    double time = baseTime + 25.0;
+                    double time = GetValidStartTime(netChurn, baseTime + 25.0);
                     double delay = 0.0;
                     percentLive = 0.0;
 
-                    //Console.WriteLine("time = " + time);
+                    Console.WriteLine("time = " + time);
                     bool[] status = netChurn.getStatusAtTime(time);
 
                     double numLive = 0;
@@ -155,7 +167,7 @@ namespace NetworkSimulation
                     }
                     catch (Exception e)
                     {
-                        //Console.WriteLine("Simulation " + sim + ": " + e);
+                        Console.WriteLine("Simulation " + sim + ": " + e);
                         sim--;
                     }
                 }
@@ -224,7 +236,7 @@ namespace NetworkSimulation
                 for (int sim = 0; sim < numSims; sim++)
                 {
                     totalSims++;
-                    //Console.WriteLine("Simulation " + (sim + 1));
+                    Console.WriteLine("Simulation " + (sim + 1));
                     Network network = new Network(CommonGraphs.Path(numNodes));
 
                     NetworkChurn netChurn = new NetworkChurn(numNodes);
@@ -235,7 +247,7 @@ namespace NetworkSimulation
                     double delay = 0.0;
                     percentLive = 0.0;
 
-                    //Console.WriteLine("time = " + time);
+                    Console.WriteLine("time = " + time);
                     bool[] status = netChurn.getStatusAtTime(time);
 
                     double numLive = 0;
@@ -261,7 +273,7 @@ namespace NetworkSimulation
                     }
                     catch (Exception e)
                     {
-                        //Console.WriteLine("Simulation " + sim + ": " + e);
+                        Console.WriteLine("Simulation " + sim + ": " + e);
                         sim--;
                     }
                 }
