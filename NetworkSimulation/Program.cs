@@ -19,7 +19,7 @@ namespace NetworkSimulation
         {
             Simulations sim = new Simulations(minN: 2, maxN: 4, nDelta: 1);
             Distribution upD = new Exponential(1.0);
-            Distribution downD = new Exponential(2.0);
+            Distribution downD = new Exponential(1.0);
             sim.setUpDistro(upD, downD);
             sim.simPath1();
         }
@@ -36,7 +36,7 @@ namespace NetworkSimulation
         public static void pathExponential2()
         {
             Simulations sim = new Simulations(minN: 2, maxN: 6, nDelta: 1);
-            Distribution upD = new Exponential(1.0);
+            Distribution upD = new Exponential(3.0);
             Distribution downD = new Exponential(1.0);
             sim.setUpDistro(upD, downD);
             sim.simPath1();

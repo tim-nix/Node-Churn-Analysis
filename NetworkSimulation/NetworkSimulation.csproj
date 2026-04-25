@@ -71,6 +71,7 @@
     <Compile Include="NodeTimeline.cs" />
     <Compile Include="Paretto.cs" />
     <Compile Include="PathExperiment.cs" />
+    <Compile Include="PathExperimentReporter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResultAggregator.cs" />
