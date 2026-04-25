@@ -8,35 +8,69 @@ namespace NetworkSimulation
 {
     public class TrialRunner
     {
-        public TrialResult RunPathTrial(Network network, NetworkChurn churn, double baseTime)
+        private double GetValidStartTime(NetworkChurn churn, double time)
         {
-            double time = baseTime + 25.0;
-            double delay = 0.0;
-            double percentLive = 0.0;
-            int numLive = 0;
-
             bool[] status = churn.getStatusAtTime(time);
 
             if (!status[0])
             {
                 time = churn.getNextStartTimeForNode(0, time);
-                status = churn.getStatusAtTime(time);
             }
+
+            return time;
+        }
+
+        public TrialResult RunPathTrial(
+            int numNodes,
+            int numSessions,
+            double baseTime,
+            Distribution upDistro,
+            Distribution downDistro)
+        {
+            Network network = new Network(CommonGraphs.Path(numNodes));
+
+            NetworkChurn netChurn = new NetworkChurn(numNodes);
+            netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
+
+            double time = GetValidStartTime(netChurn, baseTime + 25.0);
+            bool[] status = netChurn.getStatusAtTime(time);
+
+            double delay = 0.0;
+            double percentLive = 0.0;
+            int numLive = 0;
 
             for (int i = 0; i < status.Length; i++)
             {
                 if (status[i])
-                {
                     numLive++;
-                }
             }
 
-            percentLive = (double)numLive / status.Length;
+            percentLive = (numLive / Convert.ToDouble(status.Length)) * 100.0;
 
             network.updateStatus(status);
 
-            Message msg = new Message(network, churn, time);
-            delay = msg.getPathMessageDelay();
+            Message msg = new Message(network, netChurn, time);
+
+            try
+            {
+                delay = msg.getPathMessageDelay();
+
+                System.IO.File.AppendAllText(
+                    "msg_delays_path_" + numNodes.ToString() + ".txt",
+                    delay.ToString() + Environment.NewLine);
+            }
+            catch
+            {
+                return new TrialResult
+                {
+                    Delay = 0.0,
+                    NumLive = 0,
+                    PercentLive = 0.0,
+                    StartTime = time,
+                    Success = false,
+                    Connected = false
+                };
+            }
 
             return new TrialResult
             {
@@ -44,7 +78,8 @@ namespace NetworkSimulation
                 NumLive = numLive,
                 PercentLive = percentLive,
                 StartTime = time,
-                Success = true
+                Success = true,
+                Connected = network.isCurrentNetworkConnected()
             };
         }
     }

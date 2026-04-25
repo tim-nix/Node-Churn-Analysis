@@ -75,69 +75,7 @@ namespace NetworkSimulation
             upDistro = upD;
             downDistro = downD;
         }
-
-        private double GetValidStartTime(NetworkChurn churn, double time)
-        {
-            bool[] status = churn.getStatusAtTime(time);
-
-            if (!status[0])
-            {
-                time = churn.getNextStartTimeForNode(0, time);
-            }
-
-            return time;
-        }
-
-        private TrialResult RunPath1Trial(int numNodes, double baseTime, Distribution up, Distribution down)
-        {
-            Network network = new Network(CommonGraphs.Path(numNodes));
-
-            NetworkChurn netChurn = new NetworkChurn(numNodes);
-            netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
-            double time = GetValidStartTime(netChurn, baseTime + 25.0);
-            
-            Console.WriteLine("time = " + time);
-            bool[] status = netChurn.getStatusAtTime(time);
-
-            double delay = 0.0;
-            double percentLive = 0.0;
-            int numLive = 0;
-
-            for (int i = 0; i < status.Length; i++)
-            {
-                if (status[i])
-                    numLive++;
-            }
-
-            percentLive = (numLive / Convert.ToDouble(status.Length)) * 100.0;
-            
-            Message msg = new Message(network, netChurn, time);
-            try
-            {
-                delay = msg.getPathMessageDelay();
-                System.IO.File.AppendAllText("msg_delays_path_" + numNodes.ToString() + ".txt", delay.ToString() + Environment.NewLine);
-            }
-            catch (Exception e)
-            {
-                return new TrialResult
-                {
-                    Delay = 0.0,
-                    NumLive = 0,
-                    PercentLive = 0.0,
-                    StartTime = time,
-                    Success = false
-                };
-            }
-
-            return new TrialResult
-            {
-                Delay = delay,
-                NumLive = numLive,
-                PercentLive = percentLive,
-                StartTime = time,
-                Success = true
-            };
-        }
+        
 
         // The purpose of this method is to run simulations to determine the amount of time required
         // to deliver a message from a source node to a destination node.  The source node is the
@@ -177,10 +115,10 @@ namespace NetworkSimulation
 
                 Console.WriteLine("Number of nodes: " + numNodes);
                 totalSims = 0;
-
+                TrialRunner runner = new TrialRunner();
                 for (int sim = 0; sim < numSims; sim++)
                 {
-                    TrialResult result = RunPath1Trial(numNodes, baseTime, upDistro, downDistro);
+                    TrialResult result = runner.RunPathTrial(numNodes, numSessions, baseTime, upDistro, downDistro);
 
                     if (!result.Success)
                     {
