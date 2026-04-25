@@ -13,5 +13,6 @@ namespace NetworkSimulation
         public double PercentLive { get; set; }
         public double StartTime { get; set; }
         public bool Success { get; set; }
+        public bool Connected { get; set; }
     }
 }

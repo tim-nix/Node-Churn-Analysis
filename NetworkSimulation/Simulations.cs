@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace NetworkSimulation
@@ -87,6 +88,56 @@ namespace NetworkSimulation
             return time;
         }
 
+        private TrialResult RunPath1Trial(int numNodes, double baseTime, Distribution up, Distribution down)
+        {
+            Network network = new Network(CommonGraphs.Path(numNodes));
+
+            NetworkChurn netChurn = new NetworkChurn(numNodes);
+            netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
+            double time = GetValidStartTime(netChurn, baseTime + 25.0);
+            
+            Console.WriteLine("time = " + time);
+            bool[] status = netChurn.getStatusAtTime(time);
+
+            double delay = 0.0;
+            double percentLive = 0.0;
+            int numLive = 0;
+
+            for (int i = 0; i < status.Length; i++)
+            {
+                if (status[i])
+                    numLive++;
+            }
+
+            percentLive = (numLive / Convert.ToDouble(status.Length)) * 100.0;
+            
+            Message msg = new Message(network, netChurn, time);
+            try
+            {
+                delay = msg.getPathMessageDelay();
+                System.IO.File.AppendAllText("msg_delays_path_" + numNodes.ToString() + ".txt", delay.ToString() + Environment.NewLine);
+            }
+            catch (Exception e)
+            {
+                return new TrialResult
+                {
+                    Delay = 0.0,
+                    NumLive = 0,
+                    PercentLive = 0.0,
+                    StartTime = time,
+                    Success = false
+                };
+            }
+
+            return new TrialResult
+            {
+                Delay = delay,
+                NumLive = numLive,
+                PercentLive = percentLive,
+                StartTime = time,
+                Success = true
+            };
+        }
 
         // The purpose of this method is to run simulations to determine the amount of time required
         // to deliver a message from a source node to a destination node.  The source node is the
@@ -98,7 +149,7 @@ namespace NetworkSimulation
             if ((upDistro == null) || (downDistro == null))
                 throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
 
-            int numSims = 100;  // Number of simulations to run (for each topology order)
+            int numSims = 100;
 
             int[] nValues = new int[maxOrder - minOrder];
 
@@ -106,8 +157,6 @@ namespace NetworkSimulation
             double[] connectivity = new double[maxOrder - minOrder];
             double[] liveTime = new double[maxOrder - minOrder];
             double[] avgMsgDelays = new double[maxOrder - minOrder];
-
-            double percentLive = 0.0;
 
             int index = 0;
             int numNodes = 0;
@@ -124,56 +173,33 @@ namespace NetworkSimulation
 
                 connectivity[index] = 0.0;
                 avgMsgDelays[index] = 0.0;
+                liveTime[index] = 0.0;
 
                 Console.WriteLine("Number of nodes: " + numNodes);
                 totalSims = 0;
+
                 for (int sim = 0; sim < numSims; sim++)
                 {
+                    TrialResult result = RunPath1Trial(numNodes, baseTime, upDistro, downDistro);
+
+                    if (!result.Success)
+                    {
+                        sim--;
+                        continue;
+                    }
+
+                    if (result.Connected)
+                        connectivity[index]++;
+
+                    avgMsgDelays[index] += result.Delay;
+                    liveTime[index] += result.PercentLive;
+
                     totalSims++;
                     Console.WriteLine("Simulation " + (sim + 1));
-                    Network network = new Network(CommonGraphs.Path(numNodes));
-
-                    NetworkChurn netChurn = new NetworkChurn(numNodes);
-                    netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
-
-
-                    double time = GetValidStartTime(netChurn, baseTime + 25.0);
-                    double delay = 0.0;
-                    percentLive = 0.0;
-
-                    Console.WriteLine("time = " + time);
-                    bool[] status = netChurn.getStatusAtTime(time);
-
-                    double numLive = 0;
-                    for (int i = 0; i < status.Length; i++)
-                    {
-                        if (status[i])
-                            numLive += 1.0;
-                    }
-
-                    percentLive += (numLive / Convert.ToDouble(status.Length)) * 100.0;
-                    liveTime[index] += percentLive;
-
-                    network.updateStatus(status);
-                    if (network.isCurrentNetworkConnected())
-                        connectivity[index] += 1.0;
-
-                    Message msg = new Message(network, netChurn, time);
-                    try
-                    {
-                        delay = msg.getPathMessageDelay();
-                        avgMsgDelays[index] += delay;
-                        System.IO.File.AppendAllText("msg_delays_path_" + numNodes.ToString() + ".txt", delay.ToString() + Environment.NewLine);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("Simulation " + sim + ": " + e);
-                        sim--;
-                    }
                 }
 
                 connectivity[index] = (connectivity[index] / Convert.ToDouble(totalSims)) * 100.0;
-                avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(numSims);
+                avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(totalSims);
                 liveTime[index] = liveTime[index] / Convert.ToDouble(totalSims);
 
                 Console.WriteLine("Path graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
