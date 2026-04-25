@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NetworkSimulation
 {
@@ -15,13 +12,7 @@ namespace NetworkSimulation
             runner = new TrialRunner();
         }
 
-        public void Run(
-    int minOrder,
-    int maxOrder,
-    int numSessions,
-    double baseTime,
-    Distribution upDistro,
-    Distribution downDistro)
+        public void Run(int minOrder, int maxOrder, int numSessions, double baseTime, Distribution upDistro, Distribution downDistro)
         {
             int numSims = 100;
 
@@ -41,6 +32,7 @@ namespace NetworkSimulation
 
             for (int numNodes = minOrder; numNodes < maxOrder; numNodes++)
             {
+                List<TrialResult> results = new List<TrialResult>();
                 nValues[index] = numNodes;
 
                 connectivity[index] = 0.0;
@@ -65,19 +57,17 @@ namespace NetworkSimulation
                         continue;
                     }
 
-                    if (result.Connected)
-                        connectivity[index]++;
-
-                    avgMsgDelays[index] += result.Delay;
-                    liveTime[index] += result.PercentLive;
+                    results.Add(result);
 
                     totalSims++;
                     Console.WriteLine("Simulation " + (sim + 1));
                 }
 
-                connectivity[index] = (connectivity[index] / Convert.ToDouble(totalSims)) * 100.0;
-                avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(totalSims);
-                liveTime[index] = liveTime[index] / Convert.ToDouble(totalSims);
+                ResultSummary summary = ResultAggregator.Summarize(results);
+
+                connectivity[index] = summary.ConnectivityPercent;
+                avgMsgDelays[index] = summary.AverageMessageDelay;
+                liveTime[index] = summary.AverageLivePercent;
 
                 Console.WriteLine(
                     "Path graph family with {0} nodes is connected {1:N2}% of the time.",
