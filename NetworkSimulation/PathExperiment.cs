@@ -5,8 +5,6 @@ namespace NetworkSimulation
 {
     public class PathExperiment
     {
-        private const int DefaultSimulationCount = 100;
-
         private readonly TrialRunner runner;
         private readonly PathExperimentReporter reporter;
 
@@ -16,9 +14,11 @@ namespace NetworkSimulation
             reporter = new PathExperimentReporter();
         }
 
-        public void Run(int minOrder, int maxOrder, int numSessions, double baseTime, Distribution upDistro, Distribution downDistro)
+        public void Run(int minOrder, int maxOrder, int numberSimulations, int numSessions, double baseTime, Distribution upDistro, Distribution downDistro)
         {
             reporter.ClearOutputFiles();
+
+            int simulationCount = numberSimulations;
 
             for (int numNodes = minOrder; numNodes < maxOrder; numNodes++)
             {
@@ -26,7 +26,7 @@ namespace NetworkSimulation
 
                 Console.WriteLine("Number of nodes: " + numNodes);
 
-                for (int sim = 0; sim < DefaultSimulationCount; sim++)
+                for (int sim = 0; sim < simulationCount; sim++)
                 {
                     Network network = TopologyFactory.CreatePath(numNodes);
 
@@ -46,8 +46,6 @@ namespace NetworkSimulation
                     }
 
                     results.Add(result);
-
-                    Console.WriteLine("Simulation " + (sim + 1));
                 }
 
                 ResultSummary summary = ResultAggregator.Summarize(results);

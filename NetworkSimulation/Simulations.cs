@@ -10,6 +10,7 @@ namespace NetworkSimulation
         private int minOrder = 0;           // smallest graph order to simulate
         private int maxOrder = 0;           // largest graph order to simulate
         private int nodeDelta = 0;          // rate of change in graph order
+        private int numberSimulations = 0;  // number of simulations to run for each graph order
         private double baseTime = 0.0;      // earliest time to track churn
         private double timeDelta = 0.0;     // time increment
         private int numSessions = 0;        // number of sessions per node to track
@@ -20,14 +21,16 @@ namespace NetworkSimulation
         private static readonly object[] _lock = new object[_numlocks];  // lock for shared variables across threads
 
 
-        public Simulations(int minN = 20,
-                           int maxN = 200,
-                           int nDelta = 100,
+        public Simulations(int minN,
+                           int maxN,
+                           int nDelta,
+                           int numSims,
                            double startTime = 200.0,
                            double tDelta = 0.1,
                            int sessionsPerNode = 100)
         {
             setNodeRange(minN, maxN, nDelta);
+            numberSimulations = numSims;
             setTimeRange(startTime, tDelta);
             setNumberOfSessions(sessionsPerNode);
             for (int i = 0; i < _numlocks; i++)
@@ -82,7 +85,7 @@ namespace NetworkSimulation
         // "left-mode" node within the topology and the destination node is the "right-most" node
         // within the topology.  Prior to execution of this method, upDistro and downDistro should
         // be created/initialized.
-        public void simPath1()
+        public void simPath()
         {
             if ((upDistro == null) || (downDistro == null))
                 throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
@@ -92,117 +95,14 @@ namespace NetworkSimulation
             experiment.Run(
                 minOrder,
                 maxOrder,
+                numberSimulations,
                 numSessions,
                 baseTime,
                 upDistro,
                 downDistro);
         }
 
-        // The purpose of this method is to run simulations to determine the amount of time required
-        // to deliver a message from a source node to a destination node.  The source node is the
-        // "left-mode" node within the topology and the destination node is the "right-most" node
-        // within the topology.  Prior to execution of this method, upDistro and downDistro should
-        // be created/initialized.
-        //
-        // Unlike simPath1(), in this method, once a node receives the message and is attempting to
-        // pass it to the next node within the path, it does not switch to OFF.
-        public void simPath2()
-        {
-            if ((upDistro == null) || (downDistro == null))
-                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
-
-            int numSims = 10000;
-
-            int[] nValues = new int[maxOrder - minOrder];
-
-            double[] pValues = new double[maxOrder - minOrder];
-            double[] connectivity = new double[maxOrder - minOrder];
-            double[] liveTime = new double[maxOrder - minOrder];
-            double[] avgMsgDelays = new double[maxOrder - minOrder];
-
-            double percentLive = 0.0;
-
-            int index = 0;
-            int numNodes = 0;
-            int totalSims = 0;
-
-            System.IO.File.WriteAllText("graph_sizes_path.txt", "");
-            System.IO.File.WriteAllText("avg_connectivity_path.txt", "");
-            System.IO.File.WriteAllText("avg_msg_delays_path.txt", "");
-            System.IO.File.WriteAllText("avg_up_time_path.txt", "");
-
-            for (numNodes = minOrder; numNodes < maxOrder; numNodes++)
-            {
-                nValues[index] = numNodes;
-
-                connectivity[index] = 0.0;
-                avgMsgDelays[index] = 0.0;
-
-                Console.WriteLine("Number of nodes: " + numNodes);
-                totalSims = 0;
-                for (int sim = 0; sim < numSims; sim++)
-                {
-                    totalSims++;
-                    Console.WriteLine("Simulation " + (sim + 1));
-                    Network network = new Network(CommonGraphs.Path(numNodes));
-
-                    NetworkChurn netChurn = new NetworkChurn(numNodes);
-                    netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
-
-
-                    double time = baseTime + 25.0;
-                    double delay = 0.0;
-                    percentLive = 0.0;
-
-                    Console.WriteLine("time = " + time);
-                    bool[] status = netChurn.getStatusAtTime(time);
-
-                    double numLive = 0;
-                    for (int i = 0; i < status.Length; i++)
-                    {
-                        if (status[i])
-                            numLive += 1.0;
-                    }
-
-                    percentLive += (numLive / Convert.ToDouble(status.Length)) * 100.0;
-                    liveTime[index] += percentLive;
-
-                    network.updateStatus(status);
-                    if (network.isCurrentNetworkConnected())
-                        connectivity[index] += 1.0;
-
-                    Message msg = new Message(network, netChurn, time);
-                    try
-                    {
-                        delay = msg.getPathMessageDelay2();
-                        avgMsgDelays[index] += delay;
-                        System.IO.File.AppendAllText("msg_delays_path_" + numNodes.ToString() + ".txt", delay.ToString() + Environment.NewLine);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("Simulation " + sim + ": " + e);
-                        sim--;
-                    }
-                }
-
-                connectivity[index] = (connectivity[index] / Convert.ToDouble(totalSims)) * 100.0;
-                avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(numSims);
-                liveTime[index] = liveTime[index] / Convert.ToDouble(totalSims);
-
-                Console.WriteLine("Path graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
-                Console.WriteLine("The average message delay between two end nodes is {0:N4}.", avgMsgDelays[index]);
-                Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
-                Console.WriteLine();
-
-                System.IO.File.AppendAllText("graph_sizes_path.txt", nValues[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("avg_connectivity_path.txt", connectivity[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("avg_msg_delays_path.txt", avgMsgDelays[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("avg_up_time_path.txt", liveTime[index].ToString() + Environment.NewLine);
-
-                index++;
-            }
-        }
-
+        
 
         public void simCycle()
         {
