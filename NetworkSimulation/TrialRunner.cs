@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NetworkSimulation
 {
@@ -36,21 +33,13 @@ namespace NetworkSimulation
             double time = GetValidStartTime(netChurn, baseTime + 25.0);
             bool[] status = netChurn.getStatusAtTime(time);
 
-            double delay = 0.0;
-            double percentLive = 0.0;
-            int numLive = 0;
-
-            for (int i = 0; i < status.Length; i++)
-            {
-                if (status[i])
-                    numLive++;
-            }
-
-            percentLive = (numLive / Convert.ToDouble(status.Length)) * 100.0;
+            int numLive = status.Count(isLive => isLive);
+            double percentLive = (numLive / Convert.ToDouble(status.Length)) * 100.0;
 
             network.updateStatus(status);
 
             Message msg = new Message(network, netChurn, time);
+            double delay = 0.0;
 
             try
             {
