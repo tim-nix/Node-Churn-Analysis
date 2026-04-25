@@ -27,7 +27,7 @@ namespace NetworkSimulation
             Distribution upDistro,
             Distribution downDistro)
         {
-            Network network = new Network(CommonGraphs.Path(numNodes));
+            Network network = TopologyFactory.CreatePath(numNodes);
 
             NetworkChurn netChurn = new NetworkChurn(numNodes);
             netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);

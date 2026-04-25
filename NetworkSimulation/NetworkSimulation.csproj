@@ -77,6 +77,7 @@
     <Compile Include="Simulations.cs" />
     <Compile Include="ContinuousUniform.cs" />
     <Compile Include="SimulationSettings.cs" />
+    <Compile Include="TopologyFactory.cs" />
     <Compile Include="TrialResult.cs" />
     <Compile Include="TrialRunner.cs" />
   </ItemGroup>
