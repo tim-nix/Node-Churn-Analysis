@@ -19,16 +19,17 @@ namespace NetworkSimulation
 
             return time;
         }
+        
 
-        public TrialResult RunPathTrial(
+        public TrialResult RunTrial(
+            Network network,
             int numNodes,
             int numSessions,
             double baseTime,
             Distribution upDistro,
-            Distribution downDistro)
+            Distribution downDistro,
+            string delayOutputFile)
         {
-            Network network = TopologyFactory.CreatePath(numNodes);
-
             NetworkChurn netChurn = new NetworkChurn(numNodes);
             netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
 
@@ -56,7 +57,7 @@ namespace NetworkSimulation
                 delay = msg.getPathMessageDelay();
 
                 System.IO.File.AppendAllText(
-                    "msg_delays_path_" + numNodes.ToString() + ".txt",
+                    delayOutputFile,
                     delay.ToString() + Environment.NewLine);
             }
             catch

@@ -42,12 +42,16 @@ namespace NetworkSimulation
 
                 for (int sim = 0; sim < numSims; sim++)
                 {
-                    TrialResult result = runner.RunPathTrial(
+                    Network network = TopologyFactory.CreatePath(numNodes);
+
+                    TrialResult result = runner.RunTrial(
+                        network,
                         numNodes,
                         numSessions,
                         baseTime,
                         upDistro,
-                        downDistro);
+                        downDistro,
+                        "msg_delays_path_" + numNodes.ToString() + ".txt");
 
                     if (!result.Success)
                     {
