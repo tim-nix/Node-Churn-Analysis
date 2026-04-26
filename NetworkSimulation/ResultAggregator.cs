@@ -35,6 +35,9 @@ namespace NetworkSimulation
                 AllNodesLivePercent =
                     (allNodesLiveCount / Convert.ToDouble(successfulResults.Count)) * 100.0,
 
+                RedundancyGainPercent =
+                    ((zeroDelayCount - allNodesLiveCount) / Convert.ToDouble(successfulResults.Count)) * 100.0,
+
                 AverageMessageDelay =
                     successfulResults.Average(result => result.Delay),
 
