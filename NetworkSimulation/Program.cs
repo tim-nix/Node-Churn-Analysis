@@ -23,11 +23,20 @@ namespace NetworkSimulation
             sim.setUpDistro(upD, downD);
             sim.simPath();
         }
-                
+
+        public static void cycleExponential()
+        {
+            Simulations sim = new Simulations(minN: 4, maxN: 8, nDelta: 1, numSims: 5000);
+            Distribution upD = new Exponential(2.0);
+            Distribution downD = new Exponential(3.0);
+            sim.setUpDistro(upD, downD);
+            sim.simCycle();
+        }
+
 
         static void Main(string[] args)
         {
-            pathExponential();
+            cycleExponential();
         }
     }
 }

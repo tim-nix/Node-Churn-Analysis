@@ -6,5 +6,10 @@ namespace NetworkSimulation
         {
             return new Network(CommonGraphs.Path(numNodes));
         }
+
+        public static Network CreateCycle(int numNodes)
+        {
+            return new Network(CommonGraphs.Cycle(numNodes));
+        }
     }
 }

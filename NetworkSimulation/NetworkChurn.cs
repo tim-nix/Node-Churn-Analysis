@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 
 namespace NetworkSimulation
@@ -13,7 +14,7 @@ namespace NetworkSimulation
     /// </summary>
     public class NetworkChurn
     {
-        private NodeTimeline[] nodeSessions;    // the timelines of all peers
+        private List<NodeTimeline> nodeSessions;    // the timelines of all peers
 
 
         /// <summary>
@@ -26,7 +27,7 @@ namespace NetworkSimulation
         {
             get
             {
-                if ((i >= 0) && (i < nodeSessions.Length))
+                if ((i >= 0) && (i < nodeSessions.Count))
                     return nodeSessions[i];
                 else
                     throw new IndexOutOfRangeException("Error: Requested element does not exist!");
@@ -44,7 +45,7 @@ namespace NetworkSimulation
         public NetworkChurn(int numNodes)
         {
             if (numNodes > 0)
-                nodeSessions = new NodeTimeline[numNodes];
+                nodeSessions = new List<NodeTimeline>(numNodes);
             else
                 throw new ArgumentException("Error: Faulty arguments for NetworkChurn!");
             
@@ -65,10 +66,13 @@ namespace NetworkSimulation
         /// <param name="baseTime">The earliest time to track sessions</param>
         public void generateChurn(int numSessions, double baseTime, Distribution upDistro, Distribution downDistro)
         {
-            for (int i = 0; i < nodeSessions.Length; i++)
+            nodeSessions.Clear();
+
+            for (int i = 0; i < nodeSessions.Capacity; i++)
             {
-                nodeSessions[i] = new NodeTimeline(numSessions, baseTime);
-                nodeSessions[i].generateTimeline(upDistro, downDistro);
+                NodeTimeline timeline = new NodeTimeline(numSessions, baseTime);
+                timeline.generateTimeline(upDistro, downDistro);
+                nodeSessions.Add(timeline);
             }
         }
 
@@ -81,10 +85,10 @@ namespace NetworkSimulation
         /// <returns></returns>
         public double getNodeResidualAtTime(int node, double time)
         {
-            if (nodeSessions[0] == null)
+            if (nodeSessions.Count == 0)
                 throw new System.NullReferenceException("Error: Must first generate churn!");
 
-            if ((node < 0) || (node >= nodeSessions.Length))
+            if ((node < 0) || (node >= nodeSessions.Count))
                 throw new ArgumentException("Error: Argument error in getNodeResidualAtTime!");
 
             return nodeSessions[node].getResidual(time);
@@ -93,10 +97,10 @@ namespace NetworkSimulation
 
         public double getNextStartTimeForNode(int node, double time)
         {
-            if (nodeSessions[0] == null)
+            if (nodeSessions.Count == 0)
                 throw new System.NullReferenceException("Error: Must first generate churn!");
 
-            if ((node < 0) || (node >= nodeSessions.Length))
+            if ((node < 0) || (node >= nodeSessions.Count))
                 throw new ArgumentException("Error: Argument error in getNodeResidualAtTime!");
 
             return nodeSessions[node].getNextStart(time);
@@ -111,10 +115,10 @@ namespace NetworkSimulation
         /// <returns>True for each live node; false otherwise</returns>
         public bool[] getStatusAtTime(double time)
         {
-            if (nodeSessions[0] == null)
+            if (nodeSessions.Count == 0)
                 throw new System.NullReferenceException("Error: Must first generate churn!");
 
-            bool[] status = new bool[nodeSessions.Length];
+            bool[] status = new bool[nodeSessions.Count];
             for (int i = 0; i < status.Length; i++)
                 status[i] = nodeSessions[i].timeIsLive(time);
 
@@ -130,11 +134,11 @@ namespace NetworkSimulation
         /// <returns>The earliest first start time</returns>
         public double getEarliestFirstTime()
         {
-            if (nodeSessions[0] == null)
+            if (nodeSessions.Count == 0)
                 throw new System.NullReferenceException("Error: Must first generate churn!");
 
             double firstTime = nodeSessions[0].getFirstTime();
-            for (int i = 1; i < nodeSessions.Length; i++)
+            for (int i = 1; i < nodeSessions.Count; i++)
             {
                 if (nodeSessions[i].getFirstTime() < firstTime)
                     firstTime = nodeSessions[i].getFirstTime();
@@ -152,11 +156,11 @@ namespace NetworkSimulation
         /// <returns>The earliest first start time</returns>
         public double getEarliestFirstEnd()
         {
-            if (nodeSessions[0] == null)
+            if (nodeSessions.Count == 0)
                 throw new System.NullReferenceException("Error: Must first generate churn!");
 
             double firstEnd = nodeSessions[0].getFirstEnd();
-            for (int i = 1; i < nodeSessions.Length; i++)
+            for (int i = 1; i < nodeSessions.Count; i++)
             {
                 if (nodeSessions[i].getFirstEnd() < firstEnd)
                     firstEnd = nodeSessions[i].getFirstEnd();
@@ -174,11 +178,11 @@ namespace NetworkSimulation
         /// <returns>The earliest final stop time</returns>
         public double getEarliestFinalTime()
         {
-            if (nodeSessions[0] == null)
+            if (nodeSessions.Count == 0)
                 throw new System.NullReferenceException("Error: Must first generate churn!");
 
             double shortestTime = nodeSessions[0].getFinalTime();
-            for (int i = 1; i < nodeSessions.Length; i++)
+            for (int i = 1; i < nodeSessions.Count; i++)
             {
                 if (nodeSessions[i].getFinalTime() < shortestTime)
                     shortestTime = nodeSessions[i].getFinalTime();
@@ -196,11 +200,11 @@ namespace NetworkSimulation
         /// <returns>The earliest final stop time</returns>
         public double getLastFinalTime()
         {
-            if (nodeSessions[0] == null)
+            if (nodeSessions.Count == 0)
                 throw new System.NullReferenceException("Error: Must first generate churn!");
 
             double lastTime = nodeSessions[0].getFinalTime();
-            for (int i = 1; i < nodeSessions.Length; i++)
+            for (int i = 1; i < nodeSessions.Count; i++)
             {
                 if (nodeSessions[i].getFinalTime() > lastTime)
                    lastTime = nodeSessions[i].getFinalTime();
@@ -219,13 +223,13 @@ namespace NetworkSimulation
         public double[] getStartTimes()
         {
             int numSessions = 0;
-            for (int i = 0; i < nodeSessions.Length; i++)
+            for (int i = 0; i < nodeSessions.Count; i++)
                 numSessions += nodeSessions[i].numSessions;
 
             double[] startTimes = new double[numSessions];
 
             int baseValue = 0;
-            for (int i = 0; i < nodeSessions.Length; i++)
+            for (int i = 0; i < nodeSessions.Count; i++)
             {
                 double[] sessionStarts = nodeSessions[i].getStartTimes();
                 for (int j = 0; j < sessionStarts.Length; j++)
@@ -251,10 +255,10 @@ namespace NetworkSimulation
 
             double sum = 0.0;
 
-            for (int i = 0; i < nodeSessions.Length; i++)
+            for (int i = 0; i < nodeSessions.Count; i++)
                 sum += nodeSessions[i].averageUpTime();
 
-            return sum / Convert.ToDouble(nodeSessions.Length);
+            return sum / Convert.ToDouble(nodeSessions.Count);
         }
 
 
@@ -271,10 +275,10 @@ namespace NetworkSimulation
 
             double sum = 0.0;
 
-            for (int i = 0; i < nodeSessions.Length; i++)
+            for (int i = 0; i < nodeSessions.Count; i++)
                 sum += nodeSessions[i].averageDownTime();
 
-            return sum / Convert.ToDouble(nodeSessions.Length);
+            return sum / Convert.ToDouble(nodeSessions.Count);
         }
 
     }

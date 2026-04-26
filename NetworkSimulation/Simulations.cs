@@ -102,104 +102,23 @@ namespace NetworkSimulation
                 downDistro);
         }
 
-        
+
 
         public void simCycle()
         {
-            if (upDistro == null)
+            if ((upDistro == null) || (downDistro == null))
                 throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
 
-            int numSims = 10000;
+            CycleExperiment experiment = new CycleExperiment();
 
-            int[] nValues = new int[maxOrder - minOrder];
-
-            double[] pValues = new double[maxOrder - minOrder];
-            double[] connectivity = new double[maxOrder - minOrder];
-            double[] liveTime = new double[maxOrder - minOrder];
-            double[] avgMsgDelays = new double[maxOrder - minOrder];
-
-            double percentLive = 0.0;
-
-            int index = 0;
-            int numNodes = 0;
-            int totalSims = 0;
-
-            System.IO.File.WriteAllText("graph_sizes_cycle.txt", "");
-            System.IO.File.WriteAllText("avg_connectivity_cycle.txt", "");
-            System.IO.File.WriteAllText("avg_msg_delays_cycle.txt", "");
-            System.IO.File.WriteAllText("avg_up_time_cycle.txt", "");
-
-            for (numNodes = minOrder; numNodes < maxOrder; numNodes++)
-            {
-
-                nValues[index] = numNodes;
-
-                connectivity[index] = 0.0;
-                avgMsgDelays[index] = 0.0;
-
-                Console.WriteLine("Number of nodes: " + numNodes);
-                totalSims = 0;
-                for (int sim = 0; sim < numSims; sim++)
-                {
-                    totalSims++;
-                    //Console.WriteLine("Simulation " + (sim + 1));
-                    Network network = new Network(CommonGraphs.Cycle(numNodes));
-
-                    NetworkChurn netChurn = new NetworkChurn(numNodes);
-                    netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
-
-
-                    double time = baseTime + 25.0;
-                    double delay = 0.0;
-                    percentLive = 0.0;
-
-                    //Console.WriteLine("time = " + time);
-                    bool[] status = netChurn.getStatusAtTime(time);
-
-                    double numLive = 0;
-                    for (int i = 0; i < status.Length; i++)
-                    {
-                        if (status[i])
-                            numLive += 1.0;
-                    }
-
-                    percentLive += (numLive / Convert.ToDouble(status.Length)) * 100.0;
-                    liveTime[index] += percentLive;
-
-                    network.updateStatus(status);
-                    if (network.isCurrentNetworkConnected())
-                            connectivity[index] += 1.0;
-
-                    Message msg = new Message(network, netChurn, time);
-                    try
-                    {
-                        delay = msg.getCycleMessageDelay();
-                        avgMsgDelays[index] += delay;
-                        System.IO.File.AppendAllText("msg_delays_cycle_" + numNodes.ToString() + ".txt", delay.ToString() + Environment.NewLine);
-                    }
-                    catch (Exception e)
-                    {
-                        //Console.WriteLine("Simulation " + sim + ": " + e);
-                        sim--;
-                    }
-                }
-
-                connectivity[index] = (connectivity[index] / Convert.ToDouble(totalSims)) * 100.0;
-                avgMsgDelays[index] = avgMsgDelays[index] / Convert.ToDouble(numSims);
-                liveTime[index] = liveTime[index] / Convert.ToDouble(totalSims);
-
-                Console.WriteLine("Cycle graph family with {0} nodes is connected {1:N2}% of the time.", nValues[index], connectivity[index]);
-                Console.WriteLine("The average message delay between two opposite nodes is {0:N4}.", avgMsgDelays[index]);
-                Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
-                Console.WriteLine();
-
-                System.IO.File.AppendAllText("graph_sizes_cycle.txt", nValues[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("avg_connectivity_cycle.txt", connectivity[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("avg_msg_delays_cycle.txt", avgMsgDelays[index].ToString() + Environment.NewLine);
-                System.IO.File.AppendAllText("avg_up_time_cycle.txt", liveTime[index].ToString() + Environment.NewLine);
-
-                index++;
-            }
+            experiment.Run(
+                minOrder,
+                maxOrder,
+                numberSimulations,
+                numSessions,
+                baseTime,
+                upDistro,
+                downDistro);
         }
 
 
