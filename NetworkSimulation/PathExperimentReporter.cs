@@ -6,6 +6,7 @@ namespace NetworkSimulation
     {
         public void ClearOutputFiles()
         {
+            System.IO.File.WriteAllText("graph_sizes_path.txt", "");
             System.IO.File.WriteAllText("zero_delay_percent_path.txt", "");
             System.IO.File.WriteAllText("all_nodes_live_percent_path.txt", "");
             System.IO.File.WriteAllText("redundancy_gain_path.txt", "");
@@ -32,8 +33,10 @@ namespace NetworkSimulation
 
             Console.WriteLine();
 
-            System.IO.File.AppendAllText("zero_delay_percent_path.txt", 
+            System.IO.File.AppendAllText("graph_sizes_path.txt",
                 numNodes.ToString() + Environment.NewLine);
+            System.IO.File.AppendAllText("zero_delay_percent_path.txt",
+                summary.ZeroDelayPercent.ToString() + Environment.NewLine);
             System.IO.File.AppendAllText("all_nodes_live_percent_path.txt", 
                 summary.AllNodesLivePercent.ToString() + Environment.NewLine);
             System.IO.File.AppendAllText("redundancy_gain_path.txt",

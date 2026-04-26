@@ -36,12 +36,30 @@ namespace NetworkSimulation
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Starting path experiment...");
-            pathExponential();
-            Console.WriteLine("Finished path experiment.");
-            Console.WriteLine("Starting cycle experiment...");
-            cycleExponential();
-            Console.WriteLine("Finished cycle experiment.");
+            bool runPath = false;
+            bool runCycle = false;
+            bool runCompare = true;
+
+            if (runPath)
+            {
+                Console.WriteLine("Starting path experiment...");
+                pathExponential();
+                Console.WriteLine("Finished path experiment.");
+            }
+
+            if (runCycle)
+            {
+                Console.WriteLine("Starting cycle experiment...");
+                cycleExponential();
+                Console.WriteLine("Finished cycle experiment.");
+            }
+
+            if (runCompare)
+            {
+                Console.WriteLine("Starting comparison of path and cycle...");
+                new TopologyComparisonReporter().ComparePathAndCycle();
+                Console.WriteLine("Finished comparison of path and cycle.");
+            }
         }
     }
 }
