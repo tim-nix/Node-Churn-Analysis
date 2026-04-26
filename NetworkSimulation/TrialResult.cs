@@ -8,5 +8,6 @@ namespace NetworkSimulation
         public double StartTime { get; set; }
         public bool Success { get; set; }
         public bool Connected { get; set; }
+        public bool ZeroDelay { get; set; }
     }
 }

@@ -59,7 +59,8 @@ namespace NetworkSimulation
                     PercentLive = 0.0,
                     StartTime = time,
                     Success = false,
-                    Connected = false
+                    Connected = false,
+                    ZeroDelay = false
                 };
             }
 
@@ -70,7 +71,8 @@ namespace NetworkSimulation
                 PercentLive = percentLive,
                 StartTime = time,
                 Success = true,
-                Connected = network.isCurrentNetworkConnected()
+                Connected = network.isCurrentNetworkConnected(),
+                ZeroDelay = Math.Abs(delay) < 1e-9
             };
         }
     }

@@ -17,7 +17,7 @@ namespace NetworkSimulation
         // *** node along the path are both ON.                            *** 
         public static void pathExponential()
         {
-            Simulations sim = new Simulations(minN: 5, maxN: 20, nDelta: 5, numSims: 1000);
+            Simulations sim = new Simulations(minN: 2, maxN: 5, nDelta: 1, numSims: 1000);
             Distribution upD = new Exponential(2.0);
             Distribution downD = new Exponential(3.0);
             sim.setUpDistro(upD, downD);
@@ -36,9 +36,9 @@ namespace NetworkSimulation
 
         static void Main(string[] args)
         {
-            //Console.WriteLine("Starting path experiment...");
-            //pathExponential();
-            //Console.WriteLine("Finished path experiment.");
+            Console.WriteLine("Starting path experiment...");
+            pathExponential();
+            Console.WriteLine("Finished path experiment.");
             Console.WriteLine("Starting cycle experiment...");
             cycleExponential();
             Console.WriteLine("Finished cycle experiment.");

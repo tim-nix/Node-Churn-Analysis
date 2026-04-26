@@ -23,12 +23,16 @@ namespace NetworkSimulation
                 };
             }
 
-            int zeroDelayCount = successfulResults.Count(result => Math.Abs(result.Delay) < 1e-9);
+            int zeroDelayCount = successfulResults.Count(result => result.ZeroDelay);
+            int connectedCount = successfulResults.Count(result => result.Connected);
 
             return new ResultSummary
             {
                 ZeroDelayPercent =
                     (zeroDelayCount / Convert.ToDouble(successfulResults.Count)) * 100.0,
+
+                ConnectivityPercent =
+                    (connectedCount / Convert.ToDouble(successfulResults.Count)) * 100.0,
 
                 AverageMessageDelay =
                     successfulResults.Average(result => result.Delay),

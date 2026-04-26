@@ -6,8 +6,8 @@ namespace NetworkSimulation
     {
         public void ClearOutputFiles()
         {
-            System.IO.File.WriteAllText("graph_sizes_cycle.txt", "");
-            System.IO.File.WriteAllText("avg_connectivity_cycle.txt", "");
+            System.IO.File.WriteAllText("zero_delay_percent_cycle.txt", "");
+            System.IO.File.WriteAllText("connectivity_percent_cycle.txt", "");
             System.IO.File.WriteAllText("avg_msg_delays_cycle.txt", "");
             System.IO.File.WriteAllText("avg_up_time_cycle.txt", "");
         }
@@ -17,6 +17,9 @@ namespace NetworkSimulation
             Console.WriteLine("Cycle graph family with {0} nodes has zero message delay {1:N2}% of the time.",
                 numNodes, summary.ZeroDelayPercent);
 
+            Console.WriteLine("Cycle graph family with {0} nodes is initially connected {1:N2}% of the time.",
+                numNodes, summary.ConnectivityPercent);
+
             Console.WriteLine("The average message delay to the diameter target node is {0:N4}.",
                 summary.AverageMessageDelay);
 
@@ -25,8 +28,8 @@ namespace NetworkSimulation
 
             Console.WriteLine();
 
-            System.IO.File.AppendAllText("graph_sizes_cycle.txt", numNodes.ToString() + Environment.NewLine);
-            System.IO.File.AppendAllText("avg_connectivity_cycle.txt", summary.ZeroDelayPercent.ToString() + Environment.NewLine);
+            System.IO.File.AppendAllText("zero_delay_percent_cycle.txt", numNodes.ToString() + Environment.NewLine);
+            System.IO.File.AppendAllText("connectivity_percent_cycle.txt", summary.ZeroDelayPercent.ToString() + Environment.NewLine);
             System.IO.File.AppendAllText("avg_msg_delays_cycle.txt", summary.AverageMessageDelay.ToString() + Environment.NewLine);
             System.IO.File.AppendAllText("avg_up_time_cycle.txt", summary.AverageLivePercent.ToString() + Environment.NewLine);
         }
