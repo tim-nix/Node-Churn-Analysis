@@ -14,10 +14,10 @@ namespace NetworkSimulation
 
         public void WriteSummary(int numNodes, ResultSummary summary)
         {
-            Console.WriteLine("Cycle graph family with {0} nodes is connected {1:N2}% of the time.",
+            Console.WriteLine("Cycle graph family with {0} nodes has zero message delay {1:N2}% of the time.",
                 numNodes, summary.ZeroDelayPercent);
 
-            Console.WriteLine("The average message delay between two end nodes is {0:N4}.",
+            Console.WriteLine("The average message delay to the diameter target node is {0:N4}.",
                 summary.AverageMessageDelay);
 
             Console.WriteLine("On average, {0:N2}% nodes are live at any given time",
