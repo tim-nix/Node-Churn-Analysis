@@ -14,13 +14,21 @@ namespace NetworkSimulation
             reporter = new PathExperimentReporter();
         }
 
-        public void Run(int minOrder, int maxOrder, int numberSimulations, int numSessions, double baseTime, Distribution upDistro, Distribution downDistro)
+        public void Run(
+            int minOrder,
+            int maxOrder,
+            int nodeDelta,
+            int numberSimulations,
+            int numSessions,
+            double baseTime,
+            Distribution upDistro,
+            Distribution downDistro)
         {
             reporter.ClearOutputFiles();
 
             int simulationCount = numberSimulations;
 
-            for (int numNodes = minOrder; numNodes < maxOrder; numNodes++)
+            for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
             {
                 List<TrialResult> results = new List<TrialResult>();
 
@@ -37,7 +45,8 @@ namespace NetworkSimulation
                         baseTime,
                         upDistro,
                         downDistro,
-                        "msg_delays_path_" + numNodes.ToString() + ".txt");
+                        "msg_delays_path_" + numNodes.ToString() + ".txt",
+                        MessageDelayMode.PathEndpoint);
 
                     if (!result.Success)
                     {

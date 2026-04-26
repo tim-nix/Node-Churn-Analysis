@@ -26,7 +26,7 @@ namespace NetworkSimulation
 
         public static void cycleExponential()
         {
-            Simulations sim = new Simulations(minN: 4, maxN: 8, nDelta: 1, numSims: 1000);
+            Simulations sim = new Simulations(minN: 4, maxN: 12, nDelta: 2, numSims: 1000);
             Distribution upD = new Exponential(2.0);
             Distribution downD = new Exponential(3.0);
             sim.setUpDistro(upD, downD);
@@ -36,7 +36,11 @@ namespace NetworkSimulation
 
         static void Main(string[] args)
         {
+            Console.WriteLine("Starting path experiment...");
             pathExponential();
+            Console.WriteLine("Finished path experiment. Starting cycle experiment...");
+            cycleExponential();
+            Console.WriteLine("Finished cycle experiment.");
         }
     }
 }

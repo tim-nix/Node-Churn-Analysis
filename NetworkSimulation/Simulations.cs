@@ -95,6 +95,7 @@ namespace NetworkSimulation
             experiment.Run(
                 minOrder,
                 maxOrder,
+                nodeDelta,
                 numberSimulations,
                 numSessions,
                 baseTime,
@@ -114,6 +115,7 @@ namespace NetworkSimulation
             experiment.Run(
                 minOrder,
                 maxOrder,
+                nodeDelta,
                 numberSimulations,
                 numSessions,
                 baseTime,

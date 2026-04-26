@@ -16,7 +16,7 @@ namespace NetworkSimulation
 
             return time;
         }
-        
+
 
         public TrialResult RunTrial(
             Network network,
@@ -25,7 +25,8 @@ namespace NetworkSimulation
             double baseTime,
             Distribution upDistro,
             Distribution downDistro,
-            string delayOutputFile)
+            string delayOutputFile,
+            MessageDelayMode delayMode)
         {
             NetworkChurn netChurn = new NetworkChurn(numNodes);
             netChurn.generateChurn(numSessions, baseTime, upDistro, downDistro);
@@ -43,7 +44,19 @@ namespace NetworkSimulation
 
             try
             {
-                delay = msg.getPathMessageDelay();
+                switch (delayMode)
+                {
+                    case MessageDelayMode.PathEndpoint:
+                        delay = msg.getPathMessageDelay();
+                        break;
+
+                    case MessageDelayMode.CycleDiameter:
+                        delay = msg.getCycleMessageDelay();
+                        break;
+
+                    default:
+                        throw new ArgumentException("Unsupported message delay mode.");
+                }
 
                 System.IO.File.AppendAllText(
                     delayOutputFile,
