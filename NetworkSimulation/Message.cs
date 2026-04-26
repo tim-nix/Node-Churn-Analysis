@@ -54,13 +54,6 @@ namespace NetworkSimulation
             double timeDelta = 0.001;
             double curr_time = start_time;
             
-            //if (locations.Contains(endVertex))
-            //    Console.WriteLine("Source and sink both live.");
-            //else
-            //    Console.WriteLine("Residue: " + (churn.getNextStartTimeForNode(endVertex, curr_time) - curr_time));
-
-            // Track spread of message from source until the destination is reached.
-            
             while (!locations.Contains(endVertex) && (curr_time < final_time))               
             {
                 curr_time += timeDelta;
@@ -287,6 +280,21 @@ namespace NetworkSimulation
                 throw new Exception("Error: Message not delivered!");
 
             return curr_time - start_time;
+        }
+
+        public double getMessageDelay(MessageDelayMode mode)
+        {
+            switch (mode)
+            {
+                case MessageDelayMode.PathEndpoint:
+                    return getPathMessageDelay();
+
+                case MessageDelayMode.CycleDiameter:
+                    return getCycleMessageDelay();
+
+                default:
+                    throw new ArgumentException("Unsupported delay mode.");
+            }
         }
     }
 }

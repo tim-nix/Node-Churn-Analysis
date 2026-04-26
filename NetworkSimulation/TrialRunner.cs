@@ -44,19 +44,7 @@ namespace NetworkSimulation
 
             try
             {
-                switch (delayMode)
-                {
-                    case MessageDelayMode.PathEndpoint:
-                        delay = msg.getPathMessageDelay();
-                        break;
-
-                    case MessageDelayMode.CycleDiameter:
-                        delay = msg.getCycleMessageDelay();
-                        break;
-
-                    default:
-                        throw new ArgumentException("Unsupported message delay mode.");
-                }
+                delay = msg.getMessageDelay(delayMode);
 
                 System.IO.File.AppendAllText(
                     delayOutputFile,
