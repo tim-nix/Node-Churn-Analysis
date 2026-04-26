@@ -16,19 +16,19 @@ namespace NetworkSimulation
             {
                 return new ResultSummary
                 {
-                    ConnectivityPercent = 0.0,
+                    ZeroDelayPercent = 0.0,
                     AverageMessageDelay = 0.0,
                     AverageLivePercent = 0.0,
                     TrialCount = 0
                 };
             }
 
-            int connectedCount = successfulResults.Count(result => result.Connected);
+            int zeroDelayCount = successfulResults.Count(result => Math.Abs(result.Delay) < 1e-9);
 
             return new ResultSummary
             {
-                ConnectivityPercent =
-                    (connectedCount / Convert.ToDouble(successfulResults.Count)) * 100.0,
+                ZeroDelayPercent =
+                    (zeroDelayCount / Convert.ToDouble(successfulResults.Count)) * 100.0,
 
                 AverageMessageDelay =
                     successfulResults.Average(result => result.Delay),

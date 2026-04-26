@@ -17,7 +17,7 @@ namespace NetworkSimulation
         // *** node along the path are both ON.                            *** 
         public static void pathExponential()
         {
-            Simulations sim = new Simulations(minN: 2, maxN: 6, nDelta: 1, numSims: 5000);
+            Simulations sim = new Simulations(minN: 2, maxN: 6, nDelta: 1, numSims: 1000);
             Distribution upD = new Exponential(2.0);
             Distribution downD = new Exponential(3.0);
             sim.setUpDistro(upD, downD);
@@ -26,7 +26,7 @@ namespace NetworkSimulation
 
         public static void cycleExponential()
         {
-            Simulations sim = new Simulations(minN: 4, maxN: 8, nDelta: 1, numSims: 5000);
+            Simulations sim = new Simulations(minN: 4, maxN: 8, nDelta: 1, numSims: 1000);
             Distribution upD = new Exponential(2.0);
             Distribution downD = new Exponential(3.0);
             sim.setUpDistro(upD, downD);
@@ -36,7 +36,7 @@ namespace NetworkSimulation
 
         static void Main(string[] args)
         {
-            cycleExponential();
+            pathExponential();
         }
     }
 }
