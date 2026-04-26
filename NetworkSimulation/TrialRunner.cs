@@ -56,11 +56,12 @@ namespace NetworkSimulation
                 {
                     Delay = 0.0,
                     NumLive = 0,
+                    TotalNodes = numNodes,
                     PercentLive = 0.0,
                     StartTime = time,
                     Success = false,
-                    Connected = false,
-                    ZeroDelay = false
+                    ZeroDelay = false,
+                    AllNodesLive = false
                 };
             }
 
@@ -68,11 +69,12 @@ namespace NetworkSimulation
             {
                 Delay = delay,
                 NumLive = numLive,
+                TotalNodes = numNodes,
                 PercentLive = percentLive,
                 StartTime = time,
                 Success = true,
-                Connected = network.isCurrentNetworkConnected(),
-                ZeroDelay = Math.Abs(delay) < 1e-9
+                ZeroDelay = Math.Abs(delay) < 1e-9,
+                AllNodesLive = numLive == numNodes
             };
         }
     }
