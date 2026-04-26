@@ -36,9 +36,10 @@ namespace NetworkSimulation
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Starting path experiment...");
-            pathExponential();
-            Console.WriteLine("Finished path experiment. Starting cycle experiment...");
+            //Console.WriteLine("Starting path experiment...");
+            //pathExponential();
+            //Console.WriteLine("Finished path experiment.");
+            Console.WriteLine("Starting cycle experiment...");
             cycleExponential();
             Console.WriteLine("Finished cycle experiment.");
         }

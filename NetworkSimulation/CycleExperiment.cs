@@ -6,12 +6,12 @@ namespace NetworkSimulation
     public class CycleExperiment
     {
         private readonly TrialRunner runner;
-        private readonly PathExperimentReporter reporter;
+        private readonly CycleExperimentReporter reporter;
 
         public CycleExperiment()
         {
             runner = new TrialRunner();
-            reporter = new PathExperimentReporter();
+            reporter = new CycleExperimentReporter();
         }
 
         public void Run(
