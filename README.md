@@ -158,3 +158,6 @@ These files are used for post-processing and analysis.
 ## Summary
 
 This project demonstrates that **topological redundancy materially reduces message delay under node churn**, even when controlling for propagation distance. The framework is designed to support further experimental and analytical exploration of distributed systems under failure conditions.
+
+Recent Result:
+Cycle topology exhibits effective redundancy strength α ≈ 1.4–1.6, indicating partial independence between alternate paths under node churn.
