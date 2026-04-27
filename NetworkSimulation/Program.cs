@@ -89,10 +89,10 @@ namespace NetworkSimulation
 
         static void Main(string[] args)
         {
-            bool runPath = true;
-            bool runCycle = true;
-            bool runCompare = false;
-            bool runSurvival = false;
+            bool runPath = false;
+            bool runCycle = false;
+            bool runCompare = true;
+            bool runSurvival = true;
 
             if (runPath)
             {
