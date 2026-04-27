@@ -83,6 +83,7 @@
     <Compile Include="Simulations.cs" />
     <Compile Include="ContinuousUniform.cs" />
     <Compile Include="SimulationSettings.cs" />
+    <Compile Include="SurvivalAnalysis.cs" />
     <Compile Include="TopologyComparison.cs" />
     <Compile Include="TopologyComparisonReporter.cs" />
     <Compile Include="TopologyFactory.cs" />

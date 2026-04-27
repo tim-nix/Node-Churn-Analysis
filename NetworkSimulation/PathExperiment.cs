@@ -34,6 +34,11 @@ namespace NetworkSimulation
 
                 Console.WriteLine("Number of nodes: " + numNodes);
 
+                string delayOutputFile = "msg_delays_path_" + numNodes.ToString() + ".txt";
+                System.IO.File.WriteAllText(delayOutputFile, "");
+
+                Console.WriteLine("Clearing delay file: {0}", delayOutputFile);
+
                 for (int sim = 0; sim < simulationCount; sim++)
                 {
                     Network network = TopologyFactory.CreatePath(numNodes);
@@ -45,7 +50,7 @@ namespace NetworkSimulation
                         baseTime,
                         upDistro,
                         downDistro,
-                        "msg_delays_path_" + numNodes.ToString() + ".txt",
+                        delayOutputFile,
                         MessageDelayMode.PathEndpoint);
 
                     if (!result.Success)
