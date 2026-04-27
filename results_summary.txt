@@ -1,0 +1,8 @@
+n=5   → alpha_median=1.4383
+n=10  → alpha_median=1.5931
+n=15  → alpha_median=1.6330
+
+Delay reduction:
+n=5   → 33.3%
+n=10  → 27.6%
+n=15  → 24.3%
