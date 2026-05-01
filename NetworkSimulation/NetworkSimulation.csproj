@@ -66,6 +66,7 @@
     <Compile Include="CycleExperimentReporter.cs" />
     <Compile Include="Distribution.cs" />
     <Compile Include="Exponential.cs" />
+    <Compile Include="IndependentPathExperiment.cs" />
     <Compile Include="MersenneTwister.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="MessageDelayMode.cs" />
