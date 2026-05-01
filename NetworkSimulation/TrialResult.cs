@@ -2,6 +2,9 @@ using System.Diagnostics.Eventing.Reader;
 
 namespace NetworkSimulation
 {
+    /// <summary>
+    /// Stores the result of a single Monte Carlo message-delay trial.
+    /// </summary>
     public class TrialResult
     {
         public double Delay { get; set; }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -6,6 +7,14 @@ namespace NetworkSimulation
 {
     class Program
     {
+        /// <summary>
+        /// Runs the configured path-topology experiment using exponential ON/OFF
+        /// churn distributions.
+        /// </summary>
+        /// <remarks>
+        /// Current parameters use path sizes 5, 10, and 15; exponential ON rate
+        /// 2.0; exponential OFF/recovery rate 3.0; and 1000 simulations per size.
+        /// </remarks>
         public static void pathExponential()
         {
             Simulations sim = new Simulations(minN: 5, maxN: 20, nDelta: 5, numSims: 10000);
@@ -15,6 +24,15 @@ namespace NetworkSimulation
             sim.simPath();
         }
 
+        /// <summary>
+        /// Runs the configured cycle-topology experiment using exponential ON/OFF
+        /// churn distributions.
+        /// </summary>
+        /// <remarks>
+        /// Current parameters use cycle sizes 10, 20, and 30 so that each cycle
+        /// comparison preserves the source-target distance of the corresponding
+        /// path experiment.
+        /// </remarks>
         public static void cycleExponential()
         {
             Simulations sim = new Simulations(minN: 10, maxN: 40, nDelta: 10, numSims: 10000);
@@ -24,6 +42,15 @@ namespace NetworkSimulation
             sim.simCycle();
         }
 
+        /// <summary>
+        /// Extracts the trailing graph-size value from an experiment output file name.
+        /// </summary>
+        /// <param name="fileName">
+        /// File name following the convention prefix_N.txt.
+        /// </param>
+        /// <returns>
+        /// The integer graph size N parsed from the file name.
+        /// </returns>
         private static int ExtractN(string fileName)
         {
             string name = Path.GetFileNameWithoutExtension(fileName);
@@ -33,6 +60,15 @@ namespace NetworkSimulation
             return int.Parse(parts.Last());
         }
 
+        /// <summary>
+        /// Compares available path and cycle raw-delay files using empirical
+        /// survival-function analysis.
+        /// </summary>
+        /// <remarks>
+        /// Each path file msg_delays_path_N.txt is matched with
+        /// msg_delays_cycle_2N.txt. Matching pairs are analyzed by SurvivalAnalysis
+        /// and written to survival_comparison_pathN_cycle2N.csv.
+        /// </remarks>
         public static void survivalComparison()
         {
             SurvivalAnalysis analysis = new SurvivalAnalysis();
@@ -75,7 +111,17 @@ namespace NetworkSimulation
                     outputFile);
             }
         }
-                
+
+        /// <summary>
+        /// Compares previously generated path and cycle summary output files
+        /// and computes mean-delay reduction metrics.
+        /// </summary>
+        /// <remarks>
+        /// This method does not run new simulations. It reads the existing
+        /// path and cycle average-delay files, matches each path graph of size
+        /// N with the corresponding cycle graph of size 2N, and writes both
+        /// absolute and percentage delay-reduction results.
+        /// </remarks>
         public static void comparePathAndCycleExperiment()
         {
             bool runPath = true;
@@ -112,23 +158,53 @@ namespace NetworkSimulation
             }
         }
 
-        public static void independentPathMinimumExperiment()
+        /// <summary>
+        /// Runs the independent-path minimum-delay validation experiment
+        /// for multiple path graph sizes.
+        /// </summary>
+        /// <param name="nValues">
+        /// Collection of path graph sizes to evaluate.
+        /// </param>
+        /// <remarks>
+        /// For each n, reads msg_delays_path_n.txt and writes
+        /// survival_independent_min_path_n.csv.
+        /// </remarks>
+        public static void independentPathMinimumExperiment(IEnumerable<int> nValues)
         {
             IndependentPathExperiment experiment = new IndependentPathExperiment();
 
-            experiment.CompareIndependentMinimum(
-                "msg_delays_path_5.txt",
-                "survival_independent_min_path_5.csv");
+            foreach (int n in nValues)
+            {
+                string inputFile = $"msg_delays_path_{n}.txt";
+                string outputFile = $"survival_independent_min_path_{n}.csv";
+
+                if (!File.Exists(inputFile))
+                {
+                    Console.WriteLine($"Skipping n = {n}, file not found: {inputFile}");
+                    continue;
+                }
+
+                Console.WriteLine($"Running independent-path experiment for n = {n}");
+
+                experiment.CompareIndependentMinimum(inputFile, outputFile);
+            }
         }
 
 
-
+        /// <summary>
+        /// Entry point for the simulation program.
+        /// </summary>
+        /// <param name="args">Command-line arguments; currently unused.</param>
+        /// <remarks>
+        /// Boolean flags control whether path experiments, cycle experiments,
+        /// mean-delay comparison, and survival comparison are executed.
+        /// </remarks>
         static void Main(string[] args)
         {
             pathExponential();
 
             Console.WriteLine("Starting independent-path minimum experiment...");
-            independentPathMinimumExperiment();
+            independentPathMinimumExperiment(new List<int> { 5, 10, 15 });
             Console.WriteLine("Finished independent-path minimum experiment.");
         }
     }

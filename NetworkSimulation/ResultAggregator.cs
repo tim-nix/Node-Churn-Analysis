@@ -4,8 +4,24 @@ using System.Linq;
 
 namespace NetworkSimulation
 {
+    /// <summary>
+    /// Aggregates successful Monte Carlo trial results into summary statistics
+    /// used by experiment reporters.
+    /// </summary>
     public static class ResultAggregator
     {
+        /// <summary>
+        /// Computes aggregate delay, availability, and zero-delay statistics from
+        /// a list of trial results.
+        /// </summary>
+        /// <param name="results">
+        /// Trial results produced by repeated Monte Carlo simulations.
+        /// </param>
+        /// <returns>
+        /// A ResultSummary containing zero-delay percentage, all-nodes-live
+        /// percentage, redundancy gain, average delay, average live-node percentage,
+        /// and successful trial count.
+        /// </returns>
         public static ResultSummary Summarize(List<TrialResult> results)
         {
             List<TrialResult> successfulResults = results

@@ -3,17 +3,43 @@ using System.Collections.Generic;
 
 namespace NetworkSimulation
 {
+    /// <summary>
+    /// Runs a family of cycle-topology message-delay experiments over a range
+    /// of graph sizes.
+    /// 
+    /// For each cycle size, this class executes repeated Monte Carlo trials
+    /// using the diameter target node, aggregates summary statistics, and
+    /// delegates output formatting to CycleExperimentReporter.
+    /// </summary>
     public class CycleExperiment
     {
         private readonly TrialRunner runner;
         private readonly CycleExperimentReporter reporter;
 
+        /// <summary>
+        /// Initializes the cycle experiment with a trial runner and reporter.
+        /// </summary>
         public CycleExperiment()
         {
             runner = new TrialRunner();
             reporter = new CycleExperimentReporter();
         }
 
+        /// <summary>
+        /// Executes cycle-topology simulations for graph sizes in the configured range.
+        /// </summary>
+        /// <param name="minOrder">Smallest cycle graph order to simulate.</param>
+        /// <param name="maxOrder">Exclusive upper bound on cycle graph order.</param>
+        /// <param name="nodeDelta">Increment between graph sizes.</param>
+        /// <param name="numberSimulations">Number of successful trials per graph size.</param>
+        /// <param name="numSessions">Number of ON sessions generated per node.</param>
+        /// <param name="baseTime">Base time used for churn generation.</param>
+        /// <param name="upDistro">Distribution for live/ON durations.</param>
+        /// <param name="downDistro">Distribution for failed/OFF durations.</param>
+        /// <remarks>
+        /// Raw delay samples are written to msg_delays_cycle_N.txt, where N is
+        /// the number of nodes in the cycle graph.
+        /// </remarks>
         public void Run(
             int minOrder,
             int maxOrder,

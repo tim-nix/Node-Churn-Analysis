@@ -5,8 +5,21 @@ using System.IO;
 
 namespace NetworkSimulation
 {
+    /// <summary>
+    /// Compares path and cycle mean-delay output files and computes absolute
+    /// and percentage delay reduction.
+    /// </summary>
     public class TopologyComparisonReporter
     {
+        /// <summary>
+        /// Reads path and cycle summary files, matches path size N against cycle
+        /// size 2N, and writes delay-reduction outputs.
+        /// </summary>
+        /// <remarks>
+        /// Outputs absolute delay reductions to delay_reduction_path_vs_cycle.txt
+        /// and percentage reductions to delay_reduction_percent_path_vs_cycle.txt.
+        /// Rows whose cycle size is not twice the path size are skipped.
+        /// </remarks>
         public void ComparePathAndCycle()
         {
             string[] pathSizes = File.ReadAllLines("graph_sizes_path.txt");

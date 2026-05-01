@@ -6,8 +6,31 @@ using System.Linq;
 
 namespace NetworkSimulation
 {
+    /// <summary>
+    /// Provides empirical survival-function analysis for raw message-delay
+    /// output files.
+    /// 
+    /// This class converts delay samples into empirical survival functions
+    /// and compares path and cycle survival behavior, including the
+    /// independent-path reference curve Spath(t)^2 and the pointwise
+    /// redundancy-strength estimate alpha.
+    /// </summary>
     public class SurvivalAnalysis
     {
+        /// <summary>
+        /// Returns the empirical survival probability at or immediately after
+        /// the specified delay threshold.
+        /// </summary>
+        /// <param name="survivalData">
+        /// Ordered survival data represented as (time, survival probability) pairs.
+        /// </param>
+        /// <param name="t">
+        /// Delay threshold at which the survival probability is requested.
+        /// </param>
+        /// <returns>
+        /// The first survival probability whose associated time is greater than
+        /// or equal to t; returns 0.0 if t exceeds the available survival data.
+        /// </returns>
         private double GetSurvivalAtTime(
             List<Tuple<double, double>> survivalData,
             double t)
@@ -23,6 +46,16 @@ namespace NetworkSimulation
             return 0.0;
         }
 
+        /// <summary>
+        /// Computes the empirical survival function from a file of raw delay samples.
+        /// </summary>
+        /// <param name="fileName">
+        /// Input file containing one message-delay sample per line.
+        /// </param>
+        /// <returns>
+        /// A sorted list of (delay threshold, survival probability) pairs, where
+        /// the survival probability estimates P(T &gt; t) from the observed samples.
+        /// </returns>
         public List<Tuple<double, double>> ComputeSurvival(string fileName)
         {
             List<double> samples = File.ReadAllLines(fileName)
@@ -51,6 +84,23 @@ namespace NetworkSimulation
             return survivalValues;
         }
 
+        /// <summary>
+        /// Compares empirical path and cycle survival functions and writes a CSV
+        /// summary of the comparison.
+        /// </summary>
+        /// <param name="pathFileName">
+        /// Input file containing raw path delay samples.
+        /// </param>
+        /// <param name="cycleFileName">
+        /// Input file containing raw cycle delay samples.
+        /// </param>
+        /// <param name="outputFileName">
+        /// Output CSV file containing t, S_path, S_cycle, S_path^2, and alpha.
+        /// </param>
+        /// <remarks>
+        /// The method estimates alpha using log(S_cycle(t)) / log(S_path(t)) over
+        /// the central survival range to avoid boundary effects and tail noise.
+        /// </remarks>
         public void ComparePathAndCycleSurvival(
             string pathFileName,
             string cycleFileName,

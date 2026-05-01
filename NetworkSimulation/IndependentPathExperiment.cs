@@ -6,8 +6,33 @@ using System.Linq;
 
 namespace NetworkSimulation
 {
+    /// <summary>
+    /// Runs an idealized independent-path baseline experiment.
+    /// 
+    /// The experiment reads empirical path-delay samples from an existing
+    /// path delay output file, pairs consecutive samples as independent
+    /// realizations T1 and T2, constructs Tmin = min(T1, T2), and compares
+    /// the empirical survival function Smin(t) against the theoretical
+    /// independent-path prediction Spath(t)^2.
+    /// </summary>
     public class IndependentPathExperiment
     {
+        /// <summary>
+        /// Constructs empirical minimum-delay samples from paired path-delay
+        /// observations and writes a survival-function comparison table.
+        /// </summary>
+        /// <param name="pathDelayFileName">
+        /// Input file containing one path-delay sample per line.
+        /// </param>
+        /// <param name="outputFileName">
+        /// Output CSV file containing t, S_path, S_min, S_path^2, and error.
+        /// </param>
+        /// <remarks>
+        /// The method assumes the path-delay samples are independent Monte Carlo
+        /// realizations. Consecutive samples are paired as (T1, T2), and the
+        /// minimum of each pair is used to estimate the survival function for
+        /// the ideal two-independent-path case.
+        /// </remarks>
         public void CompareIndependentMinimum(
             string pathDelayFileName,
             string outputFileName)
@@ -82,6 +107,20 @@ namespace NetworkSimulation
             }
         }
 
+        /// <summary>
+        /// Returns the empirical survival probability at or immediately after
+        /// the specified delay threshold.
+        /// </summary>
+        /// <param name="survivalData">
+        /// Ordered survival data represented as (time, survival probability) pairs.
+        /// </param>
+        /// <param name="t">
+        /// Delay threshold at which the survival probability is requested.
+        /// </param>
+        /// <returns>
+        /// The first survival probability whose associated time is greater than
+        /// or equal to t; returns 0.0 if t exceeds the available survival data.
+        /// </returns>
         private double GetSurvivalAtTime(
             List<Tuple<double, double>> survivalData,
             double t)
