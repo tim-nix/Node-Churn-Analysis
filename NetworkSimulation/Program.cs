@@ -17,11 +17,11 @@ namespace NetworkSimulation
         /// </remarks>
         public static void pathExponential()
         {
-            Simulations sim = new Simulations(minN: 5, maxN: 20, nDelta: 5, numSims: 10000);
-            Distribution upD = new Exponential(2.0);
-            Distribution downD = new Exponential(3.0);
+            Simulations sim = new Simulations(minN: 5, maxN: 16, nDelta: 1, numSims: 60000);
+            Distribution upD = new Exponential(1.0);
+            Distribution downD = new Exponential(4.0);
             sim.setUpDistro(upD, downD);
-            sim.simPath();
+            sim.simPath(ExperimentRunMode.Resume);
         }
 
         /// <summary>
@@ -35,11 +35,11 @@ namespace NetworkSimulation
         /// </remarks>
         public static void cycleExponential()
         {
-            Simulations sim = new Simulations(minN: 10, maxN: 40, nDelta: 10, numSims: 10000);
-            Distribution upD = new Exponential(2.0);
-            Distribution downD = new Exponential(3.0);
+            Simulations sim = new Simulations(minN: 10, maxN: 32, nDelta: 2, numSims: 60000);
+            Distribution upD = new Exponential(1.0);
+            Distribution downD = new Exponential(4.0);
             sim.setUpDistro(upD, downD);
-            sim.simCycle();
+            sim.simCycle(ExperimentRunMode.Resume);
         }
 
         /// <summary>
@@ -171,6 +171,10 @@ namespace NetworkSimulation
         /// </remarks>
         public static void independentPathMinimumExperiment(IEnumerable<int> nValues)
         {
+            pathExponential();
+
+            Console.WriteLine("Starting independent-path minimum experiment...");
+
             IndependentPathExperiment experiment = new IndependentPathExperiment();
 
             foreach (int n in nValues)
@@ -188,6 +192,7 @@ namespace NetworkSimulation
 
                 experiment.CompareIndependentMinimum(inputFile, outputFile);
             }
+            Console.WriteLine("Finished independent-path minimum experiment.");
         }
 
 
@@ -201,11 +206,7 @@ namespace NetworkSimulation
         /// </remarks>
         static void Main(string[] args)
         {
-            pathExponential();
-
-            Console.WriteLine("Starting independent-path minimum experiment...");
-            independentPathMinimumExperiment(new List<int> { 5, 10, 15 });
-            Console.WriteLine("Finished independent-path minimum experiment.");
+            comparePathAndCycleExperiment();
         }
     }
 }

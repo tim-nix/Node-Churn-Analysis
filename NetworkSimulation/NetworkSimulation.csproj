@@ -65,6 +65,7 @@
     <Compile Include="CycleExperiment.cs" />
     <Compile Include="CycleExperimentReporter.cs" />
     <Compile Include="Distribution.cs" />
+    <Compile Include="ExperimentRunMode.cs" />
     <Compile Include="Exponential.cs" />
     <Compile Include="IndependentPathExperiment.cs" />
     <Compile Include="MersenneTwister.cs" />

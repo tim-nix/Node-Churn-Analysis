@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace NetworkSimulation
 {
@@ -48,9 +49,15 @@ namespace NetworkSimulation
             int numSessions,
             double baseTime,
             Distribution upDistro,
-            Distribution downDistro)
+            Distribution downDistro,
+            ExperimentRunMode runMode)
         {
-            reporter.ClearOutputFiles();
+            bool restart = runMode == ExperimentRunMode.Restart;
+
+            if (restart)
+            {
+                reporter.ClearOutputFiles();
+            }
 
             int simulationCount = numberSimulations;
 
@@ -61,11 +68,36 @@ namespace NetworkSimulation
                 Console.WriteLine("Number of nodes: " + numNodes);
 
                 string delayOutputFile = "msg_delays_cycle_" + numNodes.ToString() + ".txt";
-                System.IO.File.WriteAllText(delayOutputFile, "");
+                int completedSimulations = 0;
 
-                Console.WriteLine("Clearing delay file: {0}", delayOutputFile);
+                if (runMode == ExperimentRunMode.Restart)
+                {
+                    System.IO.File.WriteAllText(delayOutputFile, "");
 
-                for (int sim = 0; sim < simulationCount; sim++)
+                    Console.WriteLine("Clearing delay file: {0}", delayOutputFile);
+                }
+                else if (System.IO.File.Exists(delayOutputFile))
+                {
+                    completedSimulations = System.IO.File.ReadLines(delayOutputFile).Count();
+
+                    Console.WriteLine(
+                        "Resuming delay file: {0}; completed simulations: {1}",
+                        delayOutputFile,
+                        completedSimulations);
+                }
+
+                if (completedSimulations >= simulationCount)
+                {
+                    Console.WriteLine(
+                        "Skipping number of nodes {0}; already completed {1} simulations.",
+                        numNodes,
+                        completedSimulations);
+
+                    continue;
+                }
+
+
+                for (int sim = completedSimulations; sim < simulationCount; sim++)
                 {
                     Network network = TopologyFactory.CreateCycle(numNodes);
 
