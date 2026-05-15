@@ -21,6 +21,14 @@ namespace NetworkSimulation
             System.IO.File.WriteAllText("avg_up_time_path.txt", "");
         }
 
+        public void ClearDerivedOutputFiles()
+        {
+            System.IO.File.WriteAllText("all_nodes_live_percent_path.txt", "");
+            System.IO.File.WriteAllText("avg_msg_delays_path.txt", "");
+            System.IO.File.WriteAllText("avg_num_nodes_path.txt", "");
+            System.IO.File.WriteAllText("zero_delay_percent_path.txt", "");
+        }
+
         /// <summary>
         /// Writes summary statistics for one path graph size.
         /// </summary>

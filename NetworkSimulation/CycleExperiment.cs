@@ -52,78 +52,125 @@ namespace NetworkSimulation
             Distribution downDistro,
             ExperimentRunMode runMode)
         {
-            bool restart = runMode == ExperimentRunMode.Restart;
-
-            if (restart)
+            if (runMode == ExperimentRunMode.Restart)
             {
+                // Delete raw delay files and derived statistic files.
                 reporter.ClearOutputFiles();
+            }
+            else
+            {
+                // Keep msg_delays_*.txt files.
+                // Clear only derived statistic files.
+                reporter.ClearDerivedOutputFiles();
             }
 
             int simulationCount = numberSimulations;
 
             for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
             {
-                List<TrialResult> results = new List<TrialResult>();
-
                 Console.WriteLine("Number of nodes: " + numNodes);
 
-                string delayOutputFile = "msg_delays_cycle_" + numNodes.ToString() + ".txt";
-                int completedSimulations = 0;
+                string delayOutputFile =
+                    "msg_delays_cycle_" + numNodes.ToString() + ".txt";
 
                 if (runMode == ExperimentRunMode.Restart)
                 {
                     System.IO.File.WriteAllText(delayOutputFile, "");
 
-                    Console.WriteLine("Clearing delay file: {0}", delayOutputFile);
-                }
-                else if (System.IO.File.Exists(delayOutputFile))
-                {
-                    completedSimulations = System.IO.File.ReadLines(delayOutputFile).Count();
-
                     Console.WriteLine(
-                        "Resuming delay file: {0}; completed simulations: {1}",
-                        delayOutputFile,
-                        completedSimulations);
+                        "Clearing delay file: {0}",
+                        delayOutputFile);
                 }
 
-                if (completedSimulations >= simulationCount)
+                List<TrialResult> results =
+                    LoadResultsFromDelayFile(delayOutputFile, numNodes);
+
+                int completedSimulations = results.Count;
+
+                Console.WriteLine(
+                    "Running simulations for n={0}: {1} completed, {2} remaining.",
+                    numNodes,
+                    completedSimulations,
+                    simulationCount - completedSimulations);
+
+                for (int sim = completedSimulations;
+                     sim < simulationCount;
+                     sim++)
                 {
-                    Console.WriteLine(
-                        "Skipping number of nodes {0}; already completed {1} simulations.",
-                        numNodes,
-                        completedSimulations);
+                    Network network =
+                        TopologyFactory.CreateCycle(numNodes);
 
-                    continue;
-                }
-
-
-                for (int sim = completedSimulations; sim < simulationCount; sim++)
-                {
-                    Network network = TopologyFactory.CreateCycle(numNodes);
-
-                    TrialResult result = runner.RunTrial(
-                        network,
-                        numNodes,
-                        numSessions,
-                        baseTime,
-                        upDistro,
-                        downDistro,
-                        delayOutputFile,
-                        MessageDelayMode.CycleDiameter);
+                    TrialResult result =
+                        runner.RunTrial(
+                            network,
+                            numNodes,
+                            numSessions,
+                            baseTime,
+                            upDistro,
+                            downDistro,
+                            delayOutputFile,
+                            MessageDelayMode.CycleDiameter);
 
                     if (!result.Success)
                     {
                         sim--;
+
+                        Console.WriteLine(
+                            "Simulation failed for n={0}; retrying simulation {1}.",
+                            numNodes,
+                            sim + 1);
+
                         continue;
                     }
 
                     results.Add(result);
                 }
 
-                ResultSummary summary = ResultAggregator.Summarize(results);
+                Console.WriteLine(
+                    "Finished simulations for n={0}. Recomputing summary statistics.",
+                    numNodes);
+
+                ResultSummary summary =
+                    ResultAggregator.Summarize(results);
 
                 reporter.WriteSummary(numNodes, summary);
+
+                Console.WriteLine(
+                    "Summary statistics written for n={0}.",
+                    numNodes);
             }
+        }
+
+        private List<TrialResult> LoadResultsFromDelayFile(string delayOutputFile, int numNodes)
+        {
+            List<TrialResult> results = new List<TrialResult>();
+
+            if (!System.IO.File.Exists(delayOutputFile))
+            {
+                return results;
+            }
+
+            foreach (string line in System.IO.File.ReadLines(delayOutputFile))
+            {
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    continue;
+                }
+
+                double delay = Convert.ToDouble(line);
+
+                TrialResult result = new TrialResult
+                {
+                    Success = true,
+                    Delay = delay,
+                    PercentLive = 0.0,
+                    AllNodesLive = false
+                };
+
+                results.Add(result);
+            }
+
+            return results;
         }
     }
 }

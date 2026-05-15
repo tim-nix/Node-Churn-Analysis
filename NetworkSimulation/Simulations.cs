@@ -281,7 +281,6 @@ namespace NetworkSimulation
                 for (int sim = 0; sim < numSims; sim++)
                 {
                     totalSims++;
-                    //Console.WriteLine("Simulation " + (sim + 1));
                     Network network = new Network(CommonGraphs.GuntherHartnell(numNodes));
 
                     NetworkChurn netChurn = new NetworkChurn(numNodes);
@@ -292,7 +291,6 @@ namespace NetworkSimulation
                     double avgDelay = 0.0;
                     percentLive = 0.0;
 
-                    //Console.WriteLine("time = " + time);
                     bool[] status = netChurn.getStatusAtTime(time);
 
                     double numLive = 0;
@@ -318,7 +316,7 @@ namespace NetworkSimulation
                     }
                     catch (Exception e)
                     {
-                        //Console.WriteLine(e);
+                        Console.WriteLine(e);
                         sim--;
                     }
                 }

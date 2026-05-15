@@ -21,6 +21,14 @@ namespace NetworkSimulation
             System.IO.File.WriteAllText("avg_up_time_cycle.txt", "");
         }
 
+        public void ClearDerivedOutputFiles()
+        {
+            System.IO.File.WriteAllText("all_nodes_live_percent_cycle.txt", "");
+            System.IO.File.WriteAllText("avg_msg_delays_cycle.txt", "");
+            System.IO.File.WriteAllText("avg_num_nodes_cycle.txt", "");
+            System.IO.File.WriteAllText("zero_delay_percent_cycle.txt", "");
+        }
+
         /// <summary>
         /// Writes summary statistics for one cycle graph size.
         /// </summary>
