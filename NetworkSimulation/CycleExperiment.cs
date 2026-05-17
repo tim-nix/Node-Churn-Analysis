@@ -52,38 +52,26 @@ namespace NetworkSimulation
             Distribution downDistro,
             ExperimentRunMode runMode)
         {
-            if (runMode == ExperimentRunMode.Restart)
-            {
-                // Delete raw delay files and derived statistic files.
-                reporter.ClearOutputFiles();
-            }
-            else
-            {
-                // Keep msg_delays_*.txt files.
-                // Clear only derived statistic files.
-                reporter.ClearDerivedOutputFiles();
-            }
-
+            
+            // Delete raw delay files and derived statistic files.
+            reporter.ClearOutputFiles();
+            
             int simulationCount = numberSimulations;
 
             for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
             {
                 Console.WriteLine("Number of nodes: " + numNodes);
 
-                string delayOutputFile =
-                    "msg_delays_cycle_" + numNodes.ToString() + ".txt";
+                string delayOutputFile = "msg_delays_cycle_" + numNodes.ToString() + ".txt";
 
                 if (runMode == ExperimentRunMode.Restart)
                 {
                     System.IO.File.WriteAllText(delayOutputFile, "");
 
-                    Console.WriteLine(
-                        "Clearing delay file: {0}",
-                        delayOutputFile);
+                    Console.WriteLine("Clearing delay file: {0}", delayOutputFile);
                 }
 
-                List<TrialResult> results =
-                    LoadResultsFromDelayFile(delayOutputFile, numNodes);
+                List<TrialResult> results = LoadResultsFromDelayFile(delayOutputFile, numNodes);
 
                 int completedSimulations = results.Count;
 
@@ -93,12 +81,9 @@ namespace NetworkSimulation
                     completedSimulations,
                     simulationCount - completedSimulations);
 
-                for (int sim = completedSimulations;
-                     sim < simulationCount;
-                     sim++)
+                for (int sim = completedSimulations; sim < simulationCount; sim++)
                 {
-                    Network network =
-                        TopologyFactory.CreateCycle(numNodes);
+                    Network network = TopologyFactory.CreateCycle(numNodes);
 
                     TrialResult result =
                         runner.RunTrial(
@@ -115,8 +100,7 @@ namespace NetworkSimulation
                     {
                         sim--;
 
-                        Console.WriteLine(
-                            "Simulation failed for n={0}; retrying simulation {1}.",
+                        Console.WriteLine("Simulation failed for n={0}; retrying simulation {1}.",
                             numNodes,
                             sim + 1);
 
@@ -126,18 +110,12 @@ namespace NetworkSimulation
                     results.Add(result);
                 }
 
-                Console.WriteLine(
-                    "Finished simulations for n={0}. Recomputing summary statistics.",
-                    numNodes);
+                Console.WriteLine("Finished simulations for n={0}. Recomputing summary statistics.", numNodes);
 
-                ResultSummary summary =
-                    ResultAggregator.Summarize(results);
+                ResultSummary summary = ResultAggregator.Summarize(results);
 
-                reporter.WriteSummary(numNodes, summary);
-
-                Console.WriteLine(
-                    "Summary statistics written for n={0}.",
-                    numNodes);
+                Console.WriteLine("Summary statistics written for n={0}.", numNodes);
+                reporter.WriteSummary(numNodes, summary);                                
             }
         }
 
@@ -163,6 +141,8 @@ namespace NetworkSimulation
                 {
                     Success = true,
                     Delay = delay,
+                    ZeroDelay = (delay == 0),
+                    TotalNodes = numNodes,
                     PercentLive = 0.0,
                     AllNodesLive = false
                 };

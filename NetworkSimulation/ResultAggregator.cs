@@ -45,20 +45,15 @@ namespace NetworkSimulation
 
             return new ResultSummary
             {
-                ZeroDelayPercent =
-                    (zeroDelayCount / Convert.ToDouble(successfulResults.Count)) * 100.0,
+                ZeroDelayPercent = (zeroDelayCount / Convert.ToDouble(successfulResults.Count)) * 100.0,
 
-                AllNodesLivePercent =
-                    (allNodesLiveCount / Convert.ToDouble(successfulResults.Count)) * 100.0,
+                AllNodesLivePercent = (allNodesLiveCount / Convert.ToDouble(successfulResults.Count)) * 100.0,
 
-                RedundancyGainPercent =
-                    ((zeroDelayCount - allNodesLiveCount) / Convert.ToDouble(successfulResults.Count)) * 100.0,
+                RedundancyGainPercent = ((zeroDelayCount - allNodesLiveCount) / Convert.ToDouble(successfulResults.Count)) * 100.0,
 
-                AverageMessageDelay =
-                    successfulResults.Average(result => result.Delay),
+                AverageMessageDelay = successfulResults.Average(result => result.Delay),
 
-                AverageLivePercent =
-                    successfulResults.Average(result => result.PercentLive),
+                AverageLivePercent = successfulResults.Average(result => result.PercentLive),
 
                 TrialCount = successfulResults.Count
             };
