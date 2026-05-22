@@ -71,6 +71,8 @@
     <Compile Include="MersenneTwister.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="MessageDelayMode.cs" />
+    <Compile Include="MultiPathExperiment.cs" />
+    <Compile Include="MultiPathExperimentReporter.cs" />
     <Compile Include="Network.cs" />
     <Compile Include="NetworkChurn.cs" />
     <Compile Include="NodeTimeline.cs" />

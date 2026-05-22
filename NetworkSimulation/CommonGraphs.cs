@@ -8,17 +8,15 @@ namespace NetworkSimulation
 {
     public class CommonGraphs
     {
-        public static int[,] PetersonGraph = new int[,] {{0, 1, 0, 0, 1, 1, 0, 0, 0, 0},
-                                                         {1, 0, 1, 0, 0, 0, 1, 0, 0, 0},
-                                                         {0, 1, 0, 1, 0, 0, 0, 1, 0, 0 },
-                                                         {0, 0, 1, 0, 1, 0, 0, 0, 1, 0 },
-                                                         {1, 0, 0, 1, 0, 0, 0, 0, 0, 1 },
-                                                         {1, 0, 0, 0, 0, 0, 0, 1, 1, 0 },
-                                                         {0, 1, 0, 0, 0, 0, 0, 0, 1, 1 },
-                                                         {0, 0, 1, 0, 0, 1, 0, 0, 0, 1 },
-                                                         {0, 0, 0, 1, 0, 1, 1, 0, 0, 0 },
-                                                         {0, 0, 0, 0, 1, 0, 1, 1, 0, 0 } };
-
+        /// <summary>
+        /// Creates an adjacency matrix for an undirected cycle graph with the specified number of nodes.
+        /// </summary>
+        /// <remarks>The resulting matrix is symmetric and has 1s for each pair of adjacent nodes (i and
+        /// i±1 modulo numNodes). Negative values for numNodes will cause a runtime exception when allocating the
+        /// array.</remarks>
+        /// <param name="numNodes">The number of nodes in the cycle. Must be non-negative; if zero, returns an empty 0-by-0 matrix.</param>
+        /// <returns>An int[,] whose element [i,j] is 1 if nodes i and j are adjacent in the cycle (consecutive indices or first
+        /// and last), otherwise 0.</returns>
         public static int[,] Cycle(int numNodes)
         {
             int[,] c = new int[numNodes, numNodes];
@@ -43,6 +41,14 @@ namespace NetworkSimulation
         }
 
 
+        /// <summary>
+        /// Creates an adjacency matrix for an undirected path graph with the specified number of nodes.
+        /// </summary>
+        /// <remarks>The matrix is symmetric; edges exist only between node i and i+1 for 0 <= i <
+        /// numNodes - 1.</remarks>
+        /// <param name="numNodes">Number of nodes in the path.</param>
+        /// <returns>An int[,] adjacency matrix of size numNodes-by-numNodes where 1 indicates an edge between consecutive nodes
+        /// and 0 otherwise.</returns>
         public static int[,] Path(int numNodes)
         {
             int[,] c = new int[numNodes, numNodes];
@@ -62,7 +68,79 @@ namespace NetworkSimulation
             return c;
         }
 
+        /// <summary>
+        /// Creates an adjacency matrix representing multiple disjoint linear paths.
+        /// </summary>
+        /// <remarks>Nodes for each path occupy contiguous index ranges; edges connect consecutive indices
+        /// within each range. If pathLength or pathCount is zero the returned matrix has zero size.</remarks>
+        /// <param name="pathLength">Number of nodes in each path.</param>
+        /// <param name="pathCount">Number of disjoint paths.</param>
+        /// <returns>An int[,] adjacency matrix of size (pathLength * pathCount) by (pathLength * pathCount) where entries are 1
+        /// for adjacent nodes within the same path and 0 otherwise.</returns>
+        public static int[,] MultiPath(int pathLength, int pathCount)
+        {
+            if (pathLength < 2)
+            {
+                throw new ArgumentException("Path length must be at least 2.");
+            }
 
+            if (pathCount < 2)
+            {
+                throw new ArgumentException("Path count must be at least 2.");
+            }
+
+            /*
+             * Node layout:
+             *
+             * 0 = source
+             * 1 = destination
+             *
+             * Each path contributes (pathLength - 1)
+             * internal nodes.
+             *
+             * Total nodes:
+             *
+             * 2 + pathCount * (pathLength - 1)
+             */
+
+            int totalNodes = 2 + pathCount * (pathLength - 1);
+
+            int[,] graph = new int[totalNodes, totalNodes];
+
+            int nextNode = 2;
+
+            for (int p = 0; p < pathCount; p++)
+            {
+                int previous = 0;
+
+                /* Add internal nodes for this path. */
+                for (int i = 0; i < pathLength - 1; i++)
+                {
+                    int current = nextNode++;
+
+                    graph[previous, current] = 1;
+                    graph[current, previous] = 1;
+
+                    previous = current;
+                }
+
+                /* Connect final node in the path to destination node 1. */
+                graph[previous, 1] = 1;
+                graph[1, previous] = 1;
+            }
+
+            return graph;
+        }
+
+
+        /// <summary>
+        /// Creates an adjacency matrix for a complete undirected graph (clique) with the specified number of nodes.
+        /// </summary>
+        /// <remarks>The matrix is symmetric and represents an undirected graph; diagonal entries remain
+        /// zero.</remarks>
+        /// <param name="numNodes">The number of nodes in the clique. Must be non-negative.</param>
+        /// <returns>An int[,] adjacency matrix of size numNodes × numNodes where entries are 1 for each distinct connected node
+        /// pair and 0 on the diagonal (no self-loops).</returns>
         public static int[,] Clique(int numNodes)
         {
             int[,] c = new int[numNodes, numNodes];
@@ -83,6 +161,33 @@ namespace NetworkSimulation
         }
 
 
+        /// <summary>
+        /// Adjacency matrix for the Petersen graph.
+        /// </summary>
+        /// <remarks>The matrix is 10-by-10 and symmetric; rows and columns correspond to vertices indexed
+        /// 0 through 9. Entries are 1 for an edge and 0 for no edge; diagonal entries are 0 (no self-loops).</remarks>
+        public static int[,] PetersonGraph = new int[,] {{0, 1, 0, 0, 1, 1, 0, 0, 0, 0},
+                                                         {1, 0, 1, 0, 0, 0, 1, 0, 0, 0},
+                                                         {0, 1, 0, 1, 0, 0, 0, 1, 0, 0 },
+                                                         {0, 0, 1, 0, 1, 0, 0, 0, 1, 0 },
+                                                         {1, 0, 0, 1, 0, 0, 0, 0, 0, 1 },
+                                                         {1, 0, 0, 0, 0, 0, 0, 1, 1, 0 },
+                                                         {0, 1, 0, 0, 0, 0, 0, 0, 1, 1 },
+                                                         {0, 0, 1, 0, 0, 1, 0, 0, 0, 1 },
+                                                         {0, 0, 0, 1, 0, 1, 1, 0, 0, 0 },
+                                                         {0, 0, 0, 0, 1, 0, 1, 1, 0, 0 } };
+
+
+
+        /// <summary>
+        /// Creates an undirected random graph in the G(n, p) model and returns its adjacency matrix.
+        /// </summary>
+        /// <remarks>Randomness is generated with a Mersenne Twister. Each unordered pair (i, j) with i <
+        /// j is sampled independently; no self-loops are added.</remarks>
+        /// <param name="n">Number of vertices in the graph.</param>
+        /// <param name="p">Probability in [0, 1] that each unordered pair of vertices is connected by an edge.</param>
+        /// <returns>An n-by-n adjacency matrix where 1 denotes an edge and 0 denotes no edge; the matrix is symmetric with zeros
+        /// on the diagonal.</returns>
         public static int[,] Gnp(int n, double p)
         {
             int[,] c = new int[n, n];
@@ -103,6 +208,16 @@ namespace NetworkSimulation
             return c;
         }
 
+
+        /// <summary>
+        /// Generates an adjacency matrix for the Gunther–Hartnell graph on the specified number of nodes.
+        /// </summary>
+        /// <remarks>Computes k = ceil((sqrt(1+4*numNodes)-1)/2) to determine clique sizes, partitions
+        /// vertices into numCliques cliques of size k or k-1, fully connects vertices within each clique, and adds
+        /// designated inter-clique edges according to the Gunther–Hartnell construction.</remarks>
+        /// <param name="numNodes">The number of vertices in the graph.</param>
+        /// <returns>An adjacency matrix of size numNodes-by-numNodes (int[,]) with 1 indicating an edge and 0 indicating no
+        /// edge.</returns>
         public static int[,] GuntherHartnell(int numNodes)
         {
             int[,] c = new int[numNodes, numNodes];

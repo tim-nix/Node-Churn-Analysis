@@ -29,5 +29,10 @@ namespace NetworkSimulation
         {
             return new Network(CommonGraphs.Cycle(numNodes));
         }
+
+        public static Network CreateMultiPath(int pathLength, int pathCount)
+        {
+            return new Network(CommonGraphs.MultiPath(pathLength, pathCount));
+        }
     }
 }

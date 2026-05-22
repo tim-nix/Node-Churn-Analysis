@@ -329,6 +329,95 @@ namespace NetworkSimulation
             return curr_time - start_time;
         }
 
+
+        /// <summary>
+        /// Computes endpoint-to-endpoint message delay on a multi-path topology.
+        /// The source is node 0 and the destination is node 1.  The topology is
+        /// expected to contain two or more internally disjoint, equal-length paths
+        /// between those shared endpoints.
+        /// 
+        /// Returns the elapsed simulated time required for the message to reach
+        /// node 1 from node 0.
+        /// </summary>
+        /// <returns>
+        /// The simulated elapsed time required for message delivery between the
+        /// shared source and destination nodes.
+        /// </returns>
+        /// <exception cref="Exception">
+        /// Thrown if the source node is initially unavailable or if the message
+        /// cannot be delivered before the simulation end time.
+        /// </exception>
+        public double getMultiPathMessageDelay()
+        {
+            if (network.getNewNodeLabel(0) == -1)
+                throw new Exception("Node 0 is not live!");
+
+            int startVertex = 0;
+            int endVertex = 1;
+
+            int currStart = network.getNewNodeLabel(startVertex);
+            int currStop;
+
+            HashSet<int> locations = new HashSet<int>();
+            HashSet<int> newLocations = new HashSet<int>();
+
+            locations.Add(startVertex);
+
+            for (int j = 0; j < network.FullOrder; j++)
+            {
+                currStop = network.getNewNodeLabel(j);
+
+                if ((currStart != currStop)
+                    && (currStop != -1)
+                    && (network.isPathinCurrentNetwork(currStart, currStop)))
+                {
+                    locations.Add(j);
+                }
+            }
+
+            double timeDelta = 0.001;
+            double curr_time = start_time;
+
+            while (!locations.Contains(endVertex) && (curr_time < final_time))
+            {
+                curr_time += timeDelta;
+
+                bool[] status = churn.getStatusAtTime(curr_time);
+                network.updateStatus(status);
+
+                foreach (int i in locations)
+                {
+                    for (int j = 0; j < network.FullOrder; j++)
+                    {
+                        if (!locations.Contains(j))
+                        {
+                            currStart = network.getNewNodeLabel(i);
+                            currStop = network.getNewNodeLabel(j);
+
+                            if ((currStart != -1) && (currStop != -1))
+                            {
+                                if (network.isPathinCurrentNetwork(currStart, currStop))
+                                {
+                                    newLocations.Add(j);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                foreach (int i in newLocations)
+                    locations.Add(i);
+
+                newLocations.Clear();
+            }
+
+            if (curr_time >= final_time)
+                throw new Exception("Error: Message not delivered!");
+
+            return curr_time - start_time;
+        }
+
+
         /// <summary>
         /// Dispatches to the appropriate controlled message-delay calculation.
         /// </summary>
@@ -348,6 +437,9 @@ namespace NetworkSimulation
 
                 case MessageDelayMode.CycleDiameter:
                     return getCycleMessageDelay();
+
+                case MessageDelayMode.MultiPathEndpoint:
+                    return getMultiPathMessageDelay();
 
                 default:
                     throw new ArgumentException("Unsupported delay mode.");

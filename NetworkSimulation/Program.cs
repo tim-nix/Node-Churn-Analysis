@@ -18,8 +18,8 @@ namespace NetworkSimulation
         public static void pathExponential()
         {
             Simulations sim = new Simulations(minN: 5, maxN: 16, nDelta: 1, numSims: 100000);
-            Distribution upD = new Exponential(2.0);
-            Distribution downD = new Exponential(3.0);
+            Distribution upD = new Exponential(1.0);
+            Distribution downD = new Exponential(1.0);
             sim.setUpDistro(upD, downD);
             sim.simPath(ExperimentRunMode.Resume);
         }
@@ -36,8 +36,8 @@ namespace NetworkSimulation
         public static void cycleExponential()
         {
             Simulations sim = new Simulations(minN: 10, maxN: 32, nDelta: 2, numSims: 100000);
-            Distribution upD = new Exponential(2.0);
-            Distribution downD = new Exponential(3.0);
+            Distribution upD = new Exponential(1.0);
+            Distribution downD = new Exponential(1.0);
             sim.setUpDistro(upD, downD);
             sim.simCycle(ExperimentRunMode.Resume);
         }
@@ -197,6 +197,87 @@ namespace NetworkSimulation
 
 
         /// <summary>
+        /// Executes a small-scale validation experiment for the multi-path
+        /// topology model.  The experiment generates a topology containing
+        /// multiple internally disjoint equal-length paths between a shared
+        /// source node and destination node and measures message delivery
+        /// delay under node churn.
+        ///
+        /// The method is intended for debugging and validation of topology
+        /// construction, routing behavior, and message-delay calculations
+        /// prior to running large-scale experiments.
+        /// </summary>
+        /// <param name="pathLength">
+        /// The number of edges in each path between the shared source and
+        /// destination nodes.
+        /// </param>
+        /// <param name="pathCount">
+        /// The number of internally disjoint equal-length paths between the
+        /// shared source and destination nodes.
+        /// </param>
+        /// <param name="trials">
+        /// The number of simulation trials to execute.
+        /// </param>
+        public static void multiPathSanityTest(
+            int pathLength,
+            int pathCount,
+            int trials)
+        {
+            int numNodes = 2 + pathCount * (pathLength - 1);
+
+            int numSessions = 100;
+            double baseTime = 200.0;
+
+            Distribution upDistro = new Exponential(2.0);
+            Distribution downDistro = new Exponential(3.0);
+
+            string delayOutputFile = $"msg_delays_multipath_k{pathCount}_len{pathLength}_sanity.txt";
+
+            File.WriteAllText(delayOutputFile, "");
+
+            TrialRunner runner = new TrialRunner();
+            List<TrialResult> results = new List<TrialResult>();
+
+            Console.WriteLine("Starting multi-path sanity test...");
+            Console.WriteLine($"pathLength = {pathLength}");
+            Console.WriteLine($"pathCount = {pathCount}");
+            Console.WriteLine($"numNodes = {numNodes}");
+
+            for (int trial = 0; trial < trials; trial++)
+            {
+                Network network =
+                    TopologyFactory.CreateMultiPath(pathLength, pathCount);
+
+                TrialResult result = runner.RunTrial(
+                    network,
+                    numNodes,
+                    numSessions,
+                    baseTime,
+                    upDistro,
+                    downDistro,
+                    delayOutputFile,
+                    MessageDelayMode.MultiPathEndpoint);
+
+                if (!result.Success)
+                {
+                    trial--;
+                    continue;
+                }
+
+                results.Add(result);
+            }
+
+            ResultSummary summary = ResultAggregator.Summarize(results);
+
+            Console.WriteLine("Multi-path sanity test complete.");
+            Console.WriteLine($"Successful trials: {results.Count}");
+            Console.WriteLine($"Average delay: {summary.AverageMessageDelay:N4}");
+            Console.WriteLine($"Zero delay percent: {summary.ZeroDelayPercent:N2}%");
+            Console.WriteLine($"All nodes live percent: {summary.AllNodesLivePercent:N2}%");
+            Console.WriteLine();
+        }
+
+        /// <summary>
         /// Entry point for the simulation program.
         /// </summary>
         /// <param name="args">Command-line arguments; currently unused.</param>
@@ -206,7 +287,17 @@ namespace NetworkSimulation
         /// </remarks>
         static void Main(string[] args)
         {
-            comparePathAndCycleExperiment();
+            MultiPathExperiment experiment = new MultiPathExperiment();
+
+            experiment.Run(
+                new int[] { 5 },
+                new int[] { 2, 3, 4 },
+                1000,
+                100,
+                200.0,
+                new Exponential(2.0),
+                new Exponential(3.0),
+                ExperimentRunMode.Restart);
         }
     }
 }
