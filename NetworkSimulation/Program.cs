@@ -287,17 +287,12 @@ namespace NetworkSimulation
         /// </remarks>
         static void Main(string[] args)
         {
-            MultiPathExperiment experiment = new MultiPathExperiment();
+            MultiPathSurvivalComparison comparison =
+            new MultiPathSurvivalComparison();
 
-            experiment.Run(
-                new int[] { 5 },
-                new int[] { 2, 3, 4 },
-                1000,
-                100,
-                200.0,
-                new Exponential(2.0),
-                new Exponential(3.0),
-                ExperimentRunMode.Restart);
+            comparison.Run(
+                new int[] { 5, 10, 15 },
+                new int[] { 2, 3, 4 });
         }
     }
 }
