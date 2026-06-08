@@ -29,13 +29,11 @@ namespace NetworkSimulation
 
             foreach (int pathLength in pathLengths)
             {
-                string pathDelayFile =
-                    $"msg_delays_path_{pathLength}.txt";
+                string pathDelayFile = $"msg_delays_path_{pathLength}.txt";
 
                 if (!File.Exists(pathDelayFile))
                 {
-                    Console.WriteLine(
-                        $"Missing baseline path file: {pathDelayFile}");
+                    Console.WriteLine($"Missing baseline path file: {pathDelayFile}");
 
                     continue;
                 }
@@ -45,8 +43,7 @@ namespace NetworkSimulation
 
                 foreach (int pathCount in pathCounts)
                 {
-                    string multiPathDelayFile =
-                        $"msg_delays_multipath_k{pathCount}_len{pathLength}.txt";
+                    string multiPathDelayFile = $"msg_delays_multipath_k{pathCount}_len{pathLength}.txt";
 
                     if (!File.Exists(multiPathDelayFile))
                     {
@@ -56,8 +53,7 @@ namespace NetworkSimulation
                         continue;
                     }
 
-                    List<double> multiPathDelays =
-                        LoadDelays(multiPathDelayFile);
+                    List<double> multiPathDelays = LoadDelays(multiPathDelayFile);
 
                     AnalyzeConfiguration(
                         pathLength,
@@ -68,19 +64,24 @@ namespace NetworkSimulation
             }
         }
 
-        private void AnalyzeConfiguration(
-            int pathLength,
-            int pathCount,
-            List<double> pathDelays,
-            List<double> multiPathDelays)
-        {
-            string survivalOutputFile =
-                $"survival_multipath_k{pathCount}_len{pathLength}.csv";
 
-            File.WriteAllText(
-                survivalOutputFile,
-                "t,S_path,S_multipath,S_path_to_k,alpha" +
-                Environment.NewLine);
+        private class SurvivalRow
+        {
+            public double Time { get; set; }
+            public double SPath { get; set; }
+            public double SMultiPath { get; set; }
+            public double SPathToK { get; set; }
+            public double Alpha { get; set; }
+        }
+
+
+        private void AnalyzeConfiguration(
+    int pathLength,
+    int pathCount,
+    List<double> pathDelays,
+    List<double> multiPathDelays)
+        {
+            string survivalOutputFile = $"survival_multipath_k{pathCount}_len{pathLength}.csv";
 
             List<double> timePoints =
                 pathDelays
@@ -89,33 +90,34 @@ namespace NetworkSimulation
                     .OrderBy(t => t)
                     .ToList();
 
-            List<double> alphaValues =
-                new List<double>();
+            List<double> alphaValues = new List<double>();
+
+            List<SurvivalRow> rows = new List<SurvivalRow>();
 
             foreach (double t in timePoints)
             {
-                double sPath =
-                    Survival(pathDelays, t);
+                double sPath = Survival(pathDelays, t);
 
-                double sMultiPath =
-                    Survival(multiPathDelays, t);
+                double sMultiPath = Survival(multiPathDelays, t);
 
-                if (sPath <= 0.0 || sPath >= 1.0 ||
-                    sMultiPath <= 0.0 || sMultiPath >= 1.0)
+                if (sPath <= 0.0 || sPath >= 1.0 || sMultiPath <= 0.0 || sMultiPath >= 1.0)
                 {
                     continue;
                 }
 
-                double idealIndependent =
-                    Math.Pow(sPath, pathCount);
+                double idealIndependent = Math.Pow(sPath, pathCount);
 
-                double alpha =
-                    Math.Log(sMultiPath) / Math.Log(sPath);
+                double alpha = Math.Log(sMultiPath) / Math.Log(sPath);
 
-                File.AppendAllText(
-                    survivalOutputFile,
-                    $"{t},{sPath},{sMultiPath},{idealIndependent},{alpha}" +
-                    Environment.NewLine);
+                rows.Add(
+                    new SurvivalRow
+                    {
+                        Time = t,
+                        SPath = sPath,
+                        SMultiPath = sMultiPath,
+                        SPathToK = idealIndependent,
+                        Alpha = alpha
+                    });
 
                 if (sPath >= LowerSurvivalCutoff &&
                     sPath <= UpperSurvivalCutoff)
@@ -126,17 +128,27 @@ namespace NetworkSimulation
 
             if (alphaValues.Count == 0)
             {
-                Console.WriteLine(
-                    $"No alpha values available for pathLength={pathLength}, k={pathCount}.");
+                Console.WriteLine($"No alpha values available for pathLength={pathLength}, k={pathCount}.");
 
                 return;
             }
 
-            double meanAlpha =
-                alphaValues.Average();
+            double meanAlpha = alphaValues.Average();
 
-            double medianAlpha =
-                Median(alphaValues);
+            double medianAlpha = Median(alphaValues);
+
+            File.WriteAllText(survivalOutputFile, "t,S_path,S_multipath,S_path_to_k,alpha,S_path_to_mean_alpha" + Environment.NewLine);
+
+            foreach (SurvivalRow row in rows)
+            {
+                double fittedSurvival =
+                    Math.Pow(row.SPath, meanAlpha);
+
+                File.AppendAllText(
+                    survivalOutputFile,
+                    $"{row.Time},{row.SPath},{row.SMultiPath},{row.SPathToK},{row.Alpha},{fittedSurvival}" +
+                    Environment.NewLine);
+            }
 
             File.AppendAllText(
                 "alpha_summary_multipath.txt",
