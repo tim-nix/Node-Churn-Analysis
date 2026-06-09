@@ -39,9 +39,12 @@ namespace NetworkSimulation
         /// <param name="baseTime">Base time used for churn generation.</param>
         /// <param name="upDistro">Distribution for live/ON durations.</param>
         /// <param name="downDistro">Distribution for failed/OFF durations.</param>
+        /// <param name="runMode">Controls checkpoint restart or resume behavior.</param>
+        /// <param name="randomSeed">Experiment seed used for deterministic trials.</param>
+        /// <param name="maxAttempts">Maximum attempts allowed per successful trial.</param>
         /// <remarks>
-        /// Raw delay samples are written to msg_delays_cycle_N.txt, where N is
-        /// the number of nodes in the cycle graph.
+        /// Raw delay samples are written to msg_delays_cycle_N.txt. Complete
+        /// trial checkpoints and seed metadata are written beside that file.
         /// </remarks>
         public void Run(
             int minOrder,
@@ -52,7 +55,9 @@ namespace NetworkSimulation
             double baseTime,
             Distribution upDistro,
             Distribution downDistro,
-            ExperimentRunMode runMode)
+            ExperimentRunMode runMode,
+            int randomSeed = 12345,
+            int maxAttempts = 3)
         {
             
             // Delete raw delay files and derived statistic files.
@@ -66,16 +71,19 @@ namespace NetworkSimulation
 
                 string delayOutputFile = "msg_delays_cycle_" + numNodes.ToString() + ".txt";
 
-                if (runMode == ExperimentRunMode.Restart)
-                {
-                    System.IO.File.WriteAllText(delayOutputFile, "");
-
-                    Console.WriteLine("Clearing delay file: {0}", delayOutputFile);
-                }
-
-                List<TrialResult> results = LoadResultsFromDelayFile(delayOutputFile, numNodes);
+                string metadata = string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    "topology=cycle;nodes={0};seed={1}",
+                    numNodes,
+                    randomSeed);
+                TrialResultStore store =
+                    new TrialResultStore(delayOutputFile, metadata);
+                List<TrialResult> results = store.PrepareAndLoad(runMode);
 
                 int completedSimulations = results.Count;
+                if (completedSimulations > simulationCount)
+                    throw new InvalidOperationException(
+                        "Checkpoint contains more trials than requested.");
 
                 Console.WriteLine(
                     "Running simulations for n={0}: {1} completed, {2} remaining.",
@@ -85,31 +93,24 @@ namespace NetworkSimulation
 
                 for (int sim = completedSimulations; sim < simulationCount; sim++)
                 {
-                    Network network = TopologyFactory.CreateCycle(numNodes);
-
                     TrialResult result =
-                        runner.RunTrial(
-                            network,
-                            numNodes,
-                            numSessions,
-                            baseTime,
-                            upDistro,
-                            downDistro,
-                            delayOutputFile,
-                            MessageDelayMode.CycleDiameter);
-
-                    if (!result.Success)
-                    {
-                        sim--;
-
-                        Console.WriteLine("Simulation failed for n={0}; retrying simulation {1}.",
-                            numNodes,
-                            sim + 1);
-
-                        continue;
-                    }
+                        TrialAttempts.Run(
+                            attempt => runner.RunTrial(
+                                TopologyFactory.CreateCycle(numNodes),
+                                numNodes,
+                                numSessions,
+                                baseTime,
+                                upDistro.WithRandomSource(
+                                    new MersenneTwister(RandomSeed.Derive(
+                                        randomSeed, numNodes, 1, sim, attempt, 0))),
+                                downDistro.WithRandomSource(
+                                    new MersenneTwister(RandomSeed.Derive(
+                                        randomSeed, numNodes, 1, sim, attempt, 1))),
+                                MessageDelayMode.CycleDiameter),
+                            maxAttempts);
 
                     results.Add(result);
+                    store.Append(result);
                 }
 
                 Console.WriteLine("Finished simulations for n={0}. Recomputing summary statistics.", numNodes);
@@ -121,38 +122,5 @@ namespace NetworkSimulation
             }
         }
 
-        private List<TrialResult> LoadResultsFromDelayFile(string delayOutputFile, int numNodes)
-        {
-            List<TrialResult> results = new List<TrialResult>();
-
-            if (!System.IO.File.Exists(delayOutputFile))
-            {
-                return results;
-            }
-
-            foreach (string line in System.IO.File.ReadLines(delayOutputFile))
-            {
-                if (string.IsNullOrWhiteSpace(line))
-                {
-                    continue;
-                }
-
-                double delay = Convert.ToDouble(line);
-
-                TrialResult result = new TrialResult
-                {
-                    Success = true,
-                    Delay = delay,
-                    ZeroDelay = (delay == 0),
-                    TotalNodes = numNodes,
-                    PercentLive = 0.0,
-                    AllNodesLive = false
-                };
-
-                results.Add(result);
-            }
-
-            return results;
-        }
     }
 }

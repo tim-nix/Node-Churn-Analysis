@@ -85,7 +85,10 @@ namespace NetworkSimulation
         // "left-mode" node within the topology and the destination node is the "right-most" node
         // within the topology.  Prior to execution of this method, upDistro and downDistro should
         // be created/initialized.
-        public void simPath(ExperimentRunMode runMode)
+        public void simPath(
+            ExperimentRunMode runMode,
+            int randomSeed = 12345,
+            int maxAttempts = 3)
         {
             if ((upDistro == null) || (downDistro == null))
                 throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
@@ -101,12 +104,17 @@ namespace NetworkSimulation
                 baseTime,
                 upDistro,
                 downDistro,
-                runMode);
+                runMode,
+                randomSeed,
+                maxAttempts);
         }
 
 
 
-        public void simCycle(ExperimentRunMode runMode)
+        public void simCycle(
+            ExperimentRunMode runMode,
+            int randomSeed = 12345,
+            int maxAttempts = 3)
         {
             if ((upDistro == null) || (downDistro == null))
                 throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
@@ -122,7 +130,9 @@ namespace NetworkSimulation
                 baseTime,
                 upDistro,
                 downDistro,
-                runMode);
+                runMode,
+                randomSeed,
+                maxAttempts);
         }
 
 

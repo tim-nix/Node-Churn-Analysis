@@ -165,7 +165,9 @@ namespace NetworkSimulation
         {
             return File.ReadLines(filename)
                 .Where(line => !string.IsNullOrWhiteSpace(line))
-                .Select(line => Convert.ToDouble(line))
+                .Select(line => double.Parse(
+                    line,
+                    System.Globalization.CultureInfo.InvariantCulture))
                 .ToList();
         }
 

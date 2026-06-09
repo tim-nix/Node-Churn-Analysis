@@ -22,6 +22,14 @@ namespace NetworkSimulation
             return v;
         }
 
+        public override Distribution WithRandomSource(IRandomSource randomSource)
+        {
+            if (randomSource == null)
+                throw new ArgumentNullException("randomSource");
+
+            return new Constant(v);
+        }
+
         public override double getExpectedValue()
         {
             return v;

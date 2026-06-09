@@ -2,7 +2,7 @@
 
 namespace NetworkSimulation
 {
-    public class MersenneTwister
+    public class MersenneTwister : IRandomSource
     {
 
         #region "Private Parameter"
@@ -225,6 +225,16 @@ namespace NetworkSimulation
         {
             double random = genrand_real3();
             return -Math.Log(random) / lambda;
+        }
+
+        public double NextClosedUnit()
+        {
+            return genrand_real1();
+        }
+
+        public double NextOpenUnit()
+        {
+            return genrand_real3();
         }
 
         /*

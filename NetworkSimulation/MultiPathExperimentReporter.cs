@@ -75,35 +75,35 @@ namespace NetworkSimulation
 
             System.IO.File.AppendAllText(
                 "path_lengths_multipath.txt",
-                pathLength.ToString() + Environment.NewLine);
+                pathLength.ToString(System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText(
                 "path_counts_multipath.txt",
-                pathCount.ToString() + Environment.NewLine);
+                pathCount.ToString(System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText(
                 "graph_sizes_multipath.txt",
-                numNodes.ToString() + Environment.NewLine);
+                numNodes.ToString(System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText(
                 "zero_delay_percent_multipath.txt",
-                summary.ZeroDelayPercent.ToString() + Environment.NewLine);
+                summary.ZeroDelayPercent.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText(
                 "all_nodes_live_percent_multipath.txt",
-                summary.AllNodesLivePercent.ToString() + Environment.NewLine);
+                summary.AllNodesLivePercent.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText(
                 "redundancy_gain_multipath.txt",
-                summary.RedundancyGainPercent.ToString() + Environment.NewLine);
+                summary.RedundancyGainPercent.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText(
                 "avg_msg_delays_multipath.txt",
-                summary.AverageMessageDelay.ToString() + Environment.NewLine);
+                summary.AverageMessageDelay.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText(
                 "avg_up_time_multipath.txt",
-                summary.AverageLivePercent.ToString() + Environment.NewLine);
+                summary.AverageLivePercent.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
         }
     }
 }

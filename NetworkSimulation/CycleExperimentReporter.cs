@@ -52,22 +52,22 @@ namespace NetworkSimulation
             Console.WriteLine();
 
             System.IO.File.AppendAllText("graph_sizes_cycle.txt",
-                numNodes.ToString() + Environment.NewLine);
+                numNodes.ToString(System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText("zero_delay_percent_cycle.txt",
-                summary.ZeroDelayPercent.ToString() + Environment.NewLine);
+                summary.ZeroDelayPercent.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText("redundancy_gain_cycle.txt",
-                summary.RedundancyGainPercent.ToString() + Environment.NewLine);
+                summary.RedundancyGainPercent.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText("all_nodes_live_percent_cycle.txt",
-                summary.AllNodesLivePercent.ToString() + Environment.NewLine);
+                summary.AllNodesLivePercent.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText("avg_msg_delays_cycle.txt",
-                summary.AverageMessageDelay.ToString() + Environment.NewLine);
+                summary.AverageMessageDelay.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
 
             System.IO.File.AppendAllText("avg_up_time_cycle.txt",
-                summary.AverageLivePercent.ToString() + Environment.NewLine);
+                summary.AverageLivePercent.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + Environment.NewLine);
         }
     }
 }

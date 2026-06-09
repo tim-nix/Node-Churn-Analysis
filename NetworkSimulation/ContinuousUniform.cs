@@ -8,7 +8,7 @@ namespace NetworkSimulation
 {
     public class ContinuousUniform : Distribution
     {
-        MersenneTwister randomNum;
+        IRandomSource randomNum;
         double a = 0.0;
         double b = 0.0;
 
@@ -31,11 +31,21 @@ namespace NetworkSimulation
 
 
         public ContinuousUniform(double min, double max)
+            : this(min, max, new MersenneTwister())
+        {
+        }
+
+        public ContinuousUniform(
+            double min,
+            double max,
+            IRandomSource randomSource)
         {
             if (min >= max)
                 throw new ArgumentException("Error: lower bound must be less than upper bound!");
+            if (randomSource == null)
+                throw new ArgumentNullException("randomSource");
 
-            randomNum = new MersenneTwister();
+            randomNum = randomSource;
             a = min;
             b = max;
         }
@@ -43,7 +53,12 @@ namespace NetworkSimulation
 
         public override double generateRandom()
         {
-            return a + (randomNum.genrand_real1() * (b - a));
+            return a + (randomNum.NextClosedUnit() * (b - a));
+        }
+
+        public override Distribution WithRandomSource(IRandomSource randomSource)
+        {
+            return new ContinuousUniform(a, b, randomSource);
         }
 
         public override double getExpectedValue()

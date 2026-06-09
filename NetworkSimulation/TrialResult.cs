@@ -1,5 +1,3 @@
-using System.Diagnostics.Eventing.Reader;
-
 namespace NetworkSimulation
 {
     /// <summary>
@@ -15,5 +13,6 @@ namespace NetworkSimulation
         public bool Success { get; set; }
         public bool ZeroDelay { get; set; }
         public bool AllNodesLive { get; set; }
+        public string FailureReason { get; set; }
     }
 }

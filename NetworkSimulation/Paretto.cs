@@ -8,7 +8,7 @@ namespace NetworkSimulation
 {
     public class Paretto : Distribution
     {
-        MersenneTwister randomNum;
+        IRandomSource randomNum;
         double alpha = 0.0;
         double beta = 0.0;
 
@@ -32,21 +32,34 @@ namespace NetworkSimulation
 
         
         public Paretto(double a, double b)
+            : this(a, b, new MersenneTwister())
+        {
+        }
+
+        public Paretto(double a, double b, IRandomSource randomSource)
         {
             if (a <= 1.0)
                 throw new ArgumentException("Error: Value for alpha must be greater then 1.0!");
 
             if (b <= 0.0)
                 throw new ArgumentException("Error: Value for beta must be positive!");
+            if (randomSource == null)
+                throw new ArgumentNullException("randomSource");
 
-            randomNum = new MersenneTwister();
+            randomNum = randomSource;
             alpha = a;
             beta = b;
         }
 
         public override double generateRandom()
         {
-            return randomNum.genparet_real(alpha, beta);
+            double random = 1.0 / (1.0 - randomNum.NextClosedUnit());
+            return (Math.Pow(random, 1.0 / alpha) - 1.0) * beta;
+        }
+
+        public override Distribution WithRandomSource(IRandomSource randomSource)
+        {
+            return new Paretto(alpha, beta, randomSource);
         }
 
         public override double getExpectedValue()

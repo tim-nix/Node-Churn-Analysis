@@ -61,9 +61,6 @@ namespace NetworkSimulation
         /// <param name="downDistro">
         /// Distribution used to generate failed/OFF durations.
         /// </param>
-        /// <param name="delayOutputFile">
-        /// File to which the raw message delay is appended.
-        /// </param>
         /// <param name="delayMode">
         /// Message-delay mode specifying the source-target interpretation.
         /// </param>
@@ -78,7 +75,6 @@ namespace NetworkSimulation
             double baseTime,
             Distribution upDistro,
             Distribution downDistro,
-            string delayOutputFile,
             MessageDelayMode delayMode)
         {
             NetworkChurn netChurn = new NetworkChurn(numNodes);
@@ -98,12 +94,8 @@ namespace NetworkSimulation
             try
             {
                 delay = msg.getMessageDelay(delayMode);
-
-                System.IO.File.AppendAllText(
-                    delayOutputFile,
-                    delay.ToString() + Environment.NewLine);
             }
-            catch
+            catch (InvalidOperationException exception)
             {
                 return new TrialResult
                 {
@@ -114,7 +106,8 @@ namespace NetworkSimulation
                     StartTime = time,
                     Success = false,
                     ZeroDelay = false,
-                    AllNodesLive = false
+                    AllNodesLive = false,
+                    FailureReason = exception.Message
                 };
             }
 

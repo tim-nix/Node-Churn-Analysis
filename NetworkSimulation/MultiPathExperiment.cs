@@ -56,6 +56,12 @@ namespace NetworkSimulation
         /// <param name="runMode">
         /// Indicates whether raw delay files should be restarted or resumed.
         /// </param>
+        /// <param name="randomSeed">
+        /// Experiment seed used to derive deterministic per-trial streams.
+        /// </param>
+        /// <param name="maxAttempts">
+        /// Maximum attempts allowed per successful trial.
+        /// </param>
         public void Run(
             int[] pathLengths,
             int[] pathCounts,
@@ -64,7 +70,9 @@ namespace NetworkSimulation
             double baseTime,
             Distribution upDistro,
             Distribution downDistro,
-            ExperimentRunMode runMode)
+            ExperimentRunMode runMode,
+            int randomSeed = 12345,
+            int maxAttempts = 3)
         {
             reporter.ClearOutputFiles();
 
@@ -90,18 +98,21 @@ namespace NetworkSimulation
                         + pathLength.ToString()
                         + ".txt";
 
-                    if (runMode == ExperimentRunMode.Restart)
-                    {
-                        System.IO.File.WriteAllText(delayOutputFile, "");
-                        Console.WriteLine(
-                            "Clearing delay file: {0}",
-                            delayOutputFile);
-                    }
-
+                    string metadata = string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        "topology=multipath;length={0};count={1};seed={2}",
+                        pathLength,
+                        pathCount,
+                        randomSeed);
+                    TrialResultStore store =
+                        new TrialResultStore(delayOutputFile, metadata);
                     List<TrialResult> results =
-                        LoadResultsFromDelayFile(delayOutputFile, numNodes);
+                        store.PrepareAndLoad(runMode);
 
                     int completedSimulations = results.Count;
+                    if (completedSimulations > simulationCount)
+                        throw new InvalidOperationException(
+                            "Checkpoint contains more trials than requested.");
 
                     Console.WriteLine(
                         "Running simulations for k={0}, length={1}: {2} completed, {3} remaining.",
@@ -114,36 +125,36 @@ namespace NetworkSimulation
                          sim < simulationCount;
                          sim++)
                     {
-                        Network network =
-                            TopologyFactory.CreateMultiPath(
-                                pathLength,
-                                pathCount);
-
                         TrialResult result =
-                            runner.RunTrial(
-                                network,
-                                numNodes,
-                                numSessions,
-                                baseTime,
-                                upDistro,
-                                downDistro,
-                                delayOutputFile,
-                                MessageDelayMode.MultiPathEndpoint);
-
-                        if (!result.Success)
-                        {
-                            sim--;
-
-                            Console.WriteLine(
-                                "Simulation failed for k={0}, length={1}; retrying simulation {2}.",
-                                pathCount,
-                                pathLength,
-                                sim + 1);
-
-                            continue;
-                        }
+                            TrialAttempts.Run(
+                                attempt => runner.RunTrial(
+                                    TopologyFactory.CreateMultiPath(
+                                        pathLength,
+                                        pathCount),
+                                    numNodes,
+                                    numSessions,
+                                    baseTime,
+                                    upDistro.WithRandomSource(
+                                        new MersenneTwister(RandomSeed.Derive(
+                                            randomSeed,
+                                            pathLength,
+                                            pathCount,
+                                            sim,
+                                            attempt,
+                                            0))),
+                                    downDistro.WithRandomSource(
+                                        new MersenneTwister(RandomSeed.Derive(
+                                            randomSeed,
+                                            pathLength,
+                                            pathCount,
+                                            sim,
+                                            attempt,
+                                            1))),
+                                    MessageDelayMode.MultiPathEndpoint),
+                                maxAttempts);
 
                         results.Add(result);
+                        store.Append(result);
                     }
 
                     ResultSummary summary =
@@ -163,43 +174,5 @@ namespace NetworkSimulation
             }
         }
 
-        private List<TrialResult> LoadResultsFromDelayFile(
-            string delayOutputFile,
-            int numNodes)
-        {
-            List<TrialResult> results =
-                new List<TrialResult>();
-
-            if (!System.IO.File.Exists(delayOutputFile))
-            {
-                return results;
-            }
-
-            foreach (string line in System.IO.File.ReadLines(delayOutputFile))
-            {
-                if (string.IsNullOrWhiteSpace(line))
-                {
-                    continue;
-                }
-
-                double delay =
-                    Convert.ToDouble(line);
-
-                TrialResult result =
-                    new TrialResult
-                    {
-                        Success = true,
-                        Delay = delay,
-                        ZeroDelay = (delay == 0),
-                        TotalNodes = numNodes,
-                        PercentLive = 0.0,
-                        AllNodesLive = false
-                    };
-
-                results.Add(result);
-            }
-
-            return results;
-        }
     }
 }

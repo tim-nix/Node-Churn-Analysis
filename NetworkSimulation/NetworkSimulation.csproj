@@ -68,6 +68,7 @@
     <Compile Include="ExperimentRunMode.cs" />
     <Compile Include="Exponential.cs" />
     <Compile Include="IndependentPathExperiment.cs" />
+    <Compile Include="IRandomSource.cs" />
     <Compile Include="MersenneTwister.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="MessageDelayMode.cs" />
@@ -84,6 +85,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResultAggregator.cs" />
     <Compile Include="ResultSummary.cs" />
+    <Compile Include="RandomSeed.cs" />
     <Compile Include="Session.cs" />
     <Compile Include="Simulations.cs" />
     <Compile Include="ContinuousUniform.cs" />
@@ -94,6 +96,8 @@
     <Compile Include="TopologyComparisonReporter.cs" />
     <Compile Include="TopologyFactory.cs" />
     <Compile Include="TrialResult.cs" />
+    <Compile Include="TrialResultStore.cs" />
+    <Compile Include="TrialAttempts.cs" />
     <Compile Include="TrialRunner.cs" />
   </ItemGroup>
   <ItemGroup>

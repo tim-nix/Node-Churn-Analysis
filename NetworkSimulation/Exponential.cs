@@ -8,7 +8,7 @@ namespace NetworkSimulation
 {
     public class Exponential : Distribution
     {
-        MersenneTwister randomNum;
+        IRandomSource randomNum;
         double lambda = 0;
         
 
@@ -22,17 +22,29 @@ namespace NetworkSimulation
 
 
         public Exponential(double lam)
+            : this(lam, new MersenneTwister())
+        {
+        }
+
+        public Exponential(double lam, IRandomSource randomSource)
         {
             if (lam <= 0.0)
                 throw new ArgumentException("Error: Value for alpha must be positive!");
+            if (randomSource == null)
+                throw new ArgumentNullException("randomSource");
 
-            randomNum = new MersenneTwister();
+            randomNum = randomSource;
             lambda = lam;
         }
 
         public override double generateRandom()
         {
-            return randomNum.genexp_real(lambda);
+            return -Math.Log(randomNum.NextOpenUnit()) / lambda;
+        }
+
+        public override Distribution WithRandomSource(IRandomSource randomSource)
+        {
+            return new Exponential(lambda, randomSource);
         }
 
         public override double getExpectedValue()

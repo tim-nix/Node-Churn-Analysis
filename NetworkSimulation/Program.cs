@@ -13,16 +13,23 @@ namespace NetworkSimulation
         /// </summary>
         /// <remarks>
         /// Current parameters use path sizes 5, 10, 15, and 20; exponential ON
-        /// rate 2.0; exponential OFF/recovery rate 3.0; and 20,000 simulations
-        /// per size.
+        /// rate 2.0; and exponential OFF/recovery rate 3.0. The number of
+        /// simulations per size is supplied by the caller.
         /// </remarks>
         /// <param name="runMode">
         /// Controls whether existing raw samples are cleared or resumed.
         /// </param>
-        public static void pathExponential(ExperimentRunMode runMode)
+        /// <param name="numberSimulations">
+        /// Number of successful simulations to run per path size.
+        /// </param>
+        /// <param name="randomSeed">
+        /// Seed used to derive deterministic random streams for each trial.
+        /// </param>
+        public static void pathExponential(
+            ExperimentRunMode runMode,
+            int numberSimulations,
+            int randomSeed)
         {
-            int numberSimulations = 20000;
-
             Simulations sim = new Simulations(
                 minN: 5,
                 maxN: 21,
@@ -34,7 +41,7 @@ namespace NetworkSimulation
 
             sim.setUpDistro(upDistro, downDistro);
 
-            sim.simPath(runMode);
+            sim.simPath(runMode, randomSeed);
         }
 
         /// <summary>
@@ -43,18 +50,32 @@ namespace NetworkSimulation
         /// </summary>
         /// <remarks>
         /// Current parameters use even cycle sizes from 10 through 30,
-        /// exponential ON/OFF rates of 1.0, and 100,000 simulations per size.
+        /// exponential ON/OFF rates of 1.0, and caller-supplied simulation
+        /// count and random seed values.
         /// </remarks>
         /// <param name="runMode">
         /// Controls whether existing raw samples are cleared or resumed.
         /// </param>
-        public static void cycleExponential(ExperimentRunMode runMode)
+        /// <param name="numberSimulations">
+        /// Number of successful simulations to run per cycle size.
+        /// </param>
+        /// <param name="randomSeed">
+        /// Seed used to derive deterministic random streams for each trial.
+        /// </param>
+        public static void cycleExponential(
+            ExperimentRunMode runMode,
+            int numberSimulations,
+            int randomSeed)
         {
-            Simulations sim = new Simulations(minN: 10, maxN: 32, nDelta: 2, numSims: 100000);
+            Simulations sim = new Simulations(
+                minN: 10,
+                maxN: 32,
+                nDelta: 2,
+                numSims: numberSimulations);
             Distribution upD = new Exponential(1.0);
             Distribution downD = new Exponential(1.0);
             sim.setUpDistro(upD, downD);
-            sim.simCycle(runMode);
+            sim.simCycle(runMode, randomSeed);
         }
 
         /// <summary>
@@ -140,8 +161,16 @@ namespace NetworkSimulation
         /// <param name="runMode">
         /// Restart/resume mode forwarded to both simulation families.
         /// </param>
+        /// <param name="numberSimulations">
+        /// Number of successful simulations to run per path size.
+        /// </param>
+        /// <param name="randomSeed">
+        /// Seed forwarded to both simulation families.
+        /// </param>
         public static void comparePathAndCycleExperiment(
-            ExperimentRunMode runMode)
+            ExperimentRunMode runMode,
+            int numberSimulations,
+            int randomSeed)
         {
             bool runPath = true;
             bool runCycle = true;
@@ -151,14 +180,14 @@ namespace NetworkSimulation
             if (runPath)
             {
                 Console.WriteLine("Starting path experiment...");
-                pathExponential(runMode);
+                pathExponential(runMode, numberSimulations, randomSeed);
                 Console.WriteLine("Finished path experiment.");
             }
 
             if (runCycle)
             {
                 Console.WriteLine("Starting cycle experiment...");
-                cycleExponential(runMode);
+                cycleExponential(runMode, numberSimulations, randomSeed);
                 Console.WriteLine("Finished cycle experiment.");
             }
 
@@ -187,15 +216,23 @@ namespace NetworkSimulation
         /// <param name="runMode">
         /// Restart/resume mode forwarded to the baseline path simulations.
         /// </param>
+        /// <param name="numberSimulations">
+        /// Number of successful simulations to run per path size.
+        /// </param>
+        /// <param name="randomSeed">
+        /// Seed forwarded to the baseline path simulations.
+        /// </param>
         /// <remarks>
         /// For each n, reads msg_delays_path_n.txt and writes
         /// survival_independent_min_path_n.csv.
         /// </remarks>
         public static void independentPathMinimumExperiment(
             IEnumerable<int> nValues,
-            ExperimentRunMode runMode)
+            ExperimentRunMode runMode,
+            int numberSimulations,
+            int randomSeed)
         {
-            pathExponential(runMode);
+            pathExponential(runMode, numberSimulations, randomSeed);
 
             Console.WriteLine("Starting independent-path minimum experiment...");
 
@@ -245,11 +282,19 @@ namespace NetworkSimulation
         /// <param name="runMode">
         /// Controls whether the sanity-test delay file is cleared first.
         /// </param>
+        /// <param name="randomSeed">
+        /// Seed used to derive deterministic random streams for each trial.
+        /// </param>
+        /// <param name="maxAttempts">
+        /// Maximum attempts allowed per successful trial.
+        /// </param>
         public static void multiPathSanityTest(
             int pathLength,
             int pathCount,
             int trials,
-            ExperimentRunMode runMode)
+            ExperimentRunMode runMode,
+            int randomSeed,
+            int maxAttempts = 3)
         {
             int numNodes = 2 + pathCount * (pathLength - 1);
 
@@ -261,39 +306,51 @@ namespace NetworkSimulation
 
             string delayOutputFile = $"msg_delays_multipath_k{pathCount}_len{pathLength}_sanity.txt";
 
-            if (runMode == ExperimentRunMode.Restart)
-                File.WriteAllText(delayOutputFile, "");
-
             TrialRunner runner = new TrialRunner();
-            List<TrialResult> results = new List<TrialResult>();
+            TrialResultStore store = new TrialResultStore(
+                delayOutputFile,
+                string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    "topology=multipath-sanity;length={0};count={1};seed={2}",
+                    pathLength,
+                    pathCount,
+                    randomSeed));
+            List<TrialResult> results = store.PrepareAndLoad(runMode);
 
             Console.WriteLine("Starting multi-path sanity test...");
             Console.WriteLine($"pathLength = {pathLength}");
             Console.WriteLine($"pathCount = {pathCount}");
             Console.WriteLine($"numNodes = {numNodes}");
 
-            for (int trial = 0; trial < trials; trial++)
+            for (int trial = results.Count; trial < trials; trial++)
             {
-                Network network =
-                    TopologyFactory.CreateMultiPath(pathLength, pathCount);
-
-                TrialResult result = runner.RunTrial(
-                    network,
-                    numNodes,
-                    numSessions,
-                    baseTime,
-                    upDistro,
-                    downDistro,
-                    delayOutputFile,
-                    MessageDelayMode.MultiPathEndpoint);
-
-                if (!result.Success)
-                {
-                    trial--;
-                    continue;
-                }
+                TrialResult result = TrialAttempts.Run(
+                    attempt => runner.RunTrial(
+                        TopologyFactory.CreateMultiPath(pathLength, pathCount),
+                        numNodes,
+                        numSessions,
+                        baseTime,
+                        upDistro.WithRandomSource(
+                            new MersenneTwister(RandomSeed.Derive(
+                                randomSeed,
+                                pathLength,
+                                pathCount,
+                                trial,
+                                attempt,
+                                0))),
+                        downDistro.WithRandomSource(
+                            new MersenneTwister(RandomSeed.Derive(
+                                randomSeed,
+                                pathLength,
+                                pathCount,
+                                trial,
+                                attempt,
+                                1))),
+                        MessageDelayMode.MultiPathEndpoint),
+                    maxAttempts);
 
                 results.Add(result);
+                store.Append(result);
             }
 
             ResultSummary summary = ResultAggregator.Summarize(results);
@@ -314,12 +371,21 @@ namespace NetworkSimulation
         /// <param name="runMode">
         /// Restart/resume mode forwarded through the complete workflow.
         /// </param>
-        public static void multiPathExponential(ExperimentRunMode runMode)
+        /// <param name="numberSimulations">
+        /// Number of successful simulations to run for each baseline path size
+        /// and multi-path topology configuration.
+        /// </param>
+        /// <param name="randomSeed">
+        /// Seed used to derive deterministic random streams for each trial.
+        /// </param>
+        public static void multiPathExponential(
+            ExperimentRunMode runMode,
+            int numberSimulations,
+            int randomSeed)
         {
-            int[] pathLengths = { 5, 10, 15 };
+            int[] pathLengths = { 5, 10, 15, 20 };
             int[] pathCounts = { 2, 3, 4, 5 };
 
-            int numberSimulations = 100000;
             int numSessions = 1000;
             double baseTime = 200.0;
 
@@ -327,7 +393,7 @@ namespace NetworkSimulation
             Distribution downDistro = new Exponential(3.0);
 
             Console.WriteLine("Starting baseline path simulations...");
-            pathExponential(runMode);
+            pathExponential(runMode, numberSimulations, randomSeed);
             Console.WriteLine("Finished baseline path simulations.");
 
             Console.WriteLine("Starting multi-path simulations...");
@@ -340,7 +406,8 @@ namespace NetworkSimulation
                 baseTime,
                 upDistro,
                 downDistro,
-                runMode);
+                runMode,
+                randomSeed);
             Console.WriteLine("Finished multi-path simulations.");
 
             Console.WriteLine("Starting multi-path survival comparison...");
@@ -356,17 +423,22 @@ namespace NetworkSimulation
         /// </summary>
         /// <param name="args">Command-line arguments; currently unused.</param>
         /// <remarks>
-        /// Change runMode here to control restart/resume behavior for every
-        /// experiment invoked by this entry point.
+        /// Change runMode here to control restart/resume behavior and
+        /// numberSimulations to control the trial count, and randomSeed to
+        /// reproduce every experiment invoked by this entry point.
         /// </remarks>
         static void Main(string[] args)
         {
             string outputDirectory = SimulationOutput.Initialize();
-            ExperimentRunMode runMode = ExperimentRunMode.Restart;
+            ExperimentRunMode runMode = ExperimentRunMode.Resume;
+            int numberSimulations = 100000;
+            int randomSeed = 12345;
 
             Console.WriteLine("Simulation output directory: {0}", outputDirectory);
             Console.WriteLine("Experiment run mode: {0}", runMode);
-            multiPathExponential(runMode);
+            Console.WriteLine("Simulations per configuration: {0}", numberSimulations);
+            Console.WriteLine("Experiment random seed: {0}", randomSeed);
+            multiPathExponential(runMode, numberSimulations, randomSeed);
         }
     }
 }

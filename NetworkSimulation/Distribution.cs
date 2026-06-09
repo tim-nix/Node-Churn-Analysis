@@ -21,6 +21,8 @@ namespace NetworkSimulation
 
         public abstract double generateRandom();
 
+        public abstract Distribution WithRandomSource(IRandomSource randomSource);
+
         public abstract double getExpectedValue();
 
         public abstract double[] getPMF(int hSize = 50);
