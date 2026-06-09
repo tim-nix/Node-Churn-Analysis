@@ -1,126 +1,17 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{1DE38BE4-BF72-434F-942E-949AE050FCB3}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <TargetFramework>net48</TargetFramework>
     <RootNamespace>NetworkSimulation</RootNamespace>
     <AssemblyName>NetworkSimulation</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <Compile Remove="NetworkSimulation.Tests\**\*.cs" />
+    <EmbeddedResource Remove="NetworkSimulation.Tests\**\*" />
+    <None Remove="NetworkSimulation.Tests\**\*" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="AdjacencyMatrix.cs" />
-    <Compile Include="CommonGraphs.cs" />
-    <Compile Include="Constant.cs" />
-    <Compile Include="CycleExperiment.cs" />
-    <Compile Include="CycleExperimentReporter.cs" />
-    <Compile Include="Distribution.cs" />
-    <Compile Include="ExperimentRunMode.cs" />
-    <Compile Include="Exponential.cs" />
-    <Compile Include="IndependentPathExperiment.cs" />
-    <Compile Include="IRandomSource.cs" />
-    <Compile Include="MersenneTwister.cs" />
-    <Compile Include="Message.cs" />
-    <Compile Include="MessageDelayMode.cs" />
-    <Compile Include="MultiPathExperiment.cs" />
-    <Compile Include="MultiPathExperimentReporter.cs" />
-    <Compile Include="MultiPathSurvivalComparison.cs" />
-    <Compile Include="Network.cs" />
-    <Compile Include="NetworkChurn.cs" />
-    <Compile Include="NodeTimeline.cs" />
-    <Compile Include="Paretto.cs" />
-    <Compile Include="PathExperiment.cs" />
-    <Compile Include="PathExperimentReporter.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ResultAggregator.cs" />
-    <Compile Include="ResultSummary.cs" />
-    <Compile Include="RandomSeed.cs" />
-    <Compile Include="Session.cs" />
-    <Compile Include="Simulations.cs" />
-    <Compile Include="ContinuousUniform.cs" />
-    <Compile Include="SimulationSettings.cs" />
-    <Compile Include="SimulationOutput.cs" />
-    <Compile Include="SurvivalAnalysis.cs" />
-    <Compile Include="TopologyComparison.cs" />
-    <Compile Include="TopologyComparisonReporter.cs" />
-    <Compile Include="TopologyFactory.cs" />
-    <Compile Include="TrialResult.cs" />
-    <Compile Include="TrialResultStore.cs" />
-    <Compile Include="TrialAttempts.cs" />
-    <Compile Include="TrialRunner.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">
-      <Visible>False</Visible>
-      <ProductName>Microsoft .NET Framework 4.5.2 %28x86 and x64%29</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
