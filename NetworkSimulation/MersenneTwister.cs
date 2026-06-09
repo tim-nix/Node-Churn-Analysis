@@ -214,17 +214,17 @@ namespace NetworkSimulation
         #endregion
 
         #region 
-        /*
-         * The purpose of this function is to generate a random number from an exponential 
-         * distribution.  It uses the inverse function of F(x) which takes input generated
-         * randomly from a uniform distribution.
-         */
+        /// <summary>
+        /// Generates an exponential random value with the supplied rate using
+        /// inverse-transform sampling from an open-interval uniform value.
+        /// The open interval avoids zero and infinite endpoint samples.
+        /// </summary>
+        /// <param name="lambda">Positive exponential rate parameter.</param>
+        /// <returns>A finite positive exponential sample.</returns>
         public double genexp_real(double lambda)
         {
-            double random = genrand_real1();                   
-            double exprand = -Math.Log(1.0 - random) / lambda; 
-
-            return exprand;
+            double random = genrand_real3();
+            return -Math.Log(random) / lambda;
         }
 
         /*

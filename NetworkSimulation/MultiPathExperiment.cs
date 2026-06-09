@@ -42,7 +42,7 @@ namespace NetworkSimulation
         /// Number of successful trials per topology configuration.
         /// </param>
         /// <param name="numSessions">
-        /// Number of ON sessions generated per node.
+        /// Initial ON sessions generated per node; timelines extend as needed.
         /// </param>
         /// <param name="baseTime">
         /// Base time used for churn generation.

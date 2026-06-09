@@ -1,382 +1,458 @@
-﻿using System;
-
+using System;
+using System.Collections.Generic;
 
 namespace NetworkSimulation
 {
     /// <summary>
-    /// The purpose of this class is to represent a series
-    /// of sessions of a given node.  The baseTime attribute
-    /// corresponds to the earliest time to start tracking
-    /// sessions.  This provides the lifecycle time to evolve.
-    /// The timeline attribute stores all sessions.
+    /// Represents the alternating ON/OFF lifecycle of one node.
+    /// Sessions are generated lazily, so the lifecycle can be queried for
+    /// arbitrarily late times without choosing a fixed array size up front.
     /// </summary>
     public class NodeTimeline
     {
-        private double baseTime = 0.0;  // the earliest possible start time  
-        private Session[] timeline;     // the collection of tracked sessions
+        private readonly double baseTime;
+        private readonly int initialSessionCount;
+        private readonly List<Session> timeline;
+        private Distribution upDistro;
+        private Distribution downDistro;
 
         public int numSessions
         {
-            get
-            {
-                return timeline.Length;
-            }
+            get { return timeline.Count; }
         }
 
-
-        /// <summary>
-        /// The purpose of this 'getter' is to return a copy of the class
-        /// member baseTime.
-        /// </summary>
         public double BaseTime
         {
-            get
-            {
-                return baseTime;
-            }
+            get { return baseTime; }
         }
 
-
-        /// <summary>
-        /// The purpose of this 'getter' is to return a copy of the class
-        /// member timeline.
-        /// </summary>
         public Session[] TimeLine
         {
             get
             {
-                Session[] tl = new Session[timeline.Length];
+                EnsureGenerated();
 
-                for (int i = 0; i < tl.Length; i++)
-                    tl[i] = new Session(timeline[i].StartTime, timeline[i].EndTime);
+                Session[] copy = new Session[timeline.Count];
+                for (int i = 0; i < copy.Length; i++)
+                {
+                    copy[i] = new Session(
+                        timeline[i].StartTime,
+                        timeline[i].EndTime);
+                }
 
-                return tl;
+                return copy;
             }
         }
 
-
         /// <summary>
-        /// A constructor for the NodeTimeline class.  Sets up the
-        /// baseTime, the numSessions and creates the array that 
-        /// will be used to store the tracked sessions.
+        /// Initializes a node timeline with an initial number of stored ON
+        /// sessions. Additional sessions are generated lazily when later times
+        /// are queried.
         /// </summary>
-        /// <param name="numToTrack">The number of live sessions to track</param>
-        /// <param name="earliestTime">The earliest time to track sessions</param>
+        /// <param name="numToTrack">Initial number of ON sessions to store.</param>
+        /// <param name="earliestTime">
+        /// Earliest time at which the first stored session may be active.
+        /// </param>
         public NodeTimeline(int numToTrack, double earliestTime)
         {
-            if ((earliestTime >= 0.0) && (numToTrack > 0))
-            {
-                baseTime = earliestTime;    // the earliest start time
-                timeline = new Session[numToTrack];
-            }
-            else
+            if (earliestTime < 0.0 || numToTrack <= 0)
                 throw new ArgumentException("Error: Faulty arguments for NodeTimeline!");
+
+            baseTime = earliestTime;
+            initialSessionCount = numToTrack;
+            timeline = new List<Session>(numToTrack);
         }
 
-
         /// <summary>
-        /// The purpose of this method is to randomly generate the 
-        /// sessions.  First, the method iterates through a series
-        /// of random sessions without storing them to allow the
-        /// session timeline to evolve.  Once the timeline reaches
-        /// the baseTime, sessions will be tracked.
-        /// 
-        /// This particular method uses a uniform distribution,
-        /// [0, 1] for each uptime as well as each downtime.
+        /// Evolves the alternating OFF/ON process to the base time and stores
+        /// the initial session window using the supplied duration distributions.
         /// </summary>
-        public void generateTimeline(Distribution upDistro, Distribution downDistro)
+        /// <param name="upDistribution">Distribution of ON durations.</param>
+        /// <param name="downDistribution">Distribution of OFF durations.</param>
+        public void generateTimeline(
+            Distribution upDistribution,
+            Distribution downDistribution)
         {
-            double startTime = 0.0;
-            double endTime = 0.0;
-            while (endTime < baseTime)
+            if (upDistribution == null)
+                throw new ArgumentNullException("upDistribution");
+            if (downDistribution == null)
+                throw new ArgumentNullException("downDistribution");
+
+            upDistro = upDistribution;
+            downDistro = downDistribution;
+            timeline.Clear();
+
+            double previousEnd = 0.0;
+            Session firstTrackedSession;
+            do
             {
-                startTime = endTime + downDistro.generateRandom();
-                endTime = startTime + upDistro.generateRandom();
+                firstTrackedSession = GenerateSession(previousEnd);
+                previousEnd = firstTrackedSession.EndTime;
             }
+            while (previousEnd < baseTime);
 
-            timeline[0] = new Session(startTime, endTime);
+            timeline.Add(firstTrackedSession);
 
-            for (int i = 1; i < timeline.Length; i++)
-            {
-                startTime = endTime + downDistro.generateRandom();
-                endTime = startTime + upDistro.generateRandom();
-
-                timeline[i] = new Session(startTime, endTime);
-            }
+            while (timeline.Count < initialSessionCount)
+                AppendSession(timeline[timeline.Count - 1].EndTime);
         }
 
-
         /// <summary>
-        /// The purpose of this method is to return a the start
-        /// time of the first tracked session.
+        /// Returns the start time of the first stored ON session.
         /// </summary>
         public double getFirstTime()
         {
-            if (timeline[0] == null)
-                throw new System.NullReferenceException("Error: Must first generate a timeline!");
-            else
-                return timeline[0].StartTime;
+            EnsureGenerated();
+            return timeline[0].StartTime;
         }
 
-
         /// <summary>
-        /// The purpose of this method is to return a the end
-        /// time of the first tracked session.
+        /// Returns the end time of the first stored ON session.
         /// </summary>
         public double getFirstEnd()
         {
-            if (timeline[0] == null)
-                throw new System.NullReferenceException("Error: Must first generate a timeline!");
-            else
-                return timeline[0].EndTime;
+            EnsureGenerated();
+            return timeline[0].EndTime;
         }
 
         /// <summary>
-        /// The purpose of this method is to return a the endtime
-        /// of the last tracked session.
+        /// Returns the end of the sessions generated so far. This is not a
+        /// lifecycle limit; later queries extend the timeline automatically.
         /// </summary>
         public double getFinalTime()
         {
-            if (timeline[timeline.Length - 1] == null)
-                throw new System.NullReferenceException("Error: Must first generate a timeline!");
-            else
-                return timeline[timeline.Length - 1].EndTime;
+            EnsureGenerated();
+            return timeline[timeline.Count - 1].EndTime;
         }
-
 
         /// <summary>
-        /// The purpose of this method is to determine if there
-        /// exists a live session at time_t within the timeline.
+        /// Determines whether the node is ON at a given time, extending the
+        /// timeline if necessary.
         /// </summary>
-        /// <param name="time_t">The time to test.</param>
-        /// <returns>Whether any session is live.</returns>
-        public bool timeIsLive(double time_t)
+        /// <param name="time">Finite, non-negative time to query.</param>
+        /// <returns>True when time falls in a stored ON interval.</returns>
+        public bool timeIsLive(double time)
         {
-            if (timeline[0] == null)
-                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+            ValidateTime(time);
+            EnsureThrough(time);
 
-            if (time_t < 0)
-                throw new ArgumentException("Error: Argument error in timeIsLive!");
-
-            for (int i = 0; i < timeline.Length; i++)
-            {
-                if (timeline[i].isLive(time_t))
-                    return true;
-            }
-
-            return false;
+            int index = FindSessionAtOrBefore(time);
+            return index >= 0 && timeline[index].isLive(time);
         }
-
 
         /// <summary>
-        /// The purpose of this method is to return the next session starting time
-        /// given a time.
+        /// Returns the first ON-session start strictly after a given time.
         /// </summary>
-        /// <param name="time_t"></param>
-        /// <returns></returns>
-        public double getNextStart(double time_t)
+        /// <param name="time">Finite, non-negative reference time.</param>
+        public double getNextStart(double time)
         {
-            if (timeline[0] == null)
-                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+            ValidateTime(time);
+            EnsureGenerated();
 
-            if ((time_t < 0) || (time_t >= timeline[timeline.Length - 1].StartTime))
-                throw new ArgumentException("Error: Argument error in timeIsLive!");
+            while (timeline[timeline.Count - 1].StartTime <= time)
+                AppendSession(timeline[timeline.Count - 1].EndTime);
 
-            for (int i = 0; i < timeline.Length; i++)
+            int low = 0;
+            int high = timeline.Count - 1;
+            while (low < high)
             {
-                if (timeline[i].StartTime > time_t)
-                    return timeline[i].StartTime;
+                int middle = low + ((high - low) / 2);
+                if (timeline[middle].StartTime <= time)
+                    low = middle + 1;
+                else
+                    high = middle;
             }
 
-            throw new Exception("Error: Failed to find next start time!");
+            return timeline[low].StartTime;
         }
-
 
         /// <summary>
-        /// The purpose of this method is to return the amount
-        /// of time remaining in the live session, if any, at
-        /// time_t.
+        /// Returns the remaining ON duration at a given time.
         /// </summary>
-        /// <param name="time_t">The time to test.</param>
-        /// <returns>The time remaining in the session.</returns>
-        public double getResidual(double time_t)
+        /// <param name="time">Finite, non-negative time to query.</param>
+        /// <returns>Remaining ON time, or zero when the node is OFF.</returns>
+        public double getResidual(double time)
         {
-            if (timeline[0] == null)
-                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+            ValidateTime(time);
+            EnsureThrough(time);
 
-            if (time_t < 0)
-                throw new ArgumentException("Error: Argument error in timeIsLive!");
-
-            for (int i = 0; i < timeline.Length; i++)
-            {
-                if (timeline[i].isLive(time_t))
-                    return timeline[i].getResidual(time_t);
-            }
-
-            return 0.0;
+            int index = FindSessionAtOrBefore(time);
+            return index >= 0 ? timeline[index].getResidual(time) : 0.0;
         }
 
-
-        public double[] getResiduals(NodeTimeline tl2)
+        /// <summary>
+        /// Returns the first ON/OFF boundary strictly after the supplied time.
+        /// </summary>
+        /// <param name="time">Finite, non-negative reference time.</param>
+        public double getNextTransition(double time)
         {
-            double[] residuals = new double[timeline.Length];
+            ValidateTime(time);
+            EnsureThrough(time);
 
-            for (int i = 0; i < timeline.Length; i++)
+            int index = FindSessionAtOrBefore(time);
+            if (index >= 0 && timeline[index].isLive(time)
+                && timeline[index].EndTime > time)
             {
-                residuals[i] = getResidual(tl2.timeline[i].StartTime);
+                return timeline[index].EndTime;
             }
+
+            return getNextStart(time);
+        }
+
+        /// <summary>
+        /// Computes this node's ON residual at every stored session start in
+        /// another timeline.
+        /// </summary>
+        /// <param name="other">Timeline supplying the query times.</param>
+        public double[] getResiduals(NodeTimeline other)
+        {
+            if (other == null)
+                throw new ArgumentNullException("other");
+
+            Session[] otherTimeline = other.TimeLine;
+            double[] residuals = new double[otherTimeline.Length];
+            for (int i = 0; i < residuals.Length; i++)
+                residuals[i] = getResidual(otherTimeline[i].StartTime);
 
             return residuals;
         }
 
-
+        /// <summary>
+        /// Returns the start times of all sessions generated so far.
+        /// </summary>
         public double[] getStartTimes()
         {
-            double[] startTimes = new double[timeline.Length];
+            EnsureGenerated();
 
-            for (int i = 0; i < timeline.Length; i++)
+            double[] startTimes = new double[timeline.Count];
+            for (int i = 0; i < timeline.Count; i++)
                 startTimes[i] = timeline[i].StartTime;
 
             return startTimes;
         }
 
-
         /// <summary>
-        /// The purpose of this method is to calculate the average
-        /// up time across all tracked sessions.
+        /// Calculates the mean ON duration across sessions generated so far.
         /// </summary>
-        /// <returns>The average up time.</returns>
         public double averageUpTime()
         {
-            if (timeline[0] == null)
-                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+            EnsureGenerated();
 
             double sum = 0.0;
-            for (int i = 0; i < timeline.Length; i++)
+            for (int i = 0; i < timeline.Count; i++)
                 sum += timeline[i].getDurationLive();
 
-            return sum / Convert.ToDouble(timeline.Length);
+            return sum / timeline.Count;
         }
 
-
         /// <summary>
-        /// The purpose of this method is to calculate the average
-        /// downtime across all tracked sessions.  The first down 
-        /// time follows the end of the first tracked session.
+        /// Calculates the mean OFF duration between stored ON sessions.
         /// </summary>
-        /// <returns>The average downtime.</returns>
+        /// <returns>Zero when fewer than two sessions are stored.</returns>
         public double averageDownTime()
         {
-            if (timeline[0] == null)
-                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+            EnsureGenerated();
+            if (timeline.Count < 2)
+                return 0.0;
 
             double sum = 0.0;
-            for (int i = 1; i < timeline.Length; i++)
-                sum += (timeline[i].StartTime - timeline[i - 1].EndTime);
+            for (int i = 1; i < timeline.Count; i++)
+                sum += timeline[i].StartTime - timeline[i - 1].EndTime;
 
-            return sum / Convert.ToDouble(timeline.Length - 1);
+            return sum / (timeline.Count - 1);
         }
 
-
         /// <summary>
-        /// The purpose of this method is to calculate the cumulative 
-        /// distribution function of the session durations from the 
-        /// generated timeline.
+        /// Estimates the empirical CDF of generated ON durations.
         /// </summary>
-        /// <param name="hSize">The number of discrete steps.</param>
-        /// <param name="rate">The step rate for each step.</param>
-        /// <returns>The ccdf distribution.</returns>
+        /// <param name="hSize">Number of histogram thresholds.</param>
+        /// <param name="rate">Distance between successive thresholds.</param>
         public double[] getUpTimeCDF(int hSize = 50, double rate = 0.5)
         {
-            if (timeline[0] == null)
-                throw new System.NullReferenceException("Error: Must first generate a timeline!");
-
-            if (hSize <= 0)
-                throw new ArgumentException("Error: Argument error in timeIsLive!");
-
-            if (rate <= 0)
-                throw new ArgumentException("Error: Argument error in timeIsLive!");
+            EnsureGenerated();
+            ValidateHistogramArguments(hSize, rate);
 
             double[] cdf = new double[hSize];
-
             double cap = 0.0;
             for (int i = 0; i < hSize; i++)
             {
-                for (int j = 0; j < timeline.Length; j++)
+                for (int j = 0; j < timeline.Count; j++)
                 {
                     if (timeline[j].getDurationLive() < cap)
                         cdf[i] += 1.0;
                 }
 
+                cdf[i] /= timeline.Count;
                 cap += rate;
             }
-
-            for (int i = 0; i < hSize; i++)
-                cdf[i] = cdf[i] / timeline.Length;
 
             return cdf;
         }
 
-
         /// <summary>
-        /// The purpose of this method is to calculate the complementary
-        /// cumulative distribution function of the down times between 
-        /// sessions from the generated timeline.  The first down time
-        /// follows the end of the first tracked session.
+        /// Estimates the empirical CDF of generated OFF durations.
         /// </summary>
-        /// <param name="hSize">The number of discrete steps.</param>
-        /// <param name="rate">The step rate for each step.</param>
-        /// <returns>The ccdf distribution.</returns>
+        /// <param name="hSize">Number of histogram thresholds.</param>
+        /// <param name="rate">Distance between successive thresholds.</param>
         public double[] getDownTimeCDF(int hSize = 50, double rate = 0.5)
         {
-            if (timeline[0] == null)
-                throw new System.NullReferenceException("Error: Must first generate a timeline!");
-
-            if (hSize <= 0)
-                throw new ArgumentException("Error: Argument error in timeIsLive!");
-
-            if (rate <= 0)
-                throw new ArgumentException("Error: Argument error in timeIsLive!");
+            EnsureGenerated();
+            ValidateHistogramArguments(hSize, rate);
 
             double[] cdf = new double[hSize];
+            if (timeline.Count < 2)
+                return cdf;
 
             double cap = 0.0;
             for (int i = 0; i < hSize; i++)
             {
-                for (int j = 1; j < timeline.Length; j++)
+                for (int j = 1; j < timeline.Count; j++)
                 {
-                    if ((timeline[j].EndTime - timeline[j-1].StartTime) < cap)
+                    double downTime =
+                        timeline[j].StartTime - timeline[j - 1].EndTime;
+                    if (downTime < cap)
                         cdf[i] += 1.0;
                 }
 
+                cdf[i] /= timeline.Count - 1;
                 cap += rate;
             }
-
-            for (int i = 0; i < hSize; i++)
-                cdf[i] = cdf[i] / timeline.Length;
 
             return cdf;
         }
 
+        /// <summary>
+        /// Formats the base time and all sessions generated so far.
+        /// </summary>
+        public override string ToString()
+        {
+            EnsureGenerated();
+
+            System.Text.StringBuilder text =
+                new System.Text.StringBuilder("Base Time: " + baseTime + "\n");
+            for (int i = 0; i < timeline.Count; i++)
+                text.Append(timeline[i]).Append('\n');
+
+            return text.ToString();
+        }
 
         /// <summary>
-        /// The purpose of this method is to convert the values contained in 
-        /// class attributes baseTime and timeline to a string.
+        /// Generates and appends the next OFF/ON cycle.
         /// </summary>
-        /// <returns>The class attributes as a string.</returns>
-        public override String ToString()
+        private void AppendSession(double previousEnd)
         {
-            if (timeline[0] == null)
-                throw new System.NullReferenceException("Error: Must first generate a timeline!");
+            timeline.Add(GenerateSession(previousEnd));
+        }
 
-            String s = "Base Time: " + baseTime + "\n";
-            for (int i = 0; i < timeline.Length; i++)
+        /// <summary>
+        /// Generates the next ON session following an OFF interval.
+        /// </summary>
+        private Session GenerateSession(double previousEnd)
+        {
+            double downTime = GenerateDuration(downDistro, "OFF");
+            double upTime = GenerateDuration(upDistro, "ON");
+            double startTime = previousEnd + downTime;
+            double endTime = startTime + upTime;
+
+            if (double.IsInfinity(startTime) || double.IsInfinity(endTime))
+                throw new InvalidOperationException(
+                    "Timeline duration overflowed the supported time range.");
+
+            return new Session(startTime, endTime);
+        }
+
+        /// <summary>
+        /// Draws a finite positive duration, retrying zero-valued samples to
+        /// guarantee that simulated time advances.
+        /// </summary>
+        private static double GenerateDuration(
+            Distribution distribution,
+            string stateName)
+        {
+            const int maxAttempts = 1000;
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
-                s += timeline[i].ToString();
-                s += "\n";
+                double duration = distribution.generateRandom();
+                if (double.IsNaN(duration)
+                    || double.IsInfinity(duration)
+                    || duration < 0.0)
+                {
+                    throw new InvalidOperationException(
+                        stateName + " distribution must generate finite, non-negative durations.");
+                }
+
+                if (duration > 0.0)
+                    return duration;
             }
 
-            return s;
+            throw new InvalidOperationException(
+                stateName + " distribution repeatedly generated zero-duration states.");
+        }
+
+        /// <summary>
+        /// Extends the timeline until it covers the supplied time.
+        /// </summary>
+        private void EnsureThrough(double time)
+        {
+            EnsureGenerated();
+            while (timeline[timeline.Count - 1].EndTime <= time)
+                AppendSession(timeline[timeline.Count - 1].EndTime);
+        }
+
+        /// <summary>
+        /// Finds the last session whose start is not later than time.
+        /// </summary>
+        private int FindSessionAtOrBefore(double time)
+        {
+            int low = 0;
+            int high = timeline.Count - 1;
+            int result = -1;
+
+            while (low <= high)
+            {
+                int middle = low + ((high - low) / 2);
+                if (timeline[middle].StartTime <= time)
+                {
+                    result = middle;
+                    low = middle + 1;
+                }
+                else
+                {
+                    high = middle - 1;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Verifies that distributions and the initial timeline were generated.
+        /// </summary>
+        private void EnsureGenerated()
+        {
+            if (timeline.Count == 0 || upDistro == null || downDistro == null)
+                throw new NullReferenceException("Error: Must first generate a timeline!");
+        }
+
+        /// <summary>
+        /// Validates a timeline query time.
+        /// </summary>
+        private static void ValidateTime(double time)
+        {
+            if (double.IsNaN(time) || double.IsInfinity(time) || time < 0.0)
+                throw new ArgumentException("Time must be finite and non-negative.");
+        }
+
+        /// <summary>
+        /// Validates empirical-distribution histogram settings.
+        /// </summary>
+        private static void ValidateHistogramArguments(int hSize, double rate)
+        {
+            if (hSize <= 0)
+                throw new ArgumentException("Histogram size must be positive.");
+            if (rate <= 0.0)
+                throw new ArgumentException("Histogram rate must be positive.");
         }
     }
 }

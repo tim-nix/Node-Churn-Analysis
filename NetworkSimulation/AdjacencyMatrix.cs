@@ -32,6 +32,22 @@ namespace NetworkSimulation
             }
         }
 
+        /// <summary>
+        /// Tests an edge without cloning the adjacency matrix.
+        /// </summary>
+        /// <param name="vertex1">First vertex index.</param>
+        /// <param name="vertex2">Second vertex index.</param>
+        /// <returns>True when the matrix contains the edge.</returns>
+        public bool hasEdge(int vertex1, int vertex2)
+        {
+            if (vertex1 < 0 || vertex1 >= Order)
+                throw new ArgumentOutOfRangeException("vertex1");
+            if (vertex2 < 0 || vertex2 >= Order)
+                throw new ArgumentOutOfRangeException("vertex2");
+
+            return graph[vertex1, vertex2] != 0;
+        }
+
 
         /// <summary>
         /// A constructor for the AdjacencyMatrix class.  

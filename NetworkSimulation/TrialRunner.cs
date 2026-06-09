@@ -49,7 +49,8 @@ namespace NetworkSimulation
         /// Number of nodes in the topology.
         /// </param>
         /// <param name="numSessions">
-        /// Number of ON sessions generated per node.
+        /// Initial number of ON sessions generated per node. Timelines extend
+        /// lazily if message delivery requires later cycles.
         /// </param>
         /// <param name="baseTime">
         /// Base time used when generating node churn.

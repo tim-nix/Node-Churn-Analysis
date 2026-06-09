@@ -1,433 +1,128 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 
 namespace NetworkSimulation
 {
     /// <summary>
-    /// Computes message-delivery delay over a dynamic network whose current
-    /// live-node subgraph changes according to a NetworkChurn process.
-    /// 
-    /// A message begins at a source node at start_time and propagates whenever
-    /// a node holding the message is connected to another live node in the
-    /// current network. Delay is measured as the elapsed simulated time until
-    /// the destination receives the message.
+    /// Computes message-delivery delay over a network whose live nodes change
+    /// according to a NetworkChurn process.
     /// </summary>
     class Message
     {
-        private Network network;
-        private NetworkChurn churn;
-        private double start_time;
-        private double final_time;
+        private readonly Network network;
+        private readonly NetworkChurn churn;
+        private readonly double start_time;
 
-        private static Random r = new Random();
+        private static readonly Random r = new Random();
 
         /// <summary>
-        /// Initializes a message-delay calculation over the supplied network and
-        /// churn process.
+        /// Initializes an event-driven message-delivery calculation.
         /// </summary>
-        /// <param name="nw">Network topology whose current status changes over time.</param>
-        /// <param name="ch">Generated node churn process.</param>
-        /// <param name="time_t">Message generation time.</param>
+        /// <param name="nw">Static full-network topology.</param>
+        /// <param name="ch">Generated, lazily extensible node churn.</param>
+        /// <param name="time_t">Message creation time.</param>
         public Message(Network nw, NetworkChurn ch, double time_t)
         {
+            if (nw == null)
+                throw new ArgumentNullException("nw");
+            if (ch == null)
+                throw new ArgumentNullException("ch");
+            if (time_t < 0.0 || double.IsNaN(time_t) || double.IsInfinity(time_t))
+                throw new ArgumentOutOfRangeException("time_t");
+
             network = nw;
             churn = ch;
             start_time = time_t;
-            final_time = churn.getLastFinalTime();
         }
 
         /// <summary>
-        /// Computes message delay between a randomly selected live source and a
-        /// randomly selected destination in the full network.
+        /// Computes delay from a random live source to a random destination.
         /// </summary>
-        /// <returns>
-        /// The elapsed time between message generation and delivery.
-        /// </returns>
-        /// <remarks>
-        /// This method is useful for general topology experiments but is not the
-        /// controlled endpoint-to-endpoint path/cycle comparison used in the
-        /// current redundancy experiments.
-        /// </remarks>
+        /// <returns>Elapsed simulated time until delivery.</returns>
         public double getMessageDelay()
         {
             if (network.CurrentOrder < 1)
                 throw new Exception("Not enough nodes!");
-            
-            int startVertex = r.Next(0, network.CurrentOrder);      // Pick a random live source
-            startVertex = network.getOldNodeLabel(startVertex);     // Convert to full network source label
-            int endVertex = startVertex;
-            
-            while (startVertex == endVertex)                        // Pick a random sink different
-                endVertex = r.Next(0, network.FullOrder);           // than the source
+            if (network.FullOrder < 2)
+                throw new Exception("A distinct destination does not exist.");
 
-            int currStart = network.getNewNodeLabel(startVertex);   // Convert source to current label
-            int currStop;
-            
-            HashSet<Int32> locations = new HashSet<int>();          // Stores message locations
-            HashSet<Int32> newLocations = new HashSet<int>();
-            
-            // Determine spread of message from source at start time.
-            locations.Add(startVertex);
-            for (int j = 0; j < network.FullOrder; j++)             
+            int currentSource;
+            int destination;
+            lock (r)
             {
-                currStop = network.getNewNodeLabel(j);              // Convert each full label to current label
-                if ((currStart != currStop) && (currStop != -1) && (network.isPathinCurrentNetwork(currStart, currStop)))
-                    locations.Add(j);                               // if live and path from source, then add
-            }
-            
-            double timeDelta = 0.001;
-            double curr_time = start_time;
-            
-            while (!locations.Contains(endVertex) && (curr_time < final_time))               
-            {
-                curr_time += timeDelta;
-                bool[] status = churn.getStatusAtTime(curr_time);
-                network.updateStatus(status);
-                
-                foreach (int i in locations)
-                {
-                    
-                    for (int j = 0; j < network.FullOrder; j++)
-                    {
-                        
-                        if (!locations.Contains(j))
-                        {
-                            currStart = network.getNewNodeLabel(i);
-                            currStop = network.getNewNodeLabel(j);
-                            if ((currStart != -1) && (currStop != -1))
-                            {
-                                if (network.isPathinCurrentNetwork(currStart, currStop))
-                                    newLocations.Add(j);
-                            }
-                        }
-                    }
-                }
-                
-                foreach (int i in newLocations)
-                    locations.Add(i);
-                newLocations.Clear();
+                currentSource = r.Next(0, network.CurrentOrder);
+                destination = r.Next(0, network.FullOrder - 1);
             }
 
-            //Console.WriteLine("Message delay: " + (curr_time - start_time));
-            if (curr_time >= final_time)
-                throw new Exception("Error: Message not delivered!");
+            int source = network.getOldNodeLabel(currentSource);
+            if (destination >= source)
+                destination++;
 
-            return curr_time - start_time;
+            return GetFloodingDelay(source, destination);
         }
 
-
         /// <summary>
-        /// Computes endpoint-to-endpoint message delay on a path topology.
+        /// Computes flooding delay from node 0 to node n - 1 on a path.
         /// </summary>
-        /// <returns>
-        /// The elapsed time required for a message starting at node 0 to reach
-        /// node n - 1.
-        /// </returns>
-        /// <remarks>
-        /// The source node must be live at the message start time. The message
-        /// spreads through currently connected live components and continues
-        /// propagating as churn changes the current network.
-        /// </remarks>
+        /// <returns>Elapsed simulated time until delivery.</returns>
         public double getPathMessageDelay()
         {
-            if (network.getNewNodeLabel(0) == -1)
-                throw new Exception("Node 0 is not live!");
-
-            int startVertex = 0;                                    // Pick the first node
-            int endVertex = network.FullOrder - 1;
-
-            int currStart = network.getNewNodeLabel(startVertex);   // Convert source to current label
-            int currStop;
-
-            HashSet<Int32> locations = new HashSet<int>();          // Stores message locations
-            HashSet<Int32> newLocations = new HashSet<int>();
-
-            // Determine spread of message from source at start time.
-            locations.Add(startVertex);
-            for (int j = 0; j < network.FullOrder; j++)
-            {
-                currStop = network.getNewNodeLabel(j);              // Convert each full label to current label
-                if ((currStart != currStop) && (currStop != -1) && (network.isPathinCurrentNetwork(currStart, currStop)))
-                    locations.Add(j);                               // if live and path from source, then add
-            }
-
-            double timeDelta = 0.001;
-            double curr_time = start_time;
-
-            // Track spread of message from source until the destination is reached.
-
-            while (!locations.Contains(endVertex) && (curr_time < final_time))
-            {
-                curr_time += timeDelta;
-                bool[] status = churn.getStatusAtTime(curr_time);
-                network.updateStatus(status);
-
-                foreach (int i in locations)
-                {
-
-                    for (int j = 0; j < network.FullOrder; j++)
-                    {
-
-                        if (!locations.Contains(j))
-                        {
-                            currStart = network.getNewNodeLabel(i);
-                            currStop = network.getNewNodeLabel(j);
-                            if ((currStart != -1) && (currStop != -1))
-                            {
-                                if (network.isPathinCurrentNetwork(currStart, currStop))
-                                    newLocations.Add(j);
-                            }
-                        }
-                    }
-                }
-
-                foreach (int i in newLocations)
-                    locations.Add(i);
-                newLocations.Clear();
-            }
-
-            //Console.WriteLine("Message delay: " + (curr_time - start_time));
-            if (curr_time >= final_time)
-                throw new Exception("Error: Message not delivered!");
-
-            return curr_time - start_time;
+            return GetFloodingDelay(0, network.FullOrder - 1);
         }
 
-
         /// <summary>
-        /// Computes path message delay using a sequential forwarding model in
-        /// which the message advances to the next path node when that next node
-        /// becomes live.
+        /// Computes delay for a single-copy, sequential path forwarding model.
         /// </summary>
-        /// <returns>
-        /// The elapsed time required for a message starting at node 0 to reach
-        /// node n - 1.
-        /// </returns>
-        /// <remarks>
-        /// This method differs from getPathMessageDelay by tracking a single
-        /// current message location rather than a set of all reached nodes.
-        /// </remarks>
+        /// <returns>Elapsed simulated time until delivery.</returns>
         public double getPathMessageDelay2()
         {
-            if (network.getNewNodeLabel(0) == -1)                   // Start only if source is ON
+            bool[] status = churn.getStatusAtTime(start_time);
+            if (!status[0])
                 throw new Exception("Node 0 is not live!");
 
-            int startVertex = 0;                                    // Pick the source from full network
-            int endVertex = network.FullOrder - 1;                  // Pick the destination from full network
+            int currentLocation = 0;
+            double currentTime = start_time;
 
-            int currStart = network.getNewNodeLabel(startVertex);   // Convert source to current label
-            int currStop;
-
-            // Determine spread of message from source at start time.
-            int currLoc = startVertex;                      // Source has a copy of the message
-            for (int j = 0; j < network.FullOrder; j++)
+            while (currentLocation != network.FullOrder - 1)
             {
-                currStop = network.getNewNodeLabel(j);              // Convert each full label to current label
-                if ((currStart != currStop) && (currStop != -1) && (network.isPathinCurrentNetwork(currStart, currStop)))
-                    currLoc = j;
+                while (currentLocation + 1 < network.FullOrder
+                    && status[currentLocation + 1])
+                {
+                    currentLocation++;
+                }
+
+                if (currentLocation == network.FullOrder - 1)
+                    break;
+
+                currentTime = GetNextTransition(currentTime);
+                status = churn.getStatusAtTime(currentTime);
             }
 
-            double timeDelta = 0.001;
-            double curr_time = start_time;
-
-            // Track spread of message from source until the destination is reached.
-
-            while ((currLoc != endVertex) && (curr_time < final_time))
-            {
-                curr_time += timeDelta;
-                bool[] status = churn.getStatusAtTime(curr_time);
-                network.updateStatus(status);
-
-                currStop = network.getNewNodeLabel(currLoc + 1);
-                if (currStop != -1)
-                    currLoc += 1;
-            }
-
-            //Console.WriteLine("Message delay: " + (curr_time - start_time));
-            if (curr_time >= final_time)
-                throw new Exception("Error: Message not delivered!");
-
-            return curr_time - start_time;
+            return currentTime - start_time;
         }
 
         /// <summary>
-        /// Computes source-to-diameter message delay on a cycle topology.
+        /// Computes flooding delay from node 0 to the diameter node of a cycle.
         /// </summary>
-        /// <returns>
-        /// The elapsed time required for a message starting at node 0 to reach
-        /// node n / 2 in the cycle graph.
-        /// </returns>
-        /// <remarks>
-        /// The destination node is chosen at graph distance n / 2 so that the
-        /// cycle provides two equal-length alternate routes from source to target.
-        /// </remarks>
+        /// <returns>Elapsed simulated time until delivery.</returns>
         public double getCycleMessageDelay()
         {
-            if (network.getNewNodeLabel(0) == -1)
-                throw new Exception("Node 0 is not live!");
-
-            int startVertex = 0;                                    // Pick the first node
-            int endVertex = network.FullOrder / 2;
-
-            int currStart = network.getNewNodeLabel(startVertex);   // Convert source to current label
-            int currStop;
-
-            HashSet<Int32> locations = new HashSet<int>();          // Stores message locations
-            HashSet<Int32> newLocations = new HashSet<int>();
-
-            // Determine spread of message from source at start time.
-            locations.Add(startVertex);
-            for (int j = 0; j < network.FullOrder; j++)
-            {
-                currStop = network.getNewNodeLabel(j);              // Convert each full label to current label
-                if ((currStart != currStop) && (currStop != -1) && (network.isPathinCurrentNetwork(currStart, currStop)))
-                    locations.Add(j);                               // if live and path from source, then add
-            }
-
-            double timeDelta = 0.001;
-            double curr_time = start_time;
-
-            // Track spread of message from source until the destination is reached.
-
-            while (!locations.Contains(endVertex) && (curr_time < final_time))
-            {
-                curr_time += timeDelta;
-                bool[] status = churn.getStatusAtTime(curr_time);
-                network.updateStatus(status);
-
-                foreach (int i in locations)
-                {
-
-                    for (int j = 0; j < network.FullOrder; j++)
-                    {
-
-                        if (!locations.Contains(j))
-                        {
-                            currStart = network.getNewNodeLabel(i);
-                            currStop = network.getNewNodeLabel(j);
-                            if ((currStart != -1) && (currStop != -1))
-                            {
-                                if (network.isPathinCurrentNetwork(currStart, currStop))
-                                    newLocations.Add(j);
-                            }
-                        }
-                    }
-                }
-
-                foreach (int i in newLocations)
-                    locations.Add(i);
-                newLocations.Clear();
-            }
-
-            //Console.WriteLine("Message delay: " + (curr_time - start_time));
-            if (curr_time >= final_time)
-                throw new Exception("Error: Message not delivered!");
-
-            return curr_time - start_time;
+            return GetFloodingDelay(0, network.FullOrder / 2);
         }
 
-
         /// <summary>
-        /// Computes endpoint-to-endpoint message delay on a multi-path topology.
-        /// The source is node 0 and the destination is node 1.  The topology is
-        /// expected to contain two or more internally disjoint, equal-length paths
-        /// between those shared endpoints.
-        /// 
-        /// Returns the elapsed simulated time required for the message to reach
-        /// node 1 from node 0.
+        /// Computes flooding delay between shared multipath endpoints 0 and 1.
         /// </summary>
-        /// <returns>
-        /// The simulated elapsed time required for message delivery between the
-        /// shared source and destination nodes.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Thrown if the source node is initially unavailable or if the message
-        /// cannot be delivered before the simulation end time.
-        /// </exception>
+        /// <returns>Elapsed simulated time until delivery.</returns>
         public double getMultiPathMessageDelay()
         {
-            if (network.getNewNodeLabel(0) == -1)
-                throw new Exception("Node 0 is not live!");
-
-            int startVertex = 0;
-            int endVertex = 1;
-
-            int currStart = network.getNewNodeLabel(startVertex);
-            int currStop;
-
-            HashSet<int> locations = new HashSet<int>();
-            HashSet<int> newLocations = new HashSet<int>();
-
-            locations.Add(startVertex);
-
-            for (int j = 0; j < network.FullOrder; j++)
-            {
-                currStop = network.getNewNodeLabel(j);
-
-                if ((currStart != currStop)
-                    && (currStop != -1)
-                    && (network.isPathinCurrentNetwork(currStart, currStop)))
-                {
-                    locations.Add(j);
-                }
-            }
-
-            double timeDelta = 0.001;
-            double curr_time = start_time;
-
-            while (!locations.Contains(endVertex) && (curr_time < final_time))
-            {
-                curr_time += timeDelta;
-
-                bool[] status = churn.getStatusAtTime(curr_time);
-                network.updateStatus(status);
-
-                foreach (int i in locations)
-                {
-                    for (int j = 0; j < network.FullOrder; j++)
-                    {
-                        if (!locations.Contains(j))
-                        {
-                            currStart = network.getNewNodeLabel(i);
-                            currStop = network.getNewNodeLabel(j);
-
-                            if ((currStart != -1) && (currStop != -1))
-                            {
-                                if (network.isPathinCurrentNetwork(currStart, currStop))
-                                {
-                                    newLocations.Add(j);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                foreach (int i in newLocations)
-                    locations.Add(i);
-
-                newLocations.Clear();
-            }
-
-            if (curr_time >= final_time)
-                throw new Exception("Error: Message not delivered!");
-
-            return curr_time - start_time;
+            return GetFloodingDelay(0, 1);
         }
 
-
         /// <summary>
-        /// Dispatches to the appropriate controlled message-delay calculation.
+        /// Dispatches to the endpoint interpretation selected by mode.
         /// </summary>
-        /// <param name="mode">
-        /// Delay mode specifying whether to use path endpoint delivery or cycle
-        /// diameter delivery.
-        /// </param>
-        /// <returns>
-        /// The message-delivery delay for the selected mode.
-        /// </returns>
+        /// <param name="mode">Topology-specific delivery mode.</param>
+        /// <returns>Elapsed simulated time until delivery.</returns>
         public double getMessageDelay(MessageDelayMode mode)
         {
             switch (mode)
@@ -444,6 +139,53 @@ namespace NetworkSimulation
                 default:
                     throw new ArgumentException("Unsupported delay mode.");
             }
+        }
+
+        /// <summary>
+        /// Floods the message through live connected components, advancing only
+        /// at actual node state transitions.
+        /// </summary>
+        private double GetFloodingDelay(int source, int destination)
+        {
+            if (source < 0 || source >= network.FullOrder)
+                throw new ArgumentOutOfRangeException("source");
+            if (destination < 0 || destination >= network.FullOrder)
+                throw new ArgumentOutOfRangeException("destination");
+
+            bool[] status = churn.getStatusAtTime(start_time);
+            if (!status[source])
+                throw new Exception("Source node is not live!");
+
+            bool[] locations = new bool[network.FullOrder];
+            locations[source] = true;
+
+            double currentTime = start_time;
+            while (true)
+            {
+                network.expandMessageLocations(locations, status);
+                if (locations[destination])
+                    return currentTime - start_time;
+
+                currentTime = GetNextTransition(currentTime);
+                status = churn.getStatusAtTime(currentTime);
+            }
+        }
+
+        /// <summary>
+        /// Returns and validates the next churn event after currentTime.
+        /// </summary>
+        private double GetNextTransition(double currentTime)
+        {
+            double nextTime = churn.getNextTransitionTime(currentTime);
+            if (nextTime <= currentTime
+                || double.IsNaN(nextTime)
+                || double.IsInfinity(nextTime))
+            {
+                throw new InvalidOperationException(
+                    "Churn did not produce a valid future transition.");
+            }
+
+            return nextTime;
         }
     }
 }

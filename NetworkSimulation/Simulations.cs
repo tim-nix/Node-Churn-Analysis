@@ -13,7 +13,7 @@ namespace NetworkSimulation
         private int numberSimulations = 0;  // number of simulations to run for each graph order
         private double baseTime = 0.0;      // earliest time to track churn
         private double timeDelta = 0.0;     // time increment
-        private int numSessions = 0;        // number of sessions per node to track
+        private int numSessions = 0;        // initial sessions generated per node
         private Distribution upDistro;      // distribution for drawing session up times
         private Distribution downDistro;    // distribution for drawing session down times
 
@@ -224,10 +224,10 @@ namespace NetworkSimulation
                 index++;
             }
 
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/graph_sizes_clique.txt", nValues.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_connectivity_clique.txt", connectivity.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_msg_delays_clique.txt", avgMsgDelays.Select(d => d.ToString()).ToArray());
-            System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_up_time_clique.txt", liveTime.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("graph_sizes_clique.txt", nValues.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("avg_connectivity_clique.txt", connectivity.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("avg_msg_delays_clique.txt", avgMsgDelays.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllLines("avg_up_time_clique.txt", liveTime.Select(d => d.ToString()).ToArray());
         }
 
         public void simGH()
@@ -425,10 +425,10 @@ namespace NetworkSimulation
                 Console.WriteLine("On average, {0:N2}% nodes are live at any given time", liveTime[index]);
                 Console.WriteLine();
 
-                System.IO.File.AppendAllLines("c:/Temp_For_Grading/graph_sizes_gnp.txt", nValues.Select(d => d.ToString()).ToArray());
-                System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_connectivity_gnp.txt", connectivity.Select(d => d.ToString()).ToArray());
-                System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_msg_delays_gnp.txt", avgMsgDelays.Select(d => d.ToString()).ToArray());
-                System.IO.File.WriteAllLines("c:/Temp_For_Grading/avg_up_time_gnp.txt", liveTime.Select(d => d.ToString()).ToArray());
+                System.IO.File.AppendAllLines("graph_sizes_gnp.txt", nValues.Select(d => d.ToString()).ToArray());
+                System.IO.File.WriteAllLines("avg_connectivity_gnp.txt", connectivity.Select(d => d.ToString()).ToArray());
+                System.IO.File.WriteAllLines("avg_msg_delays_gnp.txt", avgMsgDelays.Select(d => d.ToString()).ToArray());
+                System.IO.File.WriteAllLines("avg_up_time_gnp.txt", liveTime.Select(d => d.ToString()).ToArray());
 
                 index++;
             }
@@ -1012,7 +1012,7 @@ namespace NetworkSimulation
                 cdf[i] = cdf[i] / Convert.ToDouble(NUMBER_SESSIONS * SAMPLE_RUNS);
 
             // Write the cdf to a text file.
-            System.IO.File.AppendAllLines("c:/Temp_For_Grading/sampling.txt", cdf.Select(d => d.ToString()).ToArray());
+            System.IO.File.AppendAllLines("sampling.txt", cdf.Select(d => d.ToString()).ToArray());
         }
 
 
@@ -1088,8 +1088,8 @@ namespace NetworkSimulation
                 cdf[i] = cdf[i] / (SAMPLE_RUNS * interArrivalDelay.Length);
 
             // Write the cdf to a text file.
-            System.IO.File.WriteAllText("c:/Temp_For_Grading/superposition1.txt", mean.ToString());
-            System.IO.File.AppendAllLines("c:/Temp_For_Grading/superposition1.txt", cdf.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllText("superposition1.txt", mean.ToString());
+            System.IO.File.AppendAllLines("superposition1.txt", cdf.Select(d => d.ToString()).ToArray());
         }
 
 
@@ -1163,8 +1163,8 @@ namespace NetworkSimulation
                 cdf[i] = cdf[i] / (SAMPLE_SIZE * SAMPLE_RUNS);
             }
 
-            System.IO.File.WriteAllText("c:/Temp_For_Grading/superposition1.txt", mean.ToString());
-            System.IO.File.AppendAllLines("c:/Temp_For_Grading/superposition1.txt", cdf.Select(d => d.ToString()).ToArray());
+            System.IO.File.WriteAllText("superposition1.txt", mean.ToString());
+            System.IO.File.AppendAllLines("superposition1.txt", cdf.Select(d => d.ToString()).ToArray());
         }
 
         public static void Superposition2()

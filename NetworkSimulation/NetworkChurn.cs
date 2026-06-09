@@ -5,12 +5,8 @@ using System.Collections.Generic;
 namespace NetworkSimulation
 {
     /// <summary>
-    /// The purpose of this class is to represent a set of
-    /// peers within a peer-to-peer network that will join
-    /// the network for a duration (a session) and then 
-    /// depart the network for a duration (downtime) and
-    /// then rejoin the network.  Thus, the lifecycle of
-    /// each peer is represented as a NodeTimeline.
+    /// Represents the alternating ON/OFF lifecycle of every node in a network.
+    /// Each lifecycle is lazily extensible through its NodeTimeline.
     /// </summary>
     public class NetworkChurn
     {
@@ -37,10 +33,7 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// A constructor for the NetworkChurn class.  Creates 
-        /// the array that will be used to store the tracked 
-        /// session on the number of nodes specified by the
-        /// parameter.
+        /// Initializes storage for the requested number of node timelines.
         /// </summary>
         /// <param name="numNodes">The number of nodes in the network.</param>
         public NetworkChurn(int numNodes)
@@ -58,17 +51,13 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// The purpose of this method is to generate a timeline
-        /// for each node using the NodeTimeline class with each
-        /// up time as well as each down time generated using the 
-        /// uniform distribution.  The parameters specify the 
-        /// number of live sessions to track for each node and the 
-        /// base time to start tracking each timeline.  Thus, the 
-        /// start time of the first session for each node will be 
-        /// at or later than the base time.
+        /// Generates the initial session window for every node. Timelines retain
+        /// the supplied distributions and extend themselves on later queries.
         /// </summary>
-        /// <param name="numSessions">The number of live sessions to track</param>
+        /// <param name="numSessions">Initial ON sessions to store per node.</param>
         /// <param name="baseTime">The earliest time to track sessions</param>
+        /// <param name="upDistro">Distribution of ON durations.</param>
+        /// <param name="downDistro">Distribution of OFF durations.</param>
         public void generateChurn(int numSessions, double baseTime, Distribution upDistro, Distribution downDistro)
         {
             nodeSessions.Clear();
@@ -83,11 +72,11 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// 
+        /// Returns the remaining ON duration for one node at a given time.
         /// </summary>
-        /// <param name="node"></param>
-        /// <param name="time"></param>
-        /// <returns></returns>
+        /// <param name="node">Full-network node index.</param>
+        /// <param name="time">Time to query.</param>
+        /// <returns>Remaining ON time, or zero when the node is OFF.</returns>
         public double getNodeResidualAtTime(int node, double time)
         {
             EnsureChurnGenerated();
@@ -99,6 +88,11 @@ namespace NetworkSimulation
         }
 
 
+        /// <summary>
+        /// Returns the next ON-session start for one node.
+        /// </summary>
+        /// <param name="node">Full-network node index.</param>
+        /// <param name="time">Reference time.</param>
         public double getNextStartTimeForNode(int node, double time)
         {
             EnsureChurnGenerated();
@@ -125,6 +119,28 @@ namespace NetworkSimulation
                 status[i] = nodeSessions[i].timeIsLive(time);
 
             return status;
+        }
+
+
+        /// <summary>
+        /// Returns the earliest node ON/OFF transition strictly after time.
+        /// Timelines are extended lazily as required.
+        /// </summary>
+        /// <param name="time">Reference time.</param>
+        /// <returns>Earliest future transition across all nodes.</returns>
+        public double getNextTransitionTime(double time)
+        {
+            EnsureChurnGenerated();
+
+            double nextTransition = nodeSessions[0].getNextTransition(time);
+            for (int i = 1; i < nodeSessions.Count; i++)
+            {
+                double candidate = nodeSessions[i].getNextTransition(time);
+                if (candidate < nextTransition)
+                    nextTransition = candidate;
+            }
+
+            return nextTransition;
         }
 
 
@@ -173,9 +189,9 @@ namespace NetworkSimulation
         /// <summary>
         /// The purpose of this method is to iterate through all 
         /// of the node timelines and return the earliest stop 
-        /// time of the last occuring session.
+        /// end time among the sessions generated so far.
         /// </summary>
-        /// <returns>The earliest final stop time</returns>
+        /// <returns>Earliest generated session end across all nodes.</returns>
         public double getEarliestFinalTime()
         {
             EnsureChurnGenerated();
@@ -194,9 +210,9 @@ namespace NetworkSimulation
         /// <summary>
         /// The purpose of this method is to iterate through all 
         /// of the node timelines and return the last stop 
-        /// time of the last occuring session.
+        /// latest end time among the sessions generated so far.
         /// </summary>
-        /// <returns>The earliest final stop time</returns>
+        /// <returns>Latest generated session end across all nodes.</returns>
         public double getLastFinalTime()
         {
             EnsureChurnGenerated();

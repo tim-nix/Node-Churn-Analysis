@@ -33,7 +33,9 @@ namespace NetworkSimulation
         /// <param name="maxOrder">Exclusive upper bound on path graph order.</param>
         /// <param name="nodeDelta">Increment between graph sizes.</param>
         /// <param name="numberSimulations">Number of successful trials per graph size.</param>
-        /// <param name="numSessions">Number of ON sessions generated per node.</param>
+        /// <param name="numSessions">
+        /// Initial ON sessions generated per node; timelines extend as needed.
+        /// </param>
         /// <param name="baseTime">Base time used for churn generation.</param>
         /// <param name="upDistro">Distribution for live/ON durations.</param>
         /// <param name="downDistro">Distribution for failed/OFF durations.</param>

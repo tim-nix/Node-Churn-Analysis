@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace NetworkSimulation
 {
@@ -179,7 +180,7 @@ namespace NetworkSimulation
         /// isConnected() method in the AdjacencyMatrix class called on 
         /// the fullNetwork. 
         /// </summary>
-        /// <returns>Whether the currentStatus network is connected.</returns>
+        /// <returns>Whether the full network is connected.</returns>
         public bool isFullNetworkConnected()
         {
             return fullNetwork.isConnected();
@@ -205,7 +206,9 @@ namespace NetworkSimulation
         /// The purpose of this method is to determine if a path exists
         /// between nodes in the current network.
         /// </summary>
-        /// <returns>True/False - true is a path exists; false otherwise</returns>
+        /// <param name="startVertex">Current-network source node.</param>
+        /// <param name="endVertex">Current-network destination node.</param>
+        /// <returns>True when a current-network path exists.</returns>
         public bool isPathinCurrentNetwork(int startVertex, int endVertex)
         {
             return currentStatus.isPath(startVertex, endVertex);
@@ -213,13 +216,67 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// The purpose of this method is to determine if a path exists
-        /// between nodes in the current network.
+        /// Determines whether a path exists between two full-network nodes.
         /// </summary>
-        /// <returns>True/False - true is a path exists; false otherwise</returns>
+        /// <param name="startVertex">Full-network source node.</param>
+        /// <param name="endVertex">Full-network destination node.</param>
+        /// <returns>True when a full-network path exists.</returns>
         public bool isPathinFullNetwork(int startVertex, int endVertex)
         {
             return fullNetwork.isPath(startVertex, endVertex);
+        }
+
+
+        /// <summary>
+        /// Expands the set of message holders through every currently live
+        /// connected component containing at least one live holder.
+        /// Node labels are full-network labels.
+        /// </summary>
+        /// <param name="locations">
+        /// Mutable flags indicating which full-network nodes hold the message.
+        /// Newly reachable nodes are set to true.
+        /// </param>
+        /// <param name="nodeStatus">
+        /// Live status for every full-network node.
+        /// </param>
+        public void expandMessageLocations(bool[] locations, bool[] nodeStatus)
+        {
+            if (locations == null)
+                throw new ArgumentNullException("locations");
+            if (nodeStatus == null)
+                throw new ArgumentNullException("nodeStatus");
+            if (locations.Length != FullOrder || nodeStatus.Length != FullOrder)
+                throw new ArgumentException(
+                    "Location and status arrays must match the network order.");
+
+            Queue<int> toVisit = new Queue<int>();
+            bool[] visited = new bool[FullOrder];
+
+            for (int i = 0; i < FullOrder; i++)
+            {
+                if (locations[i] && nodeStatus[i])
+                {
+                    visited[i] = true;
+                    toVisit.Enqueue(i);
+                }
+            }
+
+            while (toVisit.Count > 0)
+            {
+                int current = toVisit.Dequeue();
+                locations[current] = true;
+
+                for (int neighbor = 0; neighbor < FullOrder; neighbor++)
+                {
+                    if (!visited[neighbor]
+                        && nodeStatus[neighbor]
+                        && fullNetwork.hasEdge(current, neighbor))
+                    {
+                        visited[neighbor] = true;
+                        toVisit.Enqueue(neighbor);
+                    }
+                }
+            }
         }
 
 
@@ -383,6 +440,14 @@ namespace NetworkSimulation
         }
 
 
+        /// <summary>
+        /// Repeatedly removes internal vertices from a shortest path to estimate
+        /// lengths of internally vertex-independent paths between two nodes.
+        /// The original full and current networks are restored before returning.
+        /// </summary>
+        /// <param name="startVertex">Full-network source node.</param>
+        /// <param name="endVertex">Full-network destination node.</param>
+        /// <returns>Lengths, in edges, of the independent paths found.</returns>
         public ArrayList getShortestIndependentPathLengths(int startVertex, int endVertex)
         {
             int[] path;

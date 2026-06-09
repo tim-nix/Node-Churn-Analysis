@@ -4,10 +4,8 @@
 namespace NetworkSimulation
 {
     /// <summary>
-    /// The purpose of this class is to keep track of a single live
-    /// session of a node.  The session goes live at the "time"
-    /// specified by the start attribute.  The session is live
-    /// until the "time" specified by the end attribute occurs.
+    /// Represents one node ON session using the half-open interval
+    /// [start, end), so the node is OFF exactly at the end time.
     /// </summary>
     public class Session
     {
@@ -46,7 +44,7 @@ namespace NetworkSimulation
         /// <param name="endTime">The end time of the session.</param>
         public Session(double startTime, double endTime)
         {
-            if (startTime <= endTime)
+            if (startTime < endTime)
             {
                 start = startTime;
                 end = endTime;
@@ -57,23 +55,20 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// The purpose of this method is to return whether or
-        /// not the session is live at time_t.
+        /// Determines whether a time lies in this session's half-open interval.
         /// </summary>
         /// <param name="time_t">The time to test.</param>
         /// <returns>Whether the session is live.</returns>
         public bool isLive(double time_t)
         {
-            if ((time_t >= start) && (time_t <= end))
+            if ((time_t >= start) && (time_t < end))
                 return true;
             else
                 return false;
         }
 
         /// <summary>
-        /// The purpose of this method is to return the
-        /// remaining time in the session, if any, at 
-        /// time_t.
+        /// Returns the remaining ON time in this session.
         /// </summary>
         /// <param name="time_t">The time to test.</param>
         /// <returns>The time remaining.</returns>
@@ -87,10 +82,9 @@ namespace NetworkSimulation
 
 
         /// <summary>
-        /// The purpose of this method is to calculate the
-        /// duration of time of the session.
+        /// Returns the total ON duration of the session.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>End time minus start time.</returns>
         public double getDurationLive()
         {
             return end - start;

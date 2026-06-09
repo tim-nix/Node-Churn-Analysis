@@ -12,16 +12,29 @@ namespace NetworkSimulation
         /// churn distributions.
         /// </summary>
         /// <remarks>
-        /// Current parameters use path sizes 5, 10, and 15; exponential ON rate
-        /// 2.0; exponential OFF/recovery rate 3.0; and 1000 simulations per size.
+        /// Current parameters use path sizes 5, 10, 15, and 20; exponential ON
+        /// rate 2.0; exponential OFF/recovery rate 3.0; and 20,000 simulations
+        /// per size.
         /// </remarks>
-        public static void pathExponential()
+        /// <param name="runMode">
+        /// Controls whether existing raw samples are cleared or resumed.
+        /// </param>
+        public static void pathExponential(ExperimentRunMode runMode)
         {
-            Simulations sim = new Simulations(minN: 5, maxN: 16, nDelta: 1, numSims: 100000);
-            Distribution upD = new Exponential(1.0);
-            Distribution downD = new Exponential(1.0);
-            sim.setUpDistro(upD, downD);
-            sim.simPath(ExperimentRunMode.Resume);
+            int numberSimulations = 20000;
+
+            Simulations sim = new Simulations(
+                minN: 5,
+                maxN: 21,
+                nDelta: 5,
+                numSims: numberSimulations);
+
+            Distribution upDistro = new Exponential(2.0);
+            Distribution downDistro = new Exponential(3.0);
+
+            sim.setUpDistro(upDistro, downDistro);
+
+            sim.simPath(runMode);
         }
 
         /// <summary>
@@ -29,17 +42,19 @@ namespace NetworkSimulation
         /// churn distributions.
         /// </summary>
         /// <remarks>
-        /// Current parameters use cycle sizes 10, 20, and 30 so that each cycle
-        /// comparison preserves the source-target distance of the corresponding
-        /// path experiment.
+        /// Current parameters use even cycle sizes from 10 through 30,
+        /// exponential ON/OFF rates of 1.0, and 100,000 simulations per size.
         /// </remarks>
-        public static void cycleExponential()
+        /// <param name="runMode">
+        /// Controls whether existing raw samples are cleared or resumed.
+        /// </param>
+        public static void cycleExponential(ExperimentRunMode runMode)
         {
             Simulations sim = new Simulations(minN: 10, maxN: 32, nDelta: 2, numSims: 100000);
             Distribution upD = new Exponential(1.0);
             Distribution downD = new Exponential(1.0);
             sim.setUpDistro(upD, downD);
-            sim.simCycle(ExperimentRunMode.Resume);
+            sim.simCycle(runMode);
         }
 
         /// <summary>
@@ -122,7 +137,11 @@ namespace NetworkSimulation
         /// N with the corresponding cycle graph of size 2N, and writes both
         /// absolute and percentage delay-reduction results.
         /// </remarks>
-        public static void comparePathAndCycleExperiment()
+        /// <param name="runMode">
+        /// Restart/resume mode forwarded to both simulation families.
+        /// </param>
+        public static void comparePathAndCycleExperiment(
+            ExperimentRunMode runMode)
         {
             bool runPath = true;
             bool runCycle = true;
@@ -132,14 +151,14 @@ namespace NetworkSimulation
             if (runPath)
             {
                 Console.WriteLine("Starting path experiment...");
-                pathExponential();
+                pathExponential(runMode);
                 Console.WriteLine("Finished path experiment.");
             }
 
             if (runCycle)
             {
                 Console.WriteLine("Starting cycle experiment...");
-                cycleExponential();
+                cycleExponential(runMode);
                 Console.WriteLine("Finished cycle experiment.");
             }
 
@@ -165,13 +184,18 @@ namespace NetworkSimulation
         /// <param name="nValues">
         /// Collection of path graph sizes to evaluate.
         /// </param>
+        /// <param name="runMode">
+        /// Restart/resume mode forwarded to the baseline path simulations.
+        /// </param>
         /// <remarks>
         /// For each n, reads msg_delays_path_n.txt and writes
         /// survival_independent_min_path_n.csv.
         /// </remarks>
-        public static void independentPathMinimumExperiment(IEnumerable<int> nValues)
+        public static void independentPathMinimumExperiment(
+            IEnumerable<int> nValues,
+            ExperimentRunMode runMode)
         {
-            pathExponential();
+            pathExponential(runMode);
 
             Console.WriteLine("Starting independent-path minimum experiment...");
 
@@ -218,10 +242,14 @@ namespace NetworkSimulation
         /// <param name="trials">
         /// The number of simulation trials to execute.
         /// </param>
+        /// <param name="runMode">
+        /// Controls whether the sanity-test delay file is cleared first.
+        /// </param>
         public static void multiPathSanityTest(
             int pathLength,
             int pathCount,
-            int trials)
+            int trials,
+            ExperimentRunMode runMode)
         {
             int numNodes = 2 + pathCount * (pathLength - 1);
 
@@ -233,7 +261,8 @@ namespace NetworkSimulation
 
             string delayOutputFile = $"msg_delays_multipath_k{pathCount}_len{pathLength}_sanity.txt";
 
-            File.WriteAllText(delayOutputFile, "");
+            if (runMode == ExperimentRunMode.Restart)
+                File.WriteAllText(delayOutputFile, "");
 
             TrialRunner runner = new TrialRunner();
             List<TrialResult> results = new List<TrialResult>();
@@ -277,22 +306,67 @@ namespace NetworkSimulation
             Console.WriteLine();
         }
 
+
+        /// <summary>
+        /// Runs baseline path simulations, multipath simulations, and the
+        /// resulting survival comparison using exponential ON/OFF churn.
+        /// </summary>
+        /// <param name="runMode">
+        /// Restart/resume mode forwarded through the complete workflow.
+        /// </param>
+        public static void multiPathExponential(ExperimentRunMode runMode)
+        {
+            int[] pathLengths = { 5, 10, 15 };
+            int[] pathCounts = { 2, 3, 4, 5 };
+
+            int numberSimulations = 100000;
+            int numSessions = 1000;
+            double baseTime = 200.0;
+
+            Distribution upDistro = new Exponential(2.0);
+            Distribution downDistro = new Exponential(3.0);
+
+            Console.WriteLine("Starting baseline path simulations...");
+            pathExponential(runMode);
+            Console.WriteLine("Finished baseline path simulations.");
+
+            Console.WriteLine("Starting multi-path simulations...");
+            MultiPathExperiment experiment = new MultiPathExperiment();
+            experiment.Run(
+                pathLengths,
+                pathCounts,
+                numberSimulations,
+                numSessions,
+                baseTime,
+                upDistro,
+                downDistro,
+                runMode);
+            Console.WriteLine("Finished multi-path simulations.");
+
+            Console.WriteLine("Starting multi-path survival comparison...");
+            MultiPathSurvivalComparison comparison = new MultiPathSurvivalComparison();
+            comparison.Run(pathLengths, pathCounts);
+            Console.WriteLine("Finished multi-path survival comparison.");
+        }
+
+
+
         /// <summary>
         /// Entry point for the simulation program.
         /// </summary>
         /// <param name="args">Command-line arguments; currently unused.</param>
         /// <remarks>
-        /// Boolean flags control whether path experiments, cycle experiments,
-        /// mean-delay comparison, and survival comparison are executed.
+        /// Change runMode here to control restart/resume behavior for every
+        /// experiment invoked by this entry point.
         /// </remarks>
         static void Main(string[] args)
         {
-            MultiPathSurvivalComparison comparison =
-            new MultiPathSurvivalComparison();
+            string outputDirectory = SimulationOutput.Initialize();
+            ExperimentRunMode runMode = ExperimentRunMode.Restart;
 
-            comparison.Run(
-                new int[] { 5, 10, 15 },
-                new int[] { 2, 3, 4 });
+            Console.WriteLine("Simulation output directory: {0}", outputDirectory);
+            Console.WriteLine("Experiment run mode: {0}", runMode);
+            multiPathExponential(runMode);
         }
     }
 }
