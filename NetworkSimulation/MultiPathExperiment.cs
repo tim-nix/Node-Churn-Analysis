@@ -4,8 +4,8 @@ using System.Collections.Generic;
 namespace NetworkSimulation
 {
     /// <summary>
-    /// Runs a family of multi-path topology message-delay experiments over
-    /// a range of equal path lengths and path counts.
+    /// Runs multi-path topology message-delay experiments for explicit
+    /// collections of equal path lengths and path counts.
     ///
     /// For each path length and path count, this class executes repeated
     /// Monte Carlo trials using shared endpoint nodes, records raw delay
@@ -31,12 +31,14 @@ namespace NetworkSimulation
         /// length and path count.
         /// </summary>
         /// <param name="pathLengths">
-        /// Path lengths to simulate, where each value is the number of edges
-        /// in each internally disjoint path.
+        /// Path lengths to simulate, where each value is the number of nodes
+        /// in each internally disjoint path, including the shared endpoints.
         /// </param>
         /// <param name="pathCounts">
         /// Path counts to simulate, where each value is the number of
         /// internally disjoint equal-length paths between the shared endpoints.
+        /// The current topology constructor requires each value to be at least
+        /// two.
         /// </param>
         /// <param name="numberSimulations">
         /// Number of successful trials per topology configuration.
@@ -83,7 +85,7 @@ namespace NetworkSimulation
                 foreach (int pathCount in pathCounts)
                 {
                     int numNodes =
-                        2 + pathCount * (pathLength - 1);
+                        2 + pathCount * (pathLength - 2);
 
                     Console.WriteLine(
                         "Multi-path topology: path length = {0}, path count = {1}, nodes = {2}",
@@ -100,7 +102,7 @@ namespace NetworkSimulation
 
                     string metadata = string.Format(
                         System.Globalization.CultureInfo.InvariantCulture,
-                        "topology=multipath;length={0};count={1};seed={2}",
+                        "topology=multipath;pathNodes={0};count={1};seed={2}",
                         pathLength,
                         pathCount,
                         randomSeed);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -7,9 +8,9 @@ namespace NetworkSimulation
 {
     class Simulations
     {
-        private int minOrder = 0;           // smallest graph order to simulate
-        private int maxOrder = 0;           // largest graph order to simulate
-        private int nodeDelta = 0;          // rate of change in graph order
+        private int minOrder = 0;           // smallest order in range-based runs
+        private int maxOrder = 0;           // exclusive upper bound for range-based runs
+        private int nodeDelta = 0;          // increment for range-based runs
         private int numberSimulations = 0;  // number of simulations to run for each graph order
         private double baseTime = 0.0;      // earliest time to track churn
         private double timeDelta = 0.0;     // time increment
@@ -20,7 +21,28 @@ namespace NetworkSimulation
         private const int _numlocks = 5;
         private static readonly object[] _lock = new object[_numlocks];  // lock for shared variables across threads
 
+        /// <summary>
+        /// Initializes simulation settings for callers that supply explicit
+        /// graph orders to simPath or simCycle.
+        /// </summary>
+        public Simulations(
+            int numSims,
+            double startTime = 200.0,
+            double tDelta = 0.1,
+            int sessionsPerNode = 100)
+        {
+            numberSimulations = numSims;
+            setTimeRange(startTime, tDelta);
+            setNumberOfSessions(sessionsPerNode);
+            for (int i = 0; i < _numlocks; i++)
+            {
+                _lock[i] = new object();
+            }
+        }
 
+        /// <summary>
+        /// Initializes simulation settings for arithmetic-range graph runs.
+        /// </summary>
         public Simulations(int minN,
                            int maxN,
                            int nDelta,
@@ -34,9 +56,7 @@ namespace NetworkSimulation
             setTimeRange(startTime, tDelta);
             setNumberOfSessions(sessionsPerNode);
             for (int i = 0; i < _numlocks; i++)
-            {
                 _lock[i] = new object();
-            }
         }
 
         public void setNodeRange(int minN, int maxN, int nDelta)
@@ -73,6 +93,10 @@ namespace NetworkSimulation
         }
 
 
+        /// <summary>
+        /// Sets the ON-duration distribution first and the OFF-duration
+        /// distribution second for subsequent experiment runs.
+        /// </summary>
         public void setUpDistro(Distribution upD, Distribution downD)
         {
             upDistro = upD;
@@ -80,11 +104,10 @@ namespace NetworkSimulation
         }
 
 
-        // The purpose of this method is to run simulations to determine the amount of time required
-        // to deliver a message from a source node to a destination node.  The source node is the
-        // "left-mode" node within the topology and the destination node is the "right-most" node
-        // within the topology.  Prior to execution of this method, upDistro and downDistro should
-        // be created/initialized.
+        /// <summary>
+        /// Runs path simulations over the arithmetic graph-order range
+        /// configured by the range-based constructor.
+        /// </summary>
         public void simPath(
             ExperimentRunMode runMode,
             int randomSeed = 12345,
@@ -109,8 +132,36 @@ namespace NetworkSimulation
                 maxAttempts);
         }
 
+        /// <summary>
+        /// Runs path simulations for explicit path lengths in nodes.
+        /// </summary>
+        public void simPath(
+            IEnumerable<int> graphOrders,
+            ExperimentRunMode runMode,
+            int randomSeed = 12345,
+            int maxAttempts = 3)
+        {
+            if ((upDistro == null) || (downDistro == null))
+                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
+
+            new PathExperiment().Run(
+                graphOrders,
+                numberSimulations,
+                numSessions,
+                baseTime,
+                upDistro,
+                downDistro,
+                runMode,
+                randomSeed,
+                maxAttempts);
+        }
 
 
+
+        /// <summary>
+        /// Runs cycle simulations over the arithmetic graph-order range
+        /// configured by the range-based constructor.
+        /// </summary>
         public void simCycle(
             ExperimentRunMode runMode,
             int randomSeed = 12345,
@@ -125,6 +176,30 @@ namespace NetworkSimulation
                 minOrder,
                 maxOrder,
                 nodeDelta,
+                numberSimulations,
+                numSessions,
+                baseTime,
+                upDistro,
+                downDistro,
+                runMode,
+                randomSeed,
+                maxAttempts);
+        }
+
+        /// <summary>
+        /// Runs cycle simulations for explicit cycle orders.
+        /// </summary>
+        public void simCycle(
+            IEnumerable<int> graphOrders,
+            ExperimentRunMode runMode,
+            int randomSeed = 12345,
+            int maxAttempts = 3)
+        {
+            if ((upDistro == null) || (downDistro == null))
+                throw new NullReferenceException("Error: Must set up-time and down-time distributions!");
+
+            new CycleExperiment().Run(
+                graphOrders,
                 numberSimulations,
                 numSessions,
                 baseTime,

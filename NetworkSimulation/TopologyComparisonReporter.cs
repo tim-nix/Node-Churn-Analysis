@@ -13,12 +13,13 @@ namespace NetworkSimulation
     {
         /// <summary>
         /// Reads path and cycle summary files, matches path size N against cycle
-        /// size 2N, and writes delay-reduction outputs.
+        /// size 2(N-1), and writes delay-reduction outputs.
         /// </summary>
         /// <remarks>
         /// Outputs absolute delay reductions to delay_reduction_path_vs_cycle.txt
         /// and percentage reductions to delay_reduction_percent_path_vs_cycle.txt.
-        /// Rows whose cycle size is not twice the path size are skipped.
+        /// Rows whose cycle diameter route does not match the path length are
+        /// skipped.
         /// </remarks>
         public void ComparePathAndCycle()
         {
@@ -38,7 +39,8 @@ namespace NetworkSimulation
                 int pathN = int.Parse(pathSizes[i]);
                 int cycleN = int.Parse(cycleSizes[i]);
 
-                if (cycleN != 2 * pathN)
+                if (cycleN !=
+                    TopologyFactory.GetEquivalentCycleOrder(pathN))
                 {
                     Console.WriteLine(
                         "Skipping comparison at row {0}: path n={1}, cycle n={2}",

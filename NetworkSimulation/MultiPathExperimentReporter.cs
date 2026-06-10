@@ -27,7 +27,8 @@ namespace NetworkSimulation
         /// Writes summary statistics for one multi-path topology configuration.
         /// </summary>
         /// <param name="pathLength">
-        /// Number of edges in each internally disjoint path.
+        /// Number of nodes in each internally disjoint path, including the
+        /// shared source and destination nodes.
         /// </param>
         /// <param name="pathCount">
         /// Number of internally disjoint equal-length paths between the

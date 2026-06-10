@@ -18,6 +18,16 @@ namespace NetworkSimulation
         private const double LowerSurvivalCutoff = 0.15;
         private const double UpperSurvivalCutoff = 0.85;
 
+        /// <summary>
+        /// Compares every requested multi-path configuration with its
+        /// single-path baseline of the same node-based path length.
+        /// </summary>
+        /// <param name="pathLengths">
+        /// Path lengths in nodes, including source and destination.
+        /// </param>
+        /// <param name="pathCounts">
+        /// Numbers of internally disjoint paths in the multi-path samples.
+        /// </param>
         public void Run(
             int[] pathLengths,
             int[] pathCounts)

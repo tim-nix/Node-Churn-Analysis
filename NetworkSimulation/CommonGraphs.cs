@@ -69,19 +69,29 @@ namespace NetworkSimulation
         }
 
         /// <summary>
-        /// Creates an adjacency matrix representing multiple disjoint linear paths.
+        /// Creates an adjacency matrix representing internally vertex-disjoint
+        /// linear paths with shared source and destination nodes.
         /// </summary>
-        /// <remarks>Nodes for each path occupy contiguous index ranges; edges connect consecutive indices
-        /// within each range. If pathLength or pathCount is zero the returned matrix has zero size.</remarks>
-        /// <param name="pathLength">Number of nodes in each path.</param>
-        /// <param name="pathCount">Number of disjoint paths.</param>
-        /// <returns>An int[,] adjacency matrix of size (pathLength * pathCount) by (pathLength * pathCount) where entries are 1
-        /// for adjacent nodes within the same path and 0 otherwise.</returns>
+        /// <remarks>
+        /// The source and destination are shared by every path. Each path
+        /// therefore contributes pathLength - 2 internal nodes.
+        /// </remarks>
+        /// <param name="pathLength">
+        /// Number of nodes in each path, including the shared source and
+        /// destination nodes.
+        /// </param>
+        /// <param name="pathCount">
+        /// Number of internally disjoint paths; must be at least two.
+        /// </param>
+        /// <returns>
+        /// An adjacency matrix with 2 + pathCount * (pathLength - 2) nodes.
+        /// </returns>
         public static int[,] MultiPath(int pathLength, int pathCount)
         {
-            if (pathLength < 2)
+            if (pathLength < 3)
             {
-                throw new ArgumentException("Path length must be at least 2.");
+                throw new ArgumentException(
+                    "Path length must be at least 3 nodes.");
             }
 
             if (pathCount < 2)
@@ -95,15 +105,15 @@ namespace NetworkSimulation
              * 0 = source
              * 1 = destination
              *
-             * Each path contributes (pathLength - 1)
+             * Each path contributes (pathLength - 2)
              * internal nodes.
              *
              * Total nodes:
              *
-             * 2 + pathCount * (pathLength - 1)
+             * 2 + pathCount * (pathLength - 2)
              */
 
-            int totalNodes = 2 + pathCount * (pathLength - 1);
+            int totalNodes = 2 + pathCount * (pathLength - 2);
 
             int[,] graph = new int[totalNodes, totalNodes];
 
@@ -114,7 +124,7 @@ namespace NetworkSimulation
                 int previous = 0;
 
                 /* Add internal nodes for this path. */
-                for (int i = 0; i < pathLength - 1; i++)
+                for (int i = 0; i < pathLength - 2; i++)
                 {
                     int current = nextNode++;
 

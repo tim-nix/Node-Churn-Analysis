@@ -5,8 +5,8 @@ using System.Linq;
 namespace NetworkSimulation
 {
     /// <summary>
-    /// Runs a family of path-topology message-delay experiments over a range
-    /// of graph sizes.
+    /// Runs path-topology message-delay experiments for either an arithmetic
+    /// range or an explicit collection of graph orders.
     /// 
     /// For each path size, this class executes repeated Monte Carlo trials,
     /// records raw delay samples, aggregates summary statistics, and delegates
@@ -27,7 +27,8 @@ namespace NetworkSimulation
         }
                 
         /// <summary>
-        /// Executes path-topology simulations for graph sizes in the configured range.
+        /// Executes path-topology simulations for an arithmetic range of
+        /// graph orders.
         /// </summary>
         /// <param name="minOrder">Smallest path graph order to simulate.</param>
         /// <param name="maxOrder">Exclusive upper bound on path graph order.</param>
@@ -59,12 +60,56 @@ namespace NetworkSimulation
             int randomSeed = 12345,
             int maxAttempts = 3)
         {
+            Run(
+                Enumerable.Range(minOrder, maxOrder - minOrder)
+                    .Where(order => (order - minOrder) % nodeDelta == 0),
+                numberSimulations,
+                numSessions,
+                baseTime,
+                upDistro,
+                downDistro,
+                runMode,
+                randomSeed,
+                maxAttempts);
+        }
+
+        /// <summary>
+        /// Executes path-topology simulations for explicit graph orders.
+        /// </summary>
+        /// <param name="graphOrders">
+        /// Path lengths in nodes, including source and destination.
+        /// </param>
+        /// <param name="numberSimulations">Number of successful trials per graph order.</param>
+        /// <param name="numSessions">
+        /// Initial ON sessions generated per node; timelines extend as needed.
+        /// </param>
+        /// <param name="baseTime">Base time used for churn generation.</param>
+        /// <param name="upDistro">Distribution for live/ON durations.</param>
+        /// <param name="downDistro">Distribution for failed/OFF durations.</param>
+        /// <param name="runMode">Controls checkpoint restart or resume behavior.</param>
+        /// <param name="randomSeed">Experiment seed used for deterministic trials.</param>
+        /// <param name="maxAttempts">Maximum attempts allowed per successful trial.</param>
+        /// <remarks>
+        /// Raw delay samples are written to msg_delays_path_N.txt, where N is
+        /// the supplied path length in nodes.
+        /// </remarks>
+        public void Run(
+            IEnumerable<int> graphOrders,
+            int numberSimulations,
+            int numSessions,
+            double baseTime,
+            Distribution upDistro,
+            Distribution downDistro,
+            ExperimentRunMode runMode,
+            int randomSeed = 12345,
+            int maxAttempts = 3)
+        {
             // Delete raw delay files and derived statistic files.
             reporter.ClearOutputFiles();
             
             int simulationCount = numberSimulations;
 
-            for (int numNodes = minOrder; numNodes < maxOrder; numNodes += nodeDelta)
+            foreach (int numNodes in graphOrders)
             {
                 Console.WriteLine("Number of nodes: " + numNodes);
 

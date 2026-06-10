@@ -20,6 +20,9 @@ namespace NetworkSimulation.Tests
             Run("Unexpected trial exceptions propagate", UnexpectedTrialExceptionsPropagate);
             Run("Seeded distributions are reproducible", SeededDistributionsAreReproducible);
             Run("Resumed path run matches uninterrupted run", ResumeMatchesUninterrupted);
+            Run("Multi-path length includes shared endpoints", MultiPathLengthIncludesEndpoints);
+            Run("Multi-path requires an internal node", MultiPathRequiresInternalNode);
+            Run("Equivalent cycle preserves path length", EquivalentCyclePreservesPathLength);
 
             Console.WriteLine(
                 failures == 0
@@ -172,6 +175,55 @@ namespace NetworkSimulation.Tests
 
                 Equal(complete, resumed, "Checkpoint contents");
             });
+        }
+
+        private static void MultiPathLengthIncludesEndpoints()
+        {
+            const int pathLength = 5;
+            const int pathCount = 3;
+
+            int[,] graph = CommonGraphs.MultiPath(pathLength, pathCount);
+
+            Equal(
+                2 + pathCount * (pathLength - 2),
+                graph.GetLength(0),
+                "Graph order");
+
+            Network network = new Network(graph);
+            List<int> lengths = network
+                .getShortestIndependentPathLengths(0, 1)
+                .Cast<int>()
+                .ToList();
+
+            Equal(pathCount, lengths.Count, "Independent path count");
+            foreach (int edgeLength in lengths)
+                Equal(pathLength - 1, edgeLength, "Path edge count");
+        }
+
+        private static void MultiPathRequiresInternalNode()
+        {
+            Throws<ArgumentException>(() => CommonGraphs.MultiPath(2, 2));
+        }
+
+        private static void EquivalentCyclePreservesPathLength()
+        {
+            int[] pathLengths = { 5, 10, 15, 20 };
+            int[] expectedCycleOrders = { 8, 18, 28, 38 };
+
+            for (int i = 0; i < pathLengths.Length; i++)
+            {
+                int cycleOrder =
+                    TopologyFactory.GetEquivalentCycleOrder(pathLengths[i]);
+
+                Equal(expectedCycleOrders[i], cycleOrder, "Cycle order");
+                Equal(
+                    pathLengths[i],
+                    (cycleOrder / 2) + 1,
+                    "Cycle diameter path nodes");
+            }
+
+            Throws<ArgumentException>(
+                () => TopologyFactory.GetEquivalentCycleOrder(1));
         }
 
         private static void RunPathExperiment(

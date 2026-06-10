@@ -12,10 +12,12 @@ namespace NetworkSimulation
         /// churn distributions.
         /// </summary>
         /// <remarks>
-        /// Current parameters use path sizes 5, 10, 15, and 20; exponential ON
-        /// rate 2.0; and exponential OFF/recovery rate 3.0. The number of
-        /// simulations per size is supplied by the caller.
+        /// Path lengths, exponential ON/OFF rates, and the number of
+        /// simulations are supplied by the caller.
         /// </remarks>
+        /// <param name="pathLengths">
+        /// Path lengths in nodes, including source and destination.
+        /// </param>
         /// <param name="runMode">
         /// Controls whether existing raw samples are cleared or resumed.
         /// </param>
@@ -25,23 +27,24 @@ namespace NetworkSimulation
         /// <param name="randomSeed">
         /// Seed used to derive deterministic random streams for each trial.
         /// </param>
+        /// <param name="upRate">Exponential rate for ON durations.</param>
+        /// <param name="downRate">Exponential rate for OFF durations.</param>
         public static void pathExponential(
+            int[] pathLengths,
             ExperimentRunMode runMode,
             int numberSimulations,
-            int randomSeed)
+            int randomSeed,
+            double upRate,
+            double downRate)
         {
-            Simulations sim = new Simulations(
-                minN: 5,
-                maxN: 21,
-                nDelta: 5,
-                numSims: numberSimulations);
+            Simulations sim = new Simulations(numSims: numberSimulations);
 
-            Distribution upDistro = new Exponential(2.0);
-            Distribution downDistro = new Exponential(3.0);
+            Distribution upDistro = new Exponential(upRate);
+            Distribution downDistro = new Exponential(downRate);
 
             sim.setUpDistro(upDistro, downDistro);
 
-            sim.simPath(runMode, randomSeed);
+            sim.simPath(pathLengths, runMode, randomSeed);
         }
 
         /// <summary>
@@ -49,10 +52,12 @@ namespace NetworkSimulation
         /// churn distributions.
         /// </summary>
         /// <remarks>
-        /// Current parameters use even cycle sizes from 10 through 30,
-        /// exponential ON/OFF rates of 1.0, and caller-supplied simulation
-        /// count and random seed values.
+        /// Each cycle order is derived so its diameter route contains the
+        /// corresponding caller-supplied path length in nodes.
         /// </remarks>
+        /// <param name="pathLengths">
+        /// Desired source-to-diameter path lengths in nodes.
+        /// </param>
         /// <param name="runMode">
         /// Controls whether existing raw samples are cleared or resumed.
         /// </param>
@@ -62,20 +67,25 @@ namespace NetworkSimulation
         /// <param name="randomSeed">
         /// Seed used to derive deterministic random streams for each trial.
         /// </param>
+        /// <param name="upRate">Exponential rate for ON durations.</param>
+        /// <param name="downRate">Exponential rate for OFF durations.</param>
         public static void cycleExponential(
+            int[] pathLengths,
             ExperimentRunMode runMode,
             int numberSimulations,
-            int randomSeed)
+            int randomSeed,
+            double upRate,
+            double downRate)
         {
-            Simulations sim = new Simulations(
-                minN: 10,
-                maxN: 32,
-                nDelta: 2,
-                numSims: numberSimulations);
-            Distribution upD = new Exponential(1.0);
-            Distribution downD = new Exponential(1.0);
+            Simulations sim = new Simulations(numSims: numberSimulations);
+            Distribution upD = new Exponential(upRate);
+            Distribution downD = new Exponential(downRate);
             sim.setUpDistro(upD, downD);
-            sim.simCycle(runMode, randomSeed);
+            sim.simCycle(
+                pathLengths.Select(
+                    TopologyFactory.GetEquivalentCycleOrder),
+                runMode,
+                randomSeed);
         }
 
         /// <summary>
@@ -102,8 +112,8 @@ namespace NetworkSimulation
         /// </summary>
         /// <remarks>
         /// Each path file msg_delays_path_N.txt is matched with
-        /// msg_delays_cycle_2N.txt. Matching pairs are analyzed by SurvivalAnalysis
-        /// and written to survival_comparison_pathN_cycle2N.csv.
+        /// msg_delays_cycle_2(N-1).txt so the cycle diameter route and path
+        /// both contain N nodes. Matching pairs are analyzed by SurvivalAnalysis.
         /// </remarks>
         public static void survivalComparison()
         {
@@ -121,7 +131,8 @@ namespace NetworkSimulation
             {
                 int pathN = ExtractN(pathFile);
 
-                int expectedCycleN = 2 * pathN;
+                int expectedCycleN =
+                    TopologyFactory.GetEquivalentCycleOrder(pathN);
 
                 string matchingCycleFile =
                     cycleFiles.FirstOrDefault(f => ExtractN(f) == expectedCycleN);
@@ -155,11 +166,14 @@ namespace NetworkSimulation
         /// <remarks>
         /// This method does not run new simulations. It reads the existing
         /// path and cycle average-delay files, matches each path graph of size
-        /// N with the corresponding cycle graph of size 2N, and writes both
-        /// absolute and percentage delay-reduction results.
+        /// N with the cycle whose diameter route also contains N nodes, and
+        /// writes both absolute and percentage delay-reduction results.
         /// </remarks>
         /// <param name="runMode">
         /// Restart/resume mode forwarded to both simulation families.
+        /// </param>
+        /// <param name="pathLengths">
+        /// Path lengths in nodes used by both topology families.
         /// </param>
         /// <param name="numberSimulations">
         /// Number of successful simulations to run per path size.
@@ -167,10 +181,15 @@ namespace NetworkSimulation
         /// <param name="randomSeed">
         /// Seed forwarded to both simulation families.
         /// </param>
+        /// <param name="upRate">Exponential rate for ON durations.</param>
+        /// <param name="downRate">Exponential rate for OFF durations.</param>
         public static void comparePathAndCycleExperiment(
+            int[] pathLengths,
             ExperimentRunMode runMode,
             int numberSimulations,
-            int randomSeed)
+            int randomSeed,
+            double upRate,
+            double downRate)
         {
             bool runPath = true;
             bool runCycle = true;
@@ -180,14 +199,26 @@ namespace NetworkSimulation
             if (runPath)
             {
                 Console.WriteLine("Starting path experiment...");
-                pathExponential(runMode, numberSimulations, randomSeed);
+                pathExponential(
+                    pathLengths,
+                    runMode,
+                    numberSimulations,
+                    randomSeed,
+                    upRate,
+                    downRate);
                 Console.WriteLine("Finished path experiment.");
             }
 
             if (runCycle)
             {
                 Console.WriteLine("Starting cycle experiment...");
-                cycleExponential(runMode, numberSimulations, randomSeed);
+                cycleExponential(
+                    pathLengths,
+                    runMode,
+                    numberSimulations,
+                    randomSeed,
+                    upRate,
+                    downRate);
                 Console.WriteLine("Finished cycle experiment.");
             }
 
@@ -222,6 +253,8 @@ namespace NetworkSimulation
         /// <param name="randomSeed">
         /// Seed forwarded to the baseline path simulations.
         /// </param>
+        /// <param name="upRate">Exponential rate for ON durations.</param>
+        /// <param name="downRate">Exponential rate for OFF durations.</param>
         /// <remarks>
         /// For each n, reads msg_delays_path_n.txt and writes
         /// survival_independent_min_path_n.csv.
@@ -230,15 +263,25 @@ namespace NetworkSimulation
             IEnumerable<int> nValues,
             ExperimentRunMode runMode,
             int numberSimulations,
-            int randomSeed)
+            int randomSeed,
+            double upRate,
+            double downRate)
         {
-            pathExponential(runMode, numberSimulations, randomSeed);
+            int[] pathLengths = nValues.ToArray();
+
+            pathExponential(
+                pathLengths,
+                runMode,
+                numberSimulations,
+                randomSeed,
+                upRate,
+                downRate);
 
             Console.WriteLine("Starting independent-path minimum experiment...");
 
             IndependentPathExperiment experiment = new IndependentPathExperiment();
 
-            foreach (int n in nValues)
+            foreach (int n in pathLengths)
             {
                 string inputFile = $"msg_delays_path_{n}.txt";
                 string outputFile = $"survival_independent_min_path_{n}.csv";
@@ -269,7 +312,7 @@ namespace NetworkSimulation
         /// prior to running large-scale experiments.
         /// </summary>
         /// <param name="pathLength">
-        /// The number of edges in each path between the shared source and
+        /// The number of nodes in each path, including the shared source and
         /// destination nodes.
         /// </param>
         /// <param name="pathCount">
@@ -296,7 +339,7 @@ namespace NetworkSimulation
             int randomSeed,
             int maxAttempts = 3)
         {
-            int numNodes = 2 + pathCount * (pathLength - 1);
+            int numNodes = 2 + pathCount * (pathLength - 2);
 
             int numSessions = 100;
             double baseTime = 200.0;
@@ -311,7 +354,7 @@ namespace NetworkSimulation
                 delayOutputFile,
                 string.Format(
                     System.Globalization.CultureInfo.InvariantCulture,
-                    "topology=multipath-sanity;length={0};count={1};seed={2}",
+                    "topology=multipath-sanity;pathNodes={0};count={1};seed={2}",
                     pathLength,
                     pathCount,
                     randomSeed));
@@ -368,6 +411,13 @@ namespace NetworkSimulation
         /// Runs baseline path simulations, multipath simulations, and the
         /// resulting survival comparison using exponential ON/OFF churn.
         /// </summary>
+        /// <param name="pathLengths">
+        /// Path lengths in nodes used by the baseline and multi-path runs.
+        /// </param>
+        /// <param name="pathCounts">
+        /// Numbers of internally disjoint paths used by the multi-path runs;
+        /// each value must currently be at least two.
+        /// </param>
         /// <param name="runMode">
         /// Restart/resume mode forwarded through the complete workflow.
         /// </param>
@@ -378,22 +428,31 @@ namespace NetworkSimulation
         /// <param name="randomSeed">
         /// Seed used to derive deterministic random streams for each trial.
         /// </param>
+        /// <param name="upRate">Exponential rate for ON durations.</param>
+        /// <param name="downRate">Exponential rate for OFF durations.</param>
         public static void multiPathExponential(
+            int[] pathLengths,
+            int[] pathCounts,
             ExperimentRunMode runMode,
             int numberSimulations,
-            int randomSeed)
+            int randomSeed,
+            double upRate,
+            double downRate)
         {
-            int[] pathLengths = { 5, 10, 15, 20 };
-            int[] pathCounts = { 2, 3, 4, 5 };
-
             int numSessions = 1000;
             double baseTime = 200.0;
 
-            Distribution upDistro = new Exponential(2.0);
-            Distribution downDistro = new Exponential(3.0);
+            Distribution upDistro = new Exponential(upRate);
+            Distribution downDistro = new Exponential(downRate);
 
             Console.WriteLine("Starting baseline path simulations...");
-            pathExponential(runMode, numberSimulations, randomSeed);
+            pathExponential(
+                pathLengths,
+                runMode,
+                numberSimulations,
+                randomSeed,
+                upRate,
+                downRate);
             Console.WriteLine("Finished baseline path simulations.");
 
             Console.WriteLine("Starting multi-path simulations...");
@@ -423,22 +482,39 @@ namespace NetworkSimulation
         /// </summary>
         /// <param name="args">Command-line arguments; currently unused.</param>
         /// <remarks>
-        /// Change runMode here to control restart/resume behavior and
-        /// numberSimulations to control the trial count, and randomSeed to
-        /// reproduce every experiment invoked by this entry point.
+        /// Change runMode here to control restart/resume behavior,
+        /// numberSimulations to control the trial count, randomSeed to
+        /// reproduce the experiment, upRate/downRate to control churn,
+        /// pathLengths to select route lengths in nodes, and pathCounts to
+        /// select multi-path redundancy levels of two or greater.
         /// </remarks>
         static void Main(string[] args)
         {
             string outputDirectory = SimulationOutput.Initialize();
-            ExperimentRunMode runMode = ExperimentRunMode.Resume;
+            ExperimentRunMode runMode = ExperimentRunMode.Restart;
             int numberSimulations = 100000;
             int randomSeed = 12345;
+            double upRate = 2.0;
+            double downRate = 3.0;
+            int[] pathLengths = { 5, 10, 15, 20 };
+            int[] pathCounts = { 2, 3, 4, 5 };
 
             Console.WriteLine("Simulation output directory: {0}", outputDirectory);
             Console.WriteLine("Experiment run mode: {0}", runMode);
             Console.WriteLine("Simulations per configuration: {0}", numberSimulations);
             Console.WriteLine("Experiment random seed: {0}", randomSeed);
-            multiPathExponential(runMode, numberSimulations, randomSeed);
+            Console.WriteLine("Exponential ON rate: {0}", upRate);
+            Console.WriteLine("Exponential OFF rate: {0}", downRate);
+            Console.WriteLine("Path lengths (nodes): {0}", string.Join(", ", pathLengths));
+            Console.WriteLine("Multi-path counts: {0}", string.Join(", ", pathCounts));
+            multiPathExponential(
+                pathLengths,
+                pathCounts,
+                runMode,
+                numberSimulations,
+                randomSeed,
+                upRate,
+                downRate);
         }
     }
 }
