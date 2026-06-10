@@ -23,6 +23,9 @@ namespace NetworkSimulation.Tests
             Run("Multi-path length includes shared endpoints", MultiPathLengthIncludesEndpoints);
             Run("Multi-path requires an internal node", MultiPathRequiresInternalNode);
             Run("Equivalent cycle preserves path length", EquivalentCyclePreservesPathLength);
+            Run("Comparison outputs include regime name", ComparisonOutputsIncludeRegimeName);
+            Run("Comparison regimes use independent directories", ComparisonRegimesUseIndependentDirectories);
+            Run("Survival comparison ignores checkpoint sidecars", SurvivalIgnoresSidecars);
 
             Console.WriteLine(
                 failures == 0
@@ -224,6 +227,150 @@ namespace NetworkSimulation.Tests
 
             Throws<ArgumentException>(
                 () => TopologyFactory.GetEquivalentCycleOrder(1));
+        }
+
+        private static void ComparisonOutputsIncludeRegimeName()
+        {
+            WithTemporaryDirectory(directory =>
+            {
+                string originalDirectory = Environment.CurrentDirectory;
+                try
+                {
+                    Environment.CurrentDirectory = directory;
+                    File.WriteAllText("graph_sizes_path.txt", "5");
+                    File.WriteAllText("graph_sizes_cycle.txt", "8");
+                    File.WriteAllText("avg_msg_delays_path.txt", "4");
+                    File.WriteAllText("avg_msg_delays_cycle.txt", "3");
+
+                    new TopologyComparisonReporter()
+                        .ComparePathAndCycle("high_churn");
+
+                    Equal(
+                        "1",
+                        File.ReadAllText(
+                            "delay_reduction_path_vs_cycle_high_churn.txt")
+                            .Trim(),
+                        "Absolute reduction");
+                    Equal(
+                        "25",
+                        File.ReadAllText(
+                            "delay_reduction_percent_path_vs_cycle_high_churn.txt")
+                            .Trim(),
+                        "Percentage reduction");
+                }
+                finally
+                {
+                    Environment.CurrentDirectory = originalDirectory;
+                }
+            });
+        }
+
+        private static void SurvivalIgnoresSidecars()
+        {
+            WithTemporaryDirectory(directory =>
+            {
+                string originalDirectory = Environment.CurrentDirectory;
+                try
+                {
+                    Environment.CurrentDirectory = directory;
+                    File.WriteAllText("msg_delays_path_5.txt", "1" + Environment.NewLine);
+                    File.WriteAllText("msg_delays_cycle_8.txt", "1" + Environment.NewLine);
+                    File.WriteAllText(
+                        "msg_delays_path_5.metadata.txt",
+                        "path checkpoint metadata");
+                    File.WriteAllText(
+                        "msg_delays_cycle_8.metadata.txt",
+                        "cycle checkpoint metadata");
+
+                    typeof(TopologyFactory).Assembly
+                        .GetType("NetworkSimulation.Program")
+                        .GetMethod("survivalComparison")
+                        .Invoke(null, new object[] { "test" });
+
+                    Equal(
+                        true,
+                        File.Exists("survival_comparison_path5_cycle8_test.csv"),
+                        "Survival output exists");
+                }
+                finally
+                {
+                    Environment.CurrentDirectory = originalDirectory;
+                }
+            });
+        }
+
+        private static void ComparisonRegimesUseIndependentDirectories()
+        {
+            WithTemporaryDirectory(directory =>
+            {
+                string originalDirectory = Environment.CurrentDirectory;
+                try
+                {
+                    Environment.CurrentDirectory = directory;
+
+                    typeof(TopologyFactory).Assembly
+                        .GetType("NetworkSimulation.Program")
+                        .GetMethod("comparePathAndCycleExperiment")
+                        .Invoke(
+                            null,
+                            new object[]
+                            {
+                                new[] { 3 },
+                                "low",
+                                ExperimentRunMode.Restart,
+                                1,
+                                12345,
+                                1.0,
+                                1.0
+                            });
+
+                    Equal(
+                        true,
+                        File.Exists(Path.Combine(
+                            directory,
+                            "low",
+                            "msg_delays_path_3.txt")),
+                        "Low-regime checkpoint");
+                    Equal(
+                        directory,
+                        Environment.CurrentDirectory,
+                        "Working directory restored");
+
+                    typeof(TopologyFactory).Assembly
+                        .GetType("NetworkSimulation.Program")
+                        .GetMethod("comparePathAndCycleExperiment")
+                        .Invoke(
+                            null,
+                            new object[]
+                            {
+                                new[] { 3 },
+                                "high",
+                                ExperimentRunMode.Restart,
+                                1,
+                                12345,
+                                1.0,
+                                4.0
+                            });
+
+                    Equal(
+                        true,
+                        File.Exists(Path.Combine(
+                            directory,
+                            "high",
+                            "msg_delays_path_3.txt")),
+                        "High-regime checkpoint");
+                    Equal(
+                        false,
+                        File.Exists(Path.Combine(
+                            directory,
+                            "msg_delays_path_3.txt")),
+                        "No shared checkpoint");
+                }
+                finally
+                {
+                    Environment.CurrentDirectory = originalDirectory;
+                }
+            });
         }
 
         private static void RunPathExperiment(

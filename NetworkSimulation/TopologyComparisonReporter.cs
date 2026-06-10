@@ -16,21 +16,33 @@ namespace NetworkSimulation
         /// size 2(N-1), and writes delay-reduction outputs.
         /// </summary>
         /// <remarks>
-        /// Outputs absolute delay reductions to delay_reduction_path_vs_cycle.txt
-        /// and percentage reductions to delay_reduction_percent_path_vs_cycle.txt.
+        /// Outputs absolute and percentage delay reductions to files suffixed
+        /// with the supplied regime name.
         /// Rows whose cycle diameter route does not match the path length are
         /// skipped.
         /// </remarks>
-        public void ComparePathAndCycle()
+        /// <param name="regimeName">
+        /// Name appended to output files to distinguish experiment regimes.
+        /// </param>
+        public void ComparePathAndCycle(string regimeName)
         {
+            string regimeSuffix =
+                ExperimentOutputFileName.GetRegimeSuffix(regimeName);
+            string reductionFile =
+                "delay_reduction_path_vs_cycle" + regimeSuffix + ".txt";
+            string reductionPercentFile =
+                "delay_reduction_percent_path_vs_cycle" +
+                regimeSuffix +
+                ".txt";
+
             string[] pathSizes = File.ReadAllLines("graph_sizes_path.txt");
             string[] cycleSizes = File.ReadAllLines("graph_sizes_cycle.txt");
 
             string[] pathDelays = File.ReadAllLines("avg_msg_delays_path.txt");
             string[] cycleDelays = File.ReadAllLines("avg_msg_delays_cycle.txt");
 
-            File.WriteAllText("delay_reduction_path_vs_cycle.txt", "");
-            File.WriteAllText("delay_reduction_percent_path_vs_cycle.txt", "");
+            File.WriteAllText(reductionFile, "");
+            File.WriteAllText(reductionPercentFile, "");
 
             int count = Math.Min(pathDelays.Length, cycleDelays.Length);
 
@@ -64,11 +76,11 @@ namespace NetworkSimulation
                     pathN, cycleN, pathDelay, cycleDelay, reduction, reductionPercent);
 
                 File.AppendAllText(
-                    "delay_reduction_path_vs_cycle.txt",
+                    reductionFile,
                     reduction.ToString(CultureInfo.InvariantCulture) + Environment.NewLine);
 
                 File.AppendAllText(
-                    "delay_reduction_percent_path_vs_cycle.txt",
+                    reductionPercentFile,
                     reductionPercent.ToString(CultureInfo.InvariantCulture) + Environment.NewLine);
             }
         }

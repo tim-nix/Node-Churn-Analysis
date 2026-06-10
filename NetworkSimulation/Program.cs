@@ -89,21 +89,33 @@ namespace NetworkSimulation
         }
 
         /// <summary>
-        /// Extracts the trailing graph-size value from an experiment output file name.
+        /// Extracts the graph-size value from a raw-delay output file name.
         /// </summary>
         /// <param name="fileName">
         /// File name following the convention prefix_N.txt.
         /// </param>
-        /// <returns>
-        /// The integer graph size N parsed from the file name.
-        /// </returns>
-        private static int ExtractN(string fileName)
+        /// <param name="prefix">Expected file-name prefix before N.</param>
+        /// <param name="n">The parsed graph size when the name is valid.</param>
+        /// <returns>True only when the complete file name matches the convention.</returns>
+        private static bool TryExtractN(
+            string fileName,
+            string prefix,
+            out int n)
         {
-            string name = Path.GetFileNameWithoutExtension(fileName);
+            n = 0;
+            string name = Path.GetFileName(fileName);
 
-            string[] parts = name.Split('_');
+            if (!name.StartsWith(prefix, StringComparison.Ordinal) ||
+                !name.EndsWith(".txt", StringComparison.Ordinal))
+            {
+                return false;
+            }
 
-            return int.Parse(parts.Last());
+            string graphSize = name.Substring(
+                prefix.Length,
+                name.Length - prefix.Length - ".txt".Length);
+
+            return int.TryParse(graphSize, out n) && n > 0;
         }
 
         /// <summary>
@@ -115,27 +127,58 @@ namespace NetworkSimulation
         /// msg_delays_cycle_2(N-1).txt so the cycle diameter route and path
         /// both contain N nodes. Matching pairs are analyzed by SurvivalAnalysis.
         /// </remarks>
-        public static void survivalComparison()
+        /// <param name="regimeName">
+        /// Name appended to survival comparison output files.
+        /// </param>
+        public static void survivalComparison(string regimeName)
         {
             SurvivalAnalysis analysis = new SurvivalAnalysis();
+            string regimeSuffix =
+                ExperimentOutputFileName.GetRegimeSuffix(regimeName);
 
             string[] pathFiles = Directory.GetFiles(
                 Directory.GetCurrentDirectory(),
-                "msg_delays_path_*.txt");
+                "msg_delays_path_*.txt")
+                .Where(file =>
+                {
+                    int ignored;
+                    return TryExtractN(
+                        file,
+                        "msg_delays_path_",
+                        out ignored);
+                })
+                .ToArray();
 
             string[] cycleFiles = Directory.GetFiles(
                 Directory.GetCurrentDirectory(),
-                "msg_delays_cycle_*.txt");
+                "msg_delays_cycle_*.txt")
+                .Where(file =>
+                {
+                    int ignored;
+                    return TryExtractN(
+                        file,
+                        "msg_delays_cycle_",
+                        out ignored);
+                })
+                .ToArray();
 
             foreach (string pathFile in pathFiles)
             {
-                int pathN = ExtractN(pathFile);
+                int pathN;
+                TryExtractN(pathFile, "msg_delays_path_", out pathN);
 
                 int expectedCycleN =
                     TopologyFactory.GetEquivalentCycleOrder(pathN);
 
-                string matchingCycleFile =
-                    cycleFiles.FirstOrDefault(f => ExtractN(f) == expectedCycleN);
+                string matchingCycleFile = cycleFiles.FirstOrDefault(file =>
+                {
+                    int cycleN;
+                    return TryExtractN(
+                        file,
+                        "msg_delays_cycle_",
+                        out cycleN) &&
+                        cycleN == expectedCycleN;
+                });
 
                 if (matchingCycleFile == null)
                 {
@@ -145,7 +188,7 @@ namespace NetworkSimulation
                 }
 
                 string outputFile =
-                    $"survival_comparison_path{pathN}_cycle{expectedCycleN}.csv";
+                    $"survival_comparison_path{pathN}_cycle{expectedCycleN}{regimeSuffix}.csv";
 
                 Console.WriteLine(
                     "Comparing path n={0} with cycle n={1}",
@@ -160,20 +203,23 @@ namespace NetworkSimulation
         }
 
         /// <summary>
-        /// Compares previously generated path and cycle summary output files
-        /// and computes mean-delay reduction metrics.
+        /// Runs matching path and cycle experiments, then computes delay and
+        /// survival comparisons for the generated results.
         /// </summary>
         /// <remarks>
-        /// This method does not run new simulations. It reads the existing
-        /// path and cycle average-delay files, matches each path graph of size
-        /// N with the cycle whose diameter route also contains N nodes, and
-        /// writes both absolute and percentage delay-reduction results.
+        /// Results are isolated in a directory named for the experiment regime.
+        /// Each path graph of size N is matched with the even cycle of size
+        /// 2(N-1), whose opposite-node route also contains N nodes.
         /// </remarks>
         /// <param name="runMode">
         /// Restart/resume mode forwarded to both simulation families.
         /// </param>
         /// <param name="pathLengths">
         /// Path lengths in nodes used by both topology families.
+        /// </param>
+        /// <param name="regimeName">
+        /// Name used for the result directory and appended to comparison output
+        /// files to distinguish this experiment regime from other runs.
         /// </param>
         /// <param name="numberSimulations">
         /// Number of successful simulations to run per path size.
@@ -185,6 +231,7 @@ namespace NetworkSimulation
         /// <param name="downRate">Exponential rate for OFF durations.</param>
         public static void comparePathAndCycleExperiment(
             int[] pathLengths,
+            string regimeName,
             ExperimentRunMode runMode,
             int numberSimulations,
             int randomSeed,
@@ -196,44 +243,62 @@ namespace NetworkSimulation
             bool runCompare = true;
             bool runSurvival = true;
 
-            if (runPath)
-            {
-                Console.WriteLine("Starting path experiment...");
-                pathExponential(
-                    pathLengths,
-                    runMode,
-                    numberSimulations,
-                    randomSeed,
-                    upRate,
-                    downRate);
-                Console.WriteLine("Finished path experiment.");
-            }
+            string regimeSuffix =
+                ExperimentOutputFileName.GetRegimeSuffix(regimeName);
+            string originalDirectory = Environment.CurrentDirectory;
+            string regimeDirectory = Path.Combine(
+                originalDirectory,
+                regimeSuffix.Substring(1));
 
-            if (runCycle)
-            {
-                Console.WriteLine("Starting cycle experiment...");
-                cycleExponential(
-                    pathLengths,
-                    runMode,
-                    numberSimulations,
-                    randomSeed,
-                    upRate,
-                    downRate);
-                Console.WriteLine("Finished cycle experiment.");
-            }
+            Directory.CreateDirectory(regimeDirectory);
 
-            if (runCompare)
+            try
             {
-                Console.WriteLine("Starting comparison of path and cycle...");
-                new TopologyComparisonReporter().ComparePathAndCycle();
-                Console.WriteLine("Finished comparison of path and cycle.");
-            }
+                Environment.CurrentDirectory = regimeDirectory;
 
-            if (runSurvival)
+                if (runPath)
+                {
+                    Console.WriteLine("Starting path experiment...");
+                    pathExponential(
+                        pathLengths,
+                        runMode,
+                        numberSimulations,
+                        randomSeed,
+                        upRate,
+                        downRate);
+                    Console.WriteLine("Finished path experiment.");
+                }
+
+                if (runCycle)
+                {
+                    Console.WriteLine("Starting cycle experiment...");
+                    cycleExponential(
+                        pathLengths,
+                        runMode,
+                        numberSimulations,
+                        randomSeed,
+                        upRate,
+                        downRate);
+                    Console.WriteLine("Finished cycle experiment.");
+                }
+
+                if (runCompare)
+                {
+                    Console.WriteLine("Starting comparison of path and cycle...");
+                    new TopologyComparisonReporter().ComparePathAndCycle(regimeName);
+                    Console.WriteLine("Finished comparison of path and cycle.");
+                }
+
+                if (runSurvival)
+                {
+                    Console.WriteLine("Starting survival comparison...");
+                    survivalComparison(regimeName);
+                    Console.WriteLine("Finished survival comparison.");
+                }
+            }
+            finally
             {
-                Console.WriteLine("Starting survival comparison...");
-                survivalComparison();
-                Console.WriteLine("Finished survival comparison.");
+                Environment.CurrentDirectory = originalDirectory;
             }
         }
 
@@ -491,30 +556,46 @@ namespace NetworkSimulation
         static void Main(string[] args)
         {
             string outputDirectory = SimulationOutput.Initialize();
+
             ExperimentRunMode runMode = ExperimentRunMode.Restart;
             int numberSimulations = 100000;
             int randomSeed = 12345;
-            double upRate = 2.0;
-            double downRate = 3.0;
             int[] pathLengths = { 5, 10, 15, 20 };
-            int[] pathCounts = { 2, 3, 4, 5 };
 
             Console.WriteLine("Simulation output directory: {0}", outputDirectory);
             Console.WriteLine("Experiment run mode: {0}", runMode);
             Console.WriteLine("Simulations per configuration: {0}", numberSimulations);
             Console.WriteLine("Experiment random seed: {0}", randomSeed);
-            Console.WriteLine("Exponential ON rate: {0}", upRate);
-            Console.WriteLine("Exponential OFF rate: {0}", downRate);
-            Console.WriteLine("Path lengths (nodes): {0}", string.Join(", ", pathLengths));
-            Console.WriteLine("Multi-path counts: {0}", string.Join(", ", pathCounts));
-            multiPathExponential(
+
+            Console.WriteLine("=== Low availability path/cycle experiment ===");
+            comparePathAndCycleExperiment(
                 pathLengths,
-                pathCounts,
+                "low",
                 runMode,
                 numberSimulations,
                 randomSeed,
-                upRate,
-                downRate);
+                upRate: 1.0,
+                downRate: 1.0);
+
+            Console.WriteLine("=== Baseline availability path/cycle experiment ===");
+            comparePathAndCycleExperiment(
+                pathLengths,
+                "baseline",
+                runMode,
+                numberSimulations,
+                randomSeed,
+                upRate: 2.0,
+                downRate: 3.0);
+
+            Console.WriteLine("=== High availability path/cycle experiment ===");
+            comparePathAndCycleExperiment(
+                pathLengths,
+                "high",
+                runMode,
+                numberSimulations,
+                randomSeed,
+                upRate: 1.0,
+                downRate: 4.0);
         }
     }
 }

@@ -101,7 +101,9 @@ namespace NetworkSimulation
         }
 
         /// <summary>
-        /// Computes flooding delay from node 0 to the diameter node of a cycle.
+        /// Computes flooding delay from node 0 to node floor(n / 2), a
+        /// diameter-distance target. The nodes are exactly opposite when n is
+        /// even.
         /// </summary>
         /// <returns>Elapsed simulated time until delivery.</returns>
         public double getCycleMessageDelay()

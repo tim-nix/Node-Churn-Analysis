@@ -9,8 +9,9 @@ namespace NetworkSimulation
     /// range or an explicit collection of cycle orders.
     /// 
     /// For each cycle size, this class executes repeated Monte Carlo trials
-    /// using the diameter target node, aggregates summary statistics, and
-    /// delegates output formatting to CycleExperimentReporter.
+    /// from node 0 to node floor(N / 2), aggregates summary statistics, and
+    /// delegates output formatting to CycleExperimentReporter. The endpoints
+    /// are exactly opposite when N is even.
     /// </summary>
     public class CycleExperiment
     {
@@ -46,6 +47,8 @@ namespace NetworkSimulation
         /// <remarks>
         /// Raw delay samples are written to msg_delays_cycle_N.txt. Complete
         /// trial checkpoints and seed metadata are written beside that file.
+        /// Delivery is measured from node 0 to node floor(N / 2), which is
+        /// exactly opposite node 0 when N is even.
         /// </remarks>
         public void Run(
             int minOrder,
@@ -89,8 +92,8 @@ namespace NetworkSimulation
         /// <param name="maxAttempts">Maximum attempts allowed per successful trial.</param>
         /// <remarks>
         /// Raw delay samples are written to msg_delays_cycle_N.txt, where N is
-        /// the supplied cycle order. Delivery is measured from node 0 to the
-        /// diameter node at N / 2.
+        /// the supplied cycle order. Delivery is measured from node 0 to node
+        /// floor(N / 2), which is exactly opposite node 0 when N is even.
         /// </remarks>
         public void Run(
             IEnumerable<int> graphOrders,
