@@ -10,7 +10,8 @@ namespace NetworkSimulation
     /// 
     /// For each path size, this class executes repeated Monte Carlo trials,
     /// records raw delay samples, aggregates summary statistics, and delegates
-    /// output formatting to PathExperimentReporter.
+    /// output formatting to PathExperimentReporter. Path experiments use
+    /// flooding so their results are comparable with cycle flooding results.
     /// </summary>
     public class PathExperiment
     {
@@ -46,6 +47,7 @@ namespace NetworkSimulation
         /// <remarks>
         /// Raw delay samples are written to msg_delays_path_N.txt. Complete
         /// trial checkpoints and seed metadata are written beside that file.
+        /// These samples use flooding for path-vs-cycle redundancy comparisons.
         /// </remarks>
         public void Run(
             int minOrder,
@@ -91,7 +93,8 @@ namespace NetworkSimulation
         /// <param name="maxAttempts">Maximum attempts allowed per successful trial.</param>
         /// <remarks>
         /// Raw delay samples are written to msg_delays_path_N.txt, where N is
-        /// the supplied path length in nodes.
+        /// the supplied path length in nodes. These samples use flooding for
+        /// path-vs-cycle redundancy comparisons.
         /// </remarks>
         public void Run(
             IEnumerable<int> graphOrders,
@@ -150,7 +153,7 @@ namespace NetworkSimulation
                                 downDistro.WithRandomSource(
                                     new MersenneTwister(RandomSeed.Derive(
                                         randomSeed, numNodes, 0, sim, attempt, 1))),
-                                MessageDelayMode.PathEndpoint),
+                                MessageDelayMode.FloodingPathEndpoint),
                             maxAttempts);
 
                     results.Add(result);

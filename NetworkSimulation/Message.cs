@@ -64,16 +64,18 @@ namespace NetworkSimulation
         /// Computes flooding delay from node 0 to node n - 1 on a path.
         /// </summary>
         /// <returns>Elapsed simulated time until delivery.</returns>
-        public double getPathMessageDelay()
+        public double GetFloodingPathDelay()
         {
             return GetFloodingDelay(0, network.FullOrder - 1);
         }
 
         /// <summary>
-        /// Computes delay for a single-copy, sequential path forwarding model.
+        /// Computes delay for the single-copy, sequential store-and-forward
+        /// path model used to validate the closed-form path-delay formula.
+        /// This is not the flooding baseline used by path-vs-cycle experiments.
         /// </summary>
         /// <returns>Elapsed simulated time until delivery.</returns>
-        public double getPathMessageDelay2()
+        public double GetSequentialPathDelay()
         {
             bool[] status = churn.getStatusAtTime(start_time);
             if (!status[0])
@@ -129,8 +131,11 @@ namespace NetworkSimulation
         {
             switch (mode)
             {
-                case MessageDelayMode.PathEndpoint:
-                    return getPathMessageDelay();
+                case MessageDelayMode.FloodingPathEndpoint:
+                    return GetFloodingPathDelay();
+
+                case MessageDelayMode.SequentialPathEndpoint:
+                    return GetSequentialPathDelay();
 
                 case MessageDelayMode.CycleDiameter:
                     return getCycleMessageDelay();

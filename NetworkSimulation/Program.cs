@@ -125,7 +125,9 @@ namespace NetworkSimulation
         /// <remarks>
         /// Each path file msg_delays_path_N.txt is matched with
         /// msg_delays_cycle_2(N-1).txt so the cycle diameter route and path
-        /// both contain N nodes. Matching pairs are analyzed by SurvivalAnalysis.
+        /// both contain N nodes. PathExperiment generates the path samples by
+        /// flooding, so both sides of this redundancy comparison use flooding.
+        /// Matching pairs are analyzed by SurvivalAnalysis.
         /// </remarks>
         /// <param name="regimeName">
         /// Name appended to survival comparison output files.
@@ -210,6 +212,8 @@ namespace NetworkSimulation
         /// Results are isolated in a directory named for the experiment regime.
         /// Each path graph of size N is matched with the even cycle of size
         /// 2(N-1), whose opposite-node route also contains N nodes.
+        /// Both path and cycle delays use flooding; sequential path forwarding
+        /// is reserved for closed-form store-and-forward validation.
         /// </remarks>
         /// <param name="runMode">
         /// Restart/resume mode forwarded to both simulation families.

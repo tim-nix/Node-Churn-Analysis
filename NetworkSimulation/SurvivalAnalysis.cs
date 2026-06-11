@@ -54,7 +54,7 @@ namespace NetworkSimulation
         /// </param>
         /// <returns>
         /// A sorted list of (delay threshold, survival probability) pairs, where
-        /// the survival probability estimates P(T &gt; t) from the observed samples.
+        /// the survival probability estimates P(T &gt;= t) from the observed samples.
         /// </returns>
         public List<Tuple<double, double>> ComputeSurvival(string fileName)
         {
@@ -69,7 +69,8 @@ namespace NetworkSimulation
             List<Tuple<double, double>> survivalValues =
                 new List<Tuple<double, double>>();
 
-            for (int i = 0; i < n; i++)
+            int i = 0;
+            while (i < n)
             {
                 double t = samples[i];
 
@@ -79,6 +80,12 @@ namespace NetworkSimulation
 
                 survivalValues.Add(
                     new Tuple<double, double>(t, survival));
+
+                do
+                {
+                    i++;
+                }
+                while (i < n && samples[i] == t);
             }
 
             return survivalValues;

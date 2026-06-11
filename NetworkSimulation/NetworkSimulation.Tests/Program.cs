@@ -25,6 +25,10 @@ namespace NetworkSimulation.Tests
             Run("Equivalent cycle preserves path length", EquivalentCyclePreservesPathLength);
             Run("Comparison outputs include regime name", ComparisonOutputsIncludeRegimeName);
             Run("Comparison regimes use independent directories", ComparisonRegimesUseIndependentDirectories);
+            Run("Survival groups equal delay thresholds", SurvivalGroupsEqualThresholds);
+            Run(
+                "Path survival uses flooding and sequential validation remains available",
+                PathSurvivalUsesFlooding);
             Run("Survival comparison ignores checkpoint sidecars", SurvivalIgnoresSidecars);
 
             Console.WriteLine(
@@ -140,7 +144,7 @@ namespace NetworkSimulation.Tests
                     0.0,
                     new ThrowingDistribution(),
                     new ConstantDistribution(1.0),
-                    MessageDelayMode.PathEndpoint));
+                    MessageDelayMode.FloodingPathEndpoint));
         }
 
         private static void SeededDistributionsAreReproducible()
@@ -297,6 +301,148 @@ namespace NetworkSimulation.Tests
                     Environment.CurrentDirectory = originalDirectory;
                 }
             });
+        }
+
+        private static void SurvivalGroupsEqualThresholds()
+        {
+            WithTemporaryDirectory(directory =>
+            {
+                string delayFile = Path.Combine(directory, "delays.txt");
+                File.WriteAllLines(
+                    delayFile,
+                    new[] { "0", "0", "1", "1", "1", "3" });
+
+                List<Tuple<double, double>> survival =
+                    new SurvivalAnalysis().ComputeSurvival(delayFile);
+
+                Equal(3, survival.Count, "Distinct threshold count");
+                Equal(0.0, survival[0].Item1, "First threshold");
+                Equal(1.0, survival[0].Item2, "Survival at zero");
+                Equal(1.0, survival[1].Item1, "Second threshold");
+                Equal(4.0 / 6.0, survival[1].Item2, "Survival at one");
+                Equal(3.0, survival[2].Item1, "Third threshold");
+                Equal(1.0 / 6.0, survival[2].Item2, "Survival at three");
+            });
+        }
+
+        private static void PathSurvivalUsesFlooding()
+        {
+            const int trialCount = 10000;
+            const int seed = 24680;
+
+            WithTemporaryDirectory(directory =>
+            {
+                string originalDirectory = Environment.CurrentDirectory;
+                try
+                {
+                    Environment.CurrentDirectory = directory;
+
+                    new PathExperiment().Run(
+                        new[] { 5 },
+                        trialCount,
+                        4,
+                        0.0,
+                        new Exponential(2.0),
+                        new Exponential(3.0),
+                        ExperimentRunMode.Restart,
+                        seed,
+                        3);
+
+                    double[] persistedDelays = File.ReadAllLines(
+                            "msg_delays_path_5.txt")
+                        .Where(line => !string.IsNullOrWhiteSpace(line))
+                        .Select(line => double.Parse(
+                            line,
+                            CultureInfo.InvariantCulture))
+                        .ToArray();
+
+                    Equal(trialCount, persistedDelays.Length, "Path delay count");
+
+                    bool foundDistinguishingTrial = false;
+                    for (int sim = 0; sim < trialCount; sim++)
+                    {
+                        double sequentialDelay = RunSeededPathTrial(
+                            sim,
+                            seed,
+                            MessageDelayMode.SequentialPathEndpoint);
+                        double floodingDelay = RunSeededPathTrial(
+                            sim,
+                            seed,
+                            MessageDelayMode.FloodingPathEndpoint);
+
+                        if (sequentialDelay == floodingDelay)
+                            continue;
+
+                        Equal(
+                            floodingDelay,
+                            persistedDelays[sim],
+                            "Persisted flooding path delay");
+                        foundDistinguishingTrial = true;
+                        break;
+                    }
+
+                    Equal(
+                        true,
+                        foundDistinguishingTrial,
+                        "Sequential validation and flooding trial differ");
+
+                    File.Copy(
+                        "msg_delays_path_5.txt",
+                        "msg_delays_cycle_8.txt");
+                    new SurvivalAnalysis().ComparePathAndCycleSurvival(
+                        "msg_delays_path_5.txt",
+                        "msg_delays_cycle_8.txt",
+                        "survival_comparison_path5_cycle8_validation.csv");
+
+                    string[] csvLines = File.ReadAllLines(
+                        "survival_comparison_path5_cycle8_validation.csv");
+                    Equal(
+                        "t,S_path,S_cycle,S_path_squared,alpha",
+                        csvLines[0],
+                        "Survival CSV header");
+
+                    double[] thresholds = csvLines
+                        .Skip(1)
+                        .Where(line => !string.IsNullOrWhiteSpace(line))
+                        .Select(line => double.Parse(
+                            line.Split(',')[0],
+                            CultureInfo.InvariantCulture))
+                        .ToArray();
+
+                    Equal(
+                        thresholds.Length,
+                        thresholds.Distinct().Count(),
+                        "Distinct CSV thresholds");
+                }
+                finally
+                {
+                    Environment.CurrentDirectory = originalDirectory;
+                }
+            });
+        }
+
+        private static double RunSeededPathTrial(
+            int simulation,
+            int randomSeed,
+            MessageDelayMode delayMode)
+        {
+            TrialResult result = new TrialRunner().RunTrial(
+                TopologyFactory.CreatePath(5),
+                5,
+                4,
+                0.0,
+                new Exponential(
+                    2.0,
+                    new MersenneTwister(RandomSeed.Derive(
+                        randomSeed, 5, 0, simulation, 0, 0))),
+                new Exponential(
+                    3.0,
+                    new MersenneTwister(RandomSeed.Derive(
+                        randomSeed, 5, 0, simulation, 0, 1))),
+                delayMode);
+
+            Equal(true, result.Success, "Seeded path trial success");
+            return result.Delay;
         }
 
         private static void ComparisonRegimesUseIndependentDirectories()
